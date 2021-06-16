@@ -1,33 +1,34 @@
 class TractProcessor extends AudioWorkletProcessor {
     constructor() { 
       super(); 
+
+      // sections
       var N = this.N = 44;
       this.bladeStart = 10;
       this.tipStart = 32;
       this.lipStart = 39;
-      this.R = new Float64Array(this.n); // right-moving component
-      this.L = new Float64Array(this.n); // left-moving component
-      this.reflection = new Float64Array(this.n+1);
-      this.newReflection = new Float64Array(this.n+1);
-      this.junctionOutputR = new Float64Array(this.n+1);
-      this.junctionOutputL = new Float64Array(this.n+1);
-      this.A =new Float64Array(this.n);
-      this.maxAmplitude = new Float64Array(this.n);
 
-      // diameter
+      // values
+      this.R = new Float64Array(N); // right-moving component
+      this.L = new Float64Array(N); // left-moving component
+      this.reflection = new Float64Array(N+1);
+      this.junctionOutputR = new Float64Array(N+1);
+      this.junctionOutputL = new Float64Array(N+1);
+
+      // diameter & cross-sectional area
       this.diameter = new Float64Array(N);
       this.restDiameter = new Float64Array(N);
       this.targetDiameter = new Float64Array(N);
-      this.newDiameter = new Float64Array(N);
+      this.A = new Float64Array(N);
 
       // magic numbers are relative to 44
-      for (var i=0; i<N; i++)
+      for (var i = 0; i < N; i++)
       {
           var diameter = 0;
           if (i < 7 - 0.5) diameter = 0.6;
           else if (i < 12) diameter = 1.1;
           else diameter = 1.5;
-          this.diameter[i] = this.restDiameter[i] = this.targetDiameter[i] = this.newDiameter[i] = diameter;
+          this.diameter[i] = this.restDiameter[i] = this.targetDiameter[i] = diameter;
       }
 
       this.A = [];
@@ -38,14 +39,21 @@ class TractProcessor extends AudioWorkletProcessor {
       this.movementSpeed = 15; //cm per second
       this.transients = [];
       this.lipOutput = 0;
-      this.noseOutput = 0;
-      this.velumTarget = 0.01;
 
       // Nose
       this.initNose(28);
+
+      // reflections
+      this.reflectionLeft = this.reflectionRight = this.reflectionNose = 0;
+      this.calculateReflections();        
+      this.calculateNoseReflections();
+
+      this.noseDiameter[0] = this.velumTarget;
     }
 
     initNose(N) {
+      this.noseOutput = 0;
+      this.velumTarget = 0.01;
       this.noseLength = N;
       this.noseStart = this.N - N + 1;
       this.noseR = new Float64Array(N);
@@ -65,220 +73,205 @@ class TractProcessor extends AudioWorkletProcessor {
           diameter = Math.min(diameter, 1.9);
           this.noseDiameter[i] = diameter;
       }       
-      this.newReflectionLeft = this.newReflectionRight = this.newReflectionNose = 0;
-      this.calculateReflections();        
-      this.calculateNoseReflections();
-      this.noseDiameter[0] = this.velumTarget;
     }
-      
-      reshapeTract(deltaTime)
-      {
-          var amount = deltaTime * this.movementSpeed; ;    
-          var newLastObstruction = -1;
-          for (var i=0; i<this.n; i++)
-          {
-              var diameter = this.diameter[i];
-              var targetDiameter = this.targetDiameter[i];
-              if (diameter <= 0) newLastObstruction = i;
-              var slowReturn; 
-              if (i<this.noseStart) slowReturn = 0.6;
-              else if (i >= this.tipStart) slowReturn = 1.0; 
-              else slowReturn = 0.6+0.4*(i-this.noseStart)/(this.tipStart-this.noseStart);
-              this.diameter[i] = Math.moveTowards(diameter, targetDiameter, slowReturn*amount, 2*amount);
-          }
-          if (this.lastObstruction>-1 && newLastObstruction == -1 && this.noseA[0]<0.05)
-          {
-              this.addTransient(this.lastObstruction);
-          }
-          this.lastObstruction = newLastObstruction;
-          
-          amount = deltaTime * this.movementSpeed; 
-          this.noseDiameter[0] = Math.moveTowards(this.noseDiameter[0], this.velumTarget, 
-                  amount*0.25, amount*0.1);
-          this.noseA[0] = this.noseDiameter[0]*this.noseDiameter[0];        
-      }
-      
-      calculateReflections()
-      {
-          for (var i=0; i<this.n; i++) 
-          {
-              this.A[i] = this.diameter[i]*this.diameter[i]; //ignoring PI etc.
-          }
-          for (var i=1; i<this.n; i++)
-          {
-              this.reflection[i] = this.newReflection[i];
-              if (this.A[i] == 0) this.newReflection[i] = 0.999; //to prevent some bad behaviour if 0
-              else this.newReflection[i] = (this.A[i-1]-this.A[i]) / (this.A[i-1]+this.A[i]); 
-          }
-          
-          //now at junction with nose
-  
-          this.reflectionLeft = this.newReflectionLeft;
-          this.reflectionRight = this.newReflectionRight;
-          this.reflectionNose = this.newReflectionNose;
-          var sum = this.A[this.noseStart]+this.A[this.noseStart+1]+this.noseA[0];
-          this.newReflectionLeft = (2*this.A[this.noseStart]-sum)/sum;
-          this.newReflectionRight = (2*this.A[this.noseStart+1]-sum)/sum;   
-          this.newReflectionNose = (2*this.noseA[0]-sum)/sum;      
-      }
-  
-      calculateNoseReflections()
-      {
-          for (var i=0; i<this.noseLength; i++) 
-          {
-              this.noseA[i] = this.noseDiameter[i]*this.noseDiameter[i]; 
-          }
-          for (var i=1; i<this.noseLength; i++)
-          {
-              this.noseReflection[i] = (this.noseA[i-1]-this.noseA[i]) / (this.noseA[i-1]+this.noseA[i]); 
-          }
-      }
-      
-      postBuffer()
-      {         
-          // this.reshapeTract(AudioSystem.bufferDuration);
-          this.calculateReflections();
-      }
-      
-      addTransient(position)
-      {
-          var trans = {}
-          trans.position = position;
-          trans.timeAlive = 0;
-          trans.lifeTime = 0.2;
-          trans.strength = 0.3;
-          trans.exponent = 200;
-          this.transients.push(trans);
-      }
-      
-      processTransients()
-      {
-          for (var i = 0; i < this.transients.length; i++)  
-          {
-              var trans = this.transients[i];
-              var amplitude = trans.strength * Math.pow(2, -trans.exponent * trans.timeAlive);
-              this.R[trans.position] += amplitude/2;
-              this.L[trans.position] += amplitude/2;
-              trans.timeAlive += 1.0/(sampleRate*2);
-          }
-          for (var i=this.transients.length-1; i>=0; i--)
-          {
-              var trans = this.transients[i];
-              if (trans.timeAlive > trans.lifeTime)
-              {
-                  this.transients.splice(i,1);
-              }
-          }
-      }
-      
-      addTurbulenceNoise(turbulenceNoise)
-      {
-          for (var j=0; j<UI.touchesWithMouse.length; j++)
-          {
-              var touch = UI.touchesWithMouse[j];
-              if (touch.index<2 || touch.index>Tract.n) continue;
-              if (touch.diameter<=0) continue;            
-              var intensity = touch.fricative_intensity;
-              if (intensity == 0) continue;
-              this.addTurbulenceNoiseAtIndex(0.66*turbulenceNoise*intensity, touch.index, touch.diameter);
-          }
-      }
-      
-      addTurbulenceNoiseAtIndex(turbulenceNoise, index, diameter)
-      {   
-          var i = Math.floor(index);
-          var delta = index - i;
-          turbulenceNoise *= Glottis.getNoiseModulator();
-          var thinness0 = Math.clamp(8*(0.7-diameter),0,1);
-          var openness = Math.clamp(30*(diameter-0.3), 0, 1);
-          var noise0 = turbulenceNoise*(1-delta)*thinness0*openness;
-          var noise1 = turbulenceNoise*delta*thinness0*openness;
-          this.R[i+1] += noise0/2;
-          this.L[i+1] += noise0/2;
-          this.R[i+2] += noise1/2;
-          this.L[i+2] += noise1/2;
-      }
 
-    step() {
-      //mouth
-      this.processTransients();
-      this.addTurbulenceNoise(turbulenceNoise);
-      
-      //this.glottalReflection = -0.8 + 1.6 * Glottis.newTenseness;
-      this.junctionOutputR[0] = this.L[0] * this.glottalReflection + glottalOutput;
-      this.junctionOutputL[this.n] = this.R[this.n-1] * this.lipReflection; 
-      
-      for (var i=1; i<this.n; i++)
+    calculateReflections()
+    {
+      for (var i=0; i<this.N; i++) 
       {
-          var r = this.reflection[i] * (1-lambda) + this.newReflection[i]*lambda;
+        this.A[i] = this.diameter[i]*this.diameter[i]; //ignoring PI etc.
+      }
+      for (var i=1; i<this.N; i++)
+      {
+        if (this.A[i] == 0) this.reflection[i] = 0.999; //to prevent some bad behaviour if 0
+        else this.reflection[i] = (this.A[i-1]-this.A[i]) / (this.A[i-1]+this.A[i]); // kl junction
+      }
+      
+      //now at junction with nose
+      var sum = this.A[this.noseStart]+this.A[this.noseStart+1]+this.noseA[0];
+      this.reflectionLeft = (2*this.A[this.noseStart]-sum)/sum;
+      this.reflectionRight = (2*this.A[this.noseStart+1]-sum)/sum;   
+      this.reflectionNose = (2*this.noseA[0]-sum)/sum;      
+    }
+
+    calculateNoseReflections()
+    {
+      for (var i=0; i<this.noseLength; i++) 
+      {
+        this.noseA[i] = this.noseDiameter[i]*this.noseDiameter[i]; 
+      }
+      for (var i=1; i<this.noseLength; i++)
+      {
+        this.noseReflection[i] = (this.noseA[i-1]-this.noseA[i]) / (this.noseA[i-1]+this.noseA[i]); 
+      }
+    }
+
+    step(glottalExcitation, lambda) {
+      // mouth
+      // this.processTransients();
+      // this.addTurbulenceNoise(turbulenceNoise);
+      
+      this.junctionOutputR[0] = this.L[0] * this.glottalReflection + glottalExcitation;
+      this.junctionOutputL[this.N] = this.R[this.N-1] * this.lipReflection; 
+      
+      for (var i=1; i<this.N; i++)
+      {
+          var r = this.reflection[i];
           var w = r * (this.R[i-1] + this.L[i]);
           this.junctionOutputR[i] = this.R[i-1] - w;
           this.junctionOutputL[i] = this.L[i] + w;
       }    
       
-      //now at junction with nose
+      // now at junction with nose
       var i = this.noseStart;
-      var r = this.newReflectionLeft * (1-lambda) + this.reflectionLeft*lambda;
+      var r = this.reflectionLeft;
       this.junctionOutputL[i] = r*this.R[i-1]+(1+r)*(this.noseL[0]+this.L[i]);
-      r = this.newReflectionRight * (1-lambda) + this.reflectionRight*lambda;
+      r = this.reflectionRight;
       this.junctionOutputR[i] = r*this.L[i]+(1+r)*(this.R[i-1]+this.noseL[0]);     
-      r = this.newReflectionNose * (1-lambda) + this.reflectionNose*lambda;
+      r = this.reflectionNose;
       this.noseJunctionOutputR[0] = r*this.noseL[0]+(1+r)*(this.L[i]+this.R[i-1]);
        
-      for (var i=0; i<this.n; i++)
+      for (var i=0; i<this.N; i++)
       {          
           this.R[i] = this.junctionOutputR[i]*0.999;
           this.L[i] = this.junctionOutputL[i+1]*0.999; 
-          
-          //this.R[i] = Math.clamp(this.junctionOutputR[i] * this.fade, -1, 1);
-          //this.L[i] = Math.clamp(this.junctionOutputL[i+1] * this.fade, -1, 1);    
       }
 
-      this.lipOutput = this.R[this.n-1];
+      this.lipOutput = this.R[this.N-1];
       
       //nose     
       this.noseJunctionOutputL[this.noseLength] = this.noseR[this.noseLength-1] * this.lipReflection; 
       
-      for (var i=1; i<this.noseLength; i++)
+      for (var i = 1; i < this.noseLength; i++)
       {
           var w = this.noseReflection[i] * (this.noseR[i-1] + this.noseL[i]);
           this.noseJunctionOutputR[i] = this.noseR[i-1] - w;
           this.noseJunctionOutputL[i] = this.noseL[i] + w;
       }
       
-      for (var i=0; i<this.noseLength; i++)
+      for (var i = 0; i < this.noseLength; i++)
       {
-          this.noseR[i] = this.noseJunctionOutputR[i] * this.fade;
-          this.noseL[i] = this.noseJunctionOutputL[i+1] * this.fade;   
-          
-          //this.noseR[i] = Math.clamp(this.noseJunctionOutputR[i] * this.fade, -1, 1);
-          //this.noseL[i] = Math.clamp(this.noseJunctionOutputL[i+1] * this.fade, -1, 1);    
-          
-          if (updateAmplitudes)
-          {
-              var amplitude = Math.abs(this.noseR[i]+this.noseL[i]);
-              if (amplitude > this.noseMaxAmplitude[i]) this.noseMaxAmplitude[i] = amplitude;
-              else this.noseMaxAmplitude[i] *= 0.999;
-          }
+          this.noseR[i] = this.noseJunctionOutputR[i] * 1;
+          this.noseL[i] = this.noseJunctionOutputL[i+1] * 1;     
       }
 
       this.noseOutput = this.noseR[this.noseLength-1];
+
+      return this.lipOutput + this.noseOutput;
+      return glottalExcitation;
     }
 
     process(inputs, outputs, parameters) {
       const input = inputs[0];
-      const output = output[0];
+      const noise = inputs[1];
+      const output = outputs[0];
 
+      // block start
       for (let channel = 0; channel < input.length; channel++) {
         const inputChannel = input[channel];
         const outputChannel = output[channel];
-        for (let i = 0; i < inputChannel.length; i++) {
-          outputChannel[i] = step(inputChannel[i]);
+        for (let n = 0; n < 128; n++) {
+          // outputChannel[n] = inputChannel[n] / 2;
+          outputChannel[n] = this.step(inputChannel[n], n/128);
         }
-      } 
+      }
+
+      // block end
+      // this.reshapeTract(AudioSystem.bufferDuration);
+      this.calculateReflections();
 
       return true;
     }
-}
+  }
 
-registerProcessor('tract-filter', TractProcessor);
+  registerProcessor('tract-filter', TractProcessor);
+    
+
+  
+    // }
+      
+    // reshapeTract(deltaTime)
+    // {
+    //   var amount = deltaTime * this.movementSpeed; ;    
+    //   var newLastObstruction = -1;
+    //   for (var i=0; i<this.n; i++)
+    //   {
+    //     var diameter = this.diameter[i];
+    //     var targetDiameter = this.targetDiameter[i];
+    //     if (diameter <= 0) newLastObstruction = i;
+    //     var slowReturn; 
+    //     if (i<this.noseStart) slowReturn = 0.6;
+    //     else if (i >= this.tipStart) slowReturn = 1.0; 
+    //     else slowReturn = 0.6+0.4*(i-this.noseStart)/(this.tipStart-this.noseStart);
+    //     this.diameter[i] = Math.moveTowards(diameter, targetDiameter, slowReturn*amount, 2*amount);
+    //   }
+    //   if (this.lastObstruction>-1 && newLastObstruction == -1 && this.noseA[0]<0.05)
+    //   {
+    //     this.addTransient(this.lastObstruction);
+    //   }
+    //   this.lastObstruction = newLastObstruction;
+      
+    //   amount = deltaTime * this.movementSpeed; 
+    //   this.noseDiameter[0] = Math.moveTowards(this.noseDiameter[0], this.velumTarget, 
+    //       amount*0.25, amount*0.1);
+    //   this.noseA[0] = this.noseDiameter[0]*this.noseDiameter[0];        
+    // }
+      
+    // addTransient(position)
+    // {
+    //   var trans = {}
+    //   trans.position = position;
+    //   trans.timeAlive = 0;
+    //   trans.lifeTime = 0.2;
+    //   trans.strength = 0.3;
+    //   trans.exponent = 200;
+    //   this.transients.push(trans);
+    // }
+      
+    // processTransients()
+    // {
+    //   for (var i = 0; i < this.transients.length; i++)  
+    //   {
+    //     var trans = this.transients[i];
+    //     var amplitude = trans.strength * Math.pow(2, -trans.exponent * trans.timeAlive);
+    //     this.R[trans.position] += amplitude/2;
+    //     this.L[trans.position] += amplitude/2;
+    //     trans.timeAlive += 1.0/(sampleRate*2);
+    //   }
+    //   for (var i=this.transients.length-1; i>=0; i--)
+    //   {
+    //     var trans = this.transients[i];
+    //     if (trans.timeAlive > trans.lifeTime)
+    //     {
+    //       this.transients.splice(i,1);
+    //     }
+    //   }
+    // }
+      
+    // addTurbulenceNoise(turbulenceNoise)
+    // {
+    //   for (var j=0; j<UI.touchesWithMouse.length; j++)
+    //   {
+    //     var touch = UI.touchesWithMouse[j];
+    //     if (touch.index<2 || touch.index>Tract.n) continue;
+    //     if (touch.diameter<=0) continue;            
+    //     var intensity = touch.fricative_intensity;
+    //     if (intensity == 0) continue;
+    //     this.addTurbulenceNoiseAtIndex(0.66*turbulenceNoise*intensity, touch.index, touch.diameter);
+    //   }
+    // }
+      
+    // addTurbulenceNoiseAtIndex(turbulenceNoise, index, diameter)
+    // {   
+    //   var i = Math.floor(index);
+    //   var delta = index - i;
+    //   turbulenceNoise *= Glottis.getNoiseModulator();
+    //   var thinness0 = Math.clamp(8*(0.7-diameter),0,1);
+    //   var openness = Math.clamp(30*(diameter-0.3), 0, 1);
+    //   var noise0 = turbulenceNoise*(1-delta)*thinness0*openness;
+    //   var noise1 = turbulenceNoise*delta*thinness0*openness;
+    //   this.R[i+1] += noise0/2;
+    //   this.L[i+1] += noise0/2;
+    //   this.R[i+2] += noise1/2;
+    //   this.L[i+2] += noise1/2;
+    // }

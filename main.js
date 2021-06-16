@@ -13,3 +13,5 @@ function onBlur() { voice.stop(); }
 
 // main program
 const voice = new Viardot.Voice();
+
+console.log(MouseEvent.pageX)

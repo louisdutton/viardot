@@ -49,17 +49,19 @@ export class Voice {
     this.master.gain.setValueAtTime(0.05, this.context.currentTime);
     this.master.connect(this.context.destination);
   
-    this.tract = new TractFilterNode(this.context).connect(this.master);
+    this.tract = new TractFilterNode(this.context);
+    this.tract.connect(this.master);
 
     // replace with custom waveform / wavetable
     this.glottis = this.context.createOscillator();
-    this.glottis.frequency.value = 440;
+    this.glottis.type = 'triangle';
+    this.glottis.frequency.value = 110;
     this.glottis.connect(this.tract);
     this.glottis.start();
 
     // vibrato
     this.initVibrato(36, 5);
-    this.initNoise(2 * this.sampleRate);
+    // this.initNoise(2 * this.sampleRate);
   }
 
   setTargetFrequency(value) {
@@ -77,6 +79,7 @@ export class Voice {
   initNoise(bufferSize) {
     // 2 seconds of white noise
     this.aspirator = new AspiratorNode(this.context).connect(this.tract);
+    this.aspirationGain = this.context.createGain().connect(this.aspirator);
 
     this.noise = this.context.createBufferSource();
     this.noise.buffer = this.createPinkNoise(bufferSize);
@@ -84,15 +87,13 @@ export class Voice {
     this.noise.start();
 
     this.noiseModulator = new NoiseModulatorNode(this.context);
-    this.noiseModulator.connect(this.aspirator.gain);
+    this.noiseModulator.connect(this.aspirationGain);
 
-    this.noiseLFO = this.createLFO(440, this.noiseModulator)
-    this.noiseLFO.frequency.value = 1000;
-    this.noiseLFO.connect(this.noiseModulator);
+    this.noiseLFO = this.createLFO(110, this.noiseModulator).start();
     
     // filters
     this.aspirationFilter = this.createFilter(500).connect(this.aspirator);
-    this.fricativeFilter = this.createFilter(1000).connect(this.tract); // experimental q value
+    // this.fricativeFilter = this.createFilter(1000).connect(this.tract); // experimental q value
   }
 
   createLFO(frequency, target) {
