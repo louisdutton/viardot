@@ -45,7 +45,7 @@ class TractProcessor extends AudioWorkletProcessor {
 
       // reflections
       this.reflectionLeft = this.reflectionRight = this.reflectionNose = 0;
-      this.calculateReflections();        
+      this.calculateReflections();
       this.calculateNoseReflections();
 
       this.noseDiameter[0] = this.velumTarget;
@@ -106,10 +106,10 @@ class TractProcessor extends AudioWorkletProcessor {
       }
     }
 
-    step(glottalExcitation, lambda) {
+    step(glottalExcitation, noise) {
       // mouth
       // this.processTransients();
-      // this.addTurbulenceNoise(turbulenceNoise);
+      // this.addTurbulenceNoise(noise);
       
       this.junctionOutputR[0] = this.L[0] * this.glottalReflection + glottalExcitation;
       this.junctionOutputL[this.N] = this.R[this.N-1] * this.lipReflection; 
@@ -158,7 +158,26 @@ class TractProcessor extends AudioWorkletProcessor {
       this.noseOutput = this.noseR[this.noseLength-1];
 
       return this.lipOutput + this.noseOutput;
-      return glottalExcitation;
+    }
+
+    addTurbulenceNoise(turbulenceNoise)
+    {
+      this.addTurbulenceNoiseAtIndex(0.66*turbulenceNoise*intensity, 10, 10);
+    }
+      
+    addTurbulenceNoiseAtIndex(turbulenceNoise, index, diameter)
+    {   
+      var i = Math.floor(index);
+      var delta = index - i;
+      // turbulenceNoise *= Glottis.getNoiseModulator();
+      var thinness0 = Math.clamp(8*(0.7-diameter),0,1);
+      var openness = Math.clamp(30*(diameter-0.3), 0, 1);
+      var noise0 = turbulenceNoise*(1-delta)*thinness0*openness;
+      var noise1 = turbulenceNoise*delta*thinness0*openness;
+      this.R[i+1] += noise0/2;
+      this.L[i+1] += noise0/2;
+      this.R[i+2] += noise1/2;
+      this.L[i+2] += noise1/2;
     }
 
     process(inputs, outputs, parameters) {
@@ -170,9 +189,9 @@ class TractProcessor extends AudioWorkletProcessor {
       for (let channel = 0; channel < input.length; channel++) {
         const inputChannel = input[channel];
         const outputChannel = output[channel];
+        const noiseChannel = noise[channel];
         for (let n = 0; n < 128; n++) {
-          // outputChannel[n] = inputChannel[n] / 2;
-          outputChannel[n] = this.step(inputChannel[n], n/128);
+          outputChannel[n] = this.step(inputChannel[n], noiseChannel[n]);
         }
       }
 
@@ -246,32 +265,4 @@ class TractProcessor extends AudioWorkletProcessor {
     //       this.transients.splice(i,1);
     //     }
     //   }
-    // }
-      
-    // addTurbulenceNoise(turbulenceNoise)
-    // {
-    //   for (var j=0; j<UI.touchesWithMouse.length; j++)
-    //   {
-    //     var touch = UI.touchesWithMouse[j];
-    //     if (touch.index<2 || touch.index>Tract.n) continue;
-    //     if (touch.diameter<=0) continue;            
-    //     var intensity = touch.fricative_intensity;
-    //     if (intensity == 0) continue;
-    //     this.addTurbulenceNoiseAtIndex(0.66*turbulenceNoise*intensity, touch.index, touch.diameter);
-    //   }
-    // }
-      
-    // addTurbulenceNoiseAtIndex(turbulenceNoise, index, diameter)
-    // {   
-    //   var i = Math.floor(index);
-    //   var delta = index - i;
-    //   turbulenceNoise *= Glottis.getNoiseModulator();
-    //   var thinness0 = Math.clamp(8*(0.7-diameter),0,1);
-    //   var openness = Math.clamp(30*(diameter-0.3), 0, 1);
-    //   var noise0 = turbulenceNoise*(1-delta)*thinness0*openness;
-    //   var noise1 = turbulenceNoise*delta*thinness0*openness;
-    //   this.R[i+1] += noise0/2;
-    //   this.L[i+1] += noise0/2;
-    //   this.R[i+2] += noise1/2;
-    //   this.L[i+2] += noise1/2;
     // }

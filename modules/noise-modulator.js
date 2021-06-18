@@ -10,7 +10,7 @@ class NoiseModulator extends AudioWorkletProcessor {
   constructor() { 
     super();
     // other code
-    this.floor = 0.1;
+    // this.floor = 0.1;
   }
 
   process(inputs, outputs, parameters) {
@@ -23,10 +23,9 @@ class NoiseModulator extends AudioWorkletProcessor {
       const inputChannel = input[channel];
       const outputChannel = output[channel];
       for (let n = 0; n < 128; n++) {
-
-        var voiced = this.floor + 0.2 * Math.max(0, inputChannel[n]);
-        outputChannel[n] = tenseness[0] * intensity[0] * voiced + (1-tenseness[0] * intensity[0] ) * 0.3;
-        outputChannel[n] = voiced;
+        var voiced = 0.1 * Math.max(0, inputChannel[n]);
+        outputChannel[n] = tenseness[0] * intensity[0] * voiced + (1-tenseness[0] * intensity[0]) ;
+        // outputChannel[n] = 1;
       }
     }
 
