@@ -25,7 +25,7 @@ class Aspirator extends AudioWorkletProcessor {
       const simplexChannel = simplex[channel];
       for (let n = 0; n < inputChannel.length; n++) {
         var aspiration = inputChannel[n] * mod;
-        // aspiration *= 0.2 + 0.02 * simplexChannel[n];
+        aspiration *= 0.2 + 0.02 * simplexChannel[n];
         outputChannel[n] = aspiration;
       }
     }

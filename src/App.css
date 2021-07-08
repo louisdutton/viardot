@@ -1,0 +1,49 @@
+body {
+  overflow: hidden;
+  background: #222;
+}
+
+.App {
+  text-align: center;
+}
+
+.Render {
+  position: absolute;
+  z-index: -1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+button {
+  font-size: calc(10px + 2vmin);
+}
+
+input {
+  background: none;
+  font-size: large;
+  color: white;
+  text-align: center;
+  border: none;
+}
+
+#values {
+  height: 50px;
+}

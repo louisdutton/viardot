@@ -56,11 +56,11 @@ export class Voice {
     console.log('Viardot: Initializing...')
     Promise.all([
       initIPA(),
-      this.audioWorklet.addModule('modules/noise-modulator.js'),
-      this.audioWorklet.addModule('modules/aspirator.js'),
-      this.audioWorklet.addModule('modules/tract-filter.js'),
-      this.audioWorklet.addModule('modules/simplex.js'),
-      this.audioWorklet.addModule('modules/glottis.js'),
+      this.audioWorklet.addModule('audio-processors/noise-modulator.js'),
+      this.audioWorklet.addModule('audio-processors/aspirator.js'),
+      this.audioWorklet.addModule('audio-processors/tract-filter.js'),
+      this.audioWorklet.addModule('audio-processors/simplex.js'),
+      this.audioWorklet.addModule('audio-processors/glottis.js'),
     ]).then(() => this.init());
   }
 
@@ -104,7 +104,7 @@ export class Voice {
 
   initNoise(bufferSize) {
     this.aspirationGain = this.context.createGain();
-    this.aspirationGain.connect(this.tract, 0, 1);
+    this.aspirationGain.connect(this.master);
 
     this.aspirator = new AspiratorNode(this.context);
     this.aspirator.connect(this.aspirationGain);
