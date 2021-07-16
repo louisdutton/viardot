@@ -6,8 +6,10 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "css.gg": "^2.0.0",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
+    "styled-components": "^5.3.0",
     "three": "^0.130.1"
   },
   "devDependencies": {

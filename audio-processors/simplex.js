@@ -1,22 +1,4 @@
 class Simplex extends AudioWorkletProcessor {
-  constructor() { 
-    super();
-    const G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
-    const Grad = [
-      [1, 1],
-      [-1, 1],
-      [1, -1],
-      [-1, -1],
-      [1, 0],
-      [-1, 0],
-      [1, 0],
-      [-1, 0],
-      [0, 1],
-      [0, -1],
-      [0, 1],
-      [0, -1],
-    ];
-  }
 
   /*
  * Based on example code by Stefan Gustavson (stegu@itn.liu.se).
@@ -28,16 +10,30 @@ class Simplex extends AudioWorkletProcessor {
  * attribution is appreciated.
  */
 
-  
+  simplex2() {
+      const G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
+      const Grad = [
+        [1, 1],
+        [-1, 1],
+        [1, -1],
+        [-1, -1],
+        [1, 0],
+        [-1, 0],
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+        [0, 1],
+        [0, -1],
+      ];
 
-  simplex2(random = Math.random) {
       var p = new Uint8Array(256);
       for (var i = 0; i < 256; i++)
           p[i] = i;
       var n;
       var q;
       for (var i = 255; i > 0; i--) {
-          n = Math.floor((i + 1) * random());
+          n = Math.floor((i + 1) * Math.random());
           q = p[i];
           p[i] = p[n];
           p[n] = q;
@@ -85,15 +81,16 @@ class Simplex extends AudioWorkletProcessor {
       };
   }
 
-  simplex(x) { return simplex2(x*1.2, -x*.7); }
-
   process(inputs, outputs, parameters) {
     const output = outputs[0];
    
     for (let channel = 0; channel < output.length; channel++) {
       const outputChannel = output[channel];
       for (let n = 0; n < 128; n++) {
-        outputChannel[n] = this.simplex(currentTime * 1.99); // dont use whole number
+        var t = currentTime + n / sampleRate;
+        // outputChannel[n] = this.simplex2(t*1.2, -t*0.7); // dont use whole number
+        outputChannel[n] = Math.random(); // dont use whole number
+
       }
     }
 

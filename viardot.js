@@ -5,8 +5,8 @@
 */
 
 class NoiseModulatorNode extends AudioWorkletNode {
-   constructor(context) {
-    super(context, 'noise-modulator');
+   constructor(ctx) {
+    super(ctx, 'noise-modulator');
 
     this.tenseness = this.parameters.get('tenseness');
     this.intensity = this.parameters.get('intensity');
@@ -15,23 +15,24 @@ class NoiseModulatorNode extends AudioWorkletNode {
 }
 
 class GlottisNode extends AudioWorkletNode {
-  constructor(context) {
-   super(context, 'glottis');
+  constructor(ctx) {
+   super(ctx, 'glottis', { channelCount: 1, numberOfInputs: 0 });
 
    this.frequency = this.parameters.get('frequency');
    this.tenseness = this.parameters.get('tenseness');
   }
 }
 
+
 class SimplexNode extends AudioWorkletNode {
-  constructor(context) {
-   super(context, 'simplex');
+  constructor(ctx) {
+   super(ctx, 'simplex');
   }
 }
 
 class AspiratorNode extends AudioWorkletNode {
-  constructor(context) {
-    super(context, 'aspirator', { numberOfInputs: 2 });
+  constructor(ctx) {
+    super(ctx, 'aspirator', { numberOfInputs: 2 });
     this.tenseness = this.parameters.get('tenseness');
     this.intensity = this.parameters.get('intensity');
     this.vibrato = this.parameters.get('vibrato');
@@ -39,8 +40,8 @@ class AspiratorNode extends AudioWorkletNode {
 }
 
 class TractFilterNode extends AudioWorkletNode {
-  constructor(context) {
-    super(context, 'tract-filter', { numberOfInputs: 2 });
+  constructor(ctx) {
+    super(ctx, 'tract-filter', { numberOfInputs: 2 });
   }
 }
 
@@ -48,9 +49,10 @@ export class Voice {
   constructor() {
     this.ready = false;
     window.AudioContext = window.AudioContext||window.webkitAudioContext;
-    this.context = new window.AudioContext();   
-    this.sampleRate = this.context.sampleRate;
-    this.audioWorklet = this.context.audioWorklet;
+    this.ctx = new window.AudioContext();   
+    this.ctx.suspend();
+    this.sampleRate = this.ctx.sampleRate;
+    this.audioWorklet = this.ctx.audioWorklet;
     
     // async import custom audio nodes
     console.log('Viardot: Initializing...')
@@ -66,20 +68,17 @@ export class Voice {
 
   init() {
     // master gain
-    this.master = this.context.createGain();
-    this.master.gain.setValueAtTime(0.05, this.context.currentTime);
-    this.master.connect(this.context.destination);
-  
-    this.tract = new TractFilterNode(this.context);
-    this.tract.connect(this.master);
+    this.master = this.ctx.createGain();
+    this.master.gain.setValueAtTime(0.05, this.ctx.currentTime);
+    this.master.connect(this.ctx.destination);
+
+    // this.tract = new TractFilterNode(this.ctx);
+    // this.tract.connect(this.master);
 
     // replace with custom waveform / wavetable
-    // this.glottis = this.context.createOscillator();
-    this.glottis = new GlottisNode(this.context);
-    // this.glottis.type = 'square';
-    this.glottis.frequency.value = 220;
-    this.glottis.connect(this.tract);
-    // this.glottis.start();
+    this.glottis = new GlottisNode(this.ctx);
+    this.glottis.connect(this.master);
+    console.log(this.glottis)
 
     // vibrato
     this.initVibrato(10, 5);
@@ -94,7 +93,7 @@ export class Voice {
   }
 
   initVibrato(depth, rate) {
-    this.vibrato = this.context.createGain();
+    this.vibrato = this.ctx.createGain();
     this.vibrato.gain.value = depth; // vibrato depth in cents
     this.vibrato.connect(this.glottis.frequency);
 
@@ -103,18 +102,18 @@ export class Voice {
   }
 
   initNoise(bufferSize) {
-    this.aspirationGain = this.context.createGain();
+    this.aspirationGain = this.ctx.createGain();
     this.aspirationGain.connect(this.master);
 
-    this.aspirator = new AspiratorNode(this.context);
+    this.aspirator = new AspiratorNode(this.ctx);
     this.aspirator.connect(this.aspirationGain);
 
-    this.noise = this.context.createBufferSource();
+    this.noise = this.ctx.createBufferSource();
     this.noise.buffer = this.createPinkNoise(bufferSize);
     this.noise.loop = true;
     this.noise.start();
 
-    this.noiseModulator = new NoiseModulatorNode(this.context);
+    this.noiseModulator = new NoiseModulatorNode(this.ctx);
     this.noiseModulator.connect(this.aspirationGain.gain);
 
     this.noiseLFO = this.createLFO(220, this.noiseModulator);
@@ -122,22 +121,22 @@ export class Voice {
     
     // filters
     this.aspirationFilter = this.createFilter(500).connect(this.aspirator);
-    this.fricativeFilter = this.createFilter(1000).connect(this.tract, 0, 1); // experimental q value
+    // this.fricativeFilter = this.createFilter(1000).connect(this.tract, 0, 1); // experimental q value
 
     // simplex noise
-    this.simplex = new SimplexNode(this.context);
+    this.simplex = new SimplexNode(this.ctx);
     this.simplex.connect(this.aspirator, 0, 1);
   }
 
   createLFO(frequency, target) {
-    var lfo = this.context.createOscillator();
+    var lfo = this.ctx.createOscillator();
     lfo.frequency.value = frequency;
     lfo.connect(target);
     return lfo;
   }
 
   createFilter(frequency, q = 0.5) {
-    var filter = this.context.createBiquadFilter();
+    var filter = this.ctx.createBiquadFilter();
     filter.type = "bandpass";
     filter.frequency.value = frequency;
     filter.Q.value = q;
@@ -151,7 +150,7 @@ export class Voice {
     var b0, b1, b2, b3, b4, b5, b6;
     b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
 
-    var buffer = this.context.createBuffer(1, frameCount, this.sampleRate);
+    var buffer = this.ctx.createBuffer(1, frameCount, this.sampleRate);
     var channel = buffer.getChannelData(0);
     for (var i = 0; i < frameCount; i++) { 
       var white = Math.random() * 2 - 1;
@@ -168,8 +167,8 @@ export class Voice {
     return buffer;
   }
     
-  start() { this.context.resume(); }
-  stop() { this.context.suspend(); }
+  start() { this.ctx.resume(); }
+  stop() { this.ctx.suspend(); }
 }
 
 // IPA dictionary
@@ -195,7 +194,6 @@ function initIPA(){
   DICT = parseDictionary('./assets/cmudict-0.7b.txt', true);
   PHONES = parseDictionary('./assets/cmudict-0.7b.phones.txt');
   IPA = parseDictionary('./assets/arpa-to-ipa.txt');
-  console.log(IPA);
 }
 
 function toIPA(phoneme) {
@@ -203,7 +201,7 @@ function toIPA(phoneme) {
   return IPA[phoneme];
 }
 
-function parseDictionary(dir, arrayValues = false, async = false) {
+function parseDictionary(dir, arrayValues = false, async = true) {
 
   var dict = {};
   var xhr = new XMLHttpRequest();

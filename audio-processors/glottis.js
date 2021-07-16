@@ -13,7 +13,9 @@ class Glottis extends AudioWorkletProcessor {
   
     this.prevFreq = 440;
     this.d = 0;
-    this.setupWaveform(0.6);
+    this.setupWaveform(0.5);
+    // this.intensity = 1;
+    // this.loudness = 1;
   }
 
   setupWaveform(tenseness) {
@@ -41,18 +43,12 @@ class Glottis extends AudioWorkletProcessor {
     
     var omega = Math.PI/Tp;
     var s = Math.sin(omega*Te);
-    // need E0*e^(alpha*Te)*s = -1 (to meet the return at -1)
-    // and E0*e^(alpha*Tp/2) * Tp*2/pi = totalUpperIntegral 
-    //             (our approximation of the integral up to Tp)
-    // writing x for e^alpha,
-    // have E0*x^Te*s = -1 and E0 * x^(Tp/2) * Tp*2/pi = totalUpperIntegral
-    // dividing the second by the first,
-    // letting y = x^(Tp/2 - Te),
-    // y * Tp*2 / (pi*s) = -totalUpperIntegral;
+    
     var y = -Math.PI*s*totalUpperIntegral / (Tp*2);
     var z = Math.log(y);
     var alpha = z/(Tp/2 - Te);
     var E0 = -1 / (s*Math.exp(alpha*Te));
+
     this.alpha = alpha;
     this.E0 = E0;
     this.epsilon = epsilon;
@@ -60,38 +56,36 @@ class Glottis extends AudioWorkletProcessor {
     this.Delta = Delta;
     this.Te=Te;
     this.omega = omega;
-
-    this.prevTenseness = tenseness;
-    console.log("test");
   }
 
   normalizedWaveform(t) {
-    if (t>this.Te) return (-Math.exp(-this.epsilon * (t-this.Te)) + this.shift)/this.Delta;
-    return this.E0 * Math.exp(this.alpha*t) * Math.sin(this.omega * t);
+    // return (-Math.exp(-this.epsilon * (t-this.Te)) + this.shift)/this.Delta;
+    // if (t>this.Te) return (-Math.exp(-this.epsilon * (t-this.Te)) + this.shift)/this.Delta;
+    // else return this.E0 * Math.exp(this.alpha*t) * Math.sin(this.omega * t);
+    return Math.sin(2 * Math.PI * t);
   }
 
   process(inputs, outputs, parameters) {
-    const output = outputs[0];
+    const output = outputs[0][0];
     // const tenseness = parameters.tenseness[0];
     const freqs = parameters.frequency;
     const vibrato = parameters.vibrato;
+    var freq =  freqs[0] + vibrato[0];
 
-    // per buffer
-    this.setupWaveform(0.2);
+    // pre block
+    this.setupWaveform(0.5);
+    // console.log(this.output);
     
-    // per sample
-    for (let channel = 0; channel < output.length; channel++) {
-      const outputChannel = output[channel];
-      for (let n = 0; n < 128; n++) {
-        var freq =  freqs[0] + vibrato[0];
-        var time = currentTime + n / sampleRate;
-        this.d += time * (this.prevFreq - freq);
-        this.prevFreq = freq;
-        const t = time * freq + this.d;
-        outputChannel[n] = Math.sin(2 * Math.PI * t);
-        // outputChannel[n] = this.normalizedWaveform(t); // WHY WONT THIS FUCKING WORK
-      }
+    // in block
+    for (let n = 0; n < 128; n++) {
+      var time = currentTime + n / sampleRate;
+      this.d += time * (this.prevFreq - freq);
+      this.prevFreq = freq;
+      var t = time * freq + this.d;
+      output[n] = this.normalizedWaveform(t); // WHY WONT THIS FUCKING WORK
     }
+
+    // post block
 
     return true;
   }
