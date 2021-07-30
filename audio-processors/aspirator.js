@@ -1,3 +1,5 @@
+import { makeNoise2D } from "fast-simplex-noise";
+
 class Aspirator extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
@@ -9,25 +11,22 @@ class Aspirator extends AudioWorkletProcessor {
   constructor() { 
     super();
     // other code
+    var simplex2D = makeNoise2D()
+    this.simplex = (t) => simplex2D(t*1.2, -t*0.7) 
   }
 
-  process(inputs, outputs, parameters) {
-    const input = inputs[0];
-    const output = outputs[0];
-    const simplex = inputs[1];
-    const intensity = parameters.intensity;
-    const tenseness = parameters.tenseness;
-    const mod = intensity[0] * (1-Math.sqrt(tenseness[0]));
+  process(IN, OUT, PARAMS) {
+    const input = IN[0][0];
+    const output = OUT[0][0];
+    const intensity = PARAMS.intensity;
+    const tenseness = PARAMS.tenseness;
 
-    for (let channel = 0; channel < input.length; channel++) {
-      const inputChannel = input[channel];
-      const outputChannel = output[channel];
-      const simplexChannel = simplex[channel];
-      for (let n = 0; n < inputChannel.length; n++) {
-        var aspiration = inputChannel[n] * mod;
-        aspiration *= 0.2 + 0.01 * simplexChannel[n];
-        outputChannel[n] = aspiration;
-      }
+    // pre block
+    var mod = intensity[0] * (1-Math.sqrt(tenseness[0]));
+
+    // block
+    for (let n = 0; n < 128; n++) {
+      output[n] = (input[n] * mod) * (0.2 + 0.01 * this.simplex(currentTime))
     }
 
     return true;

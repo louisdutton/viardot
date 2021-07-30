@@ -1,54 +1,68 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import styled from 'styled-components'
 import './App.css'
 
 // External modules
 import * as VIARDOT from '../viardot'
+import * as RITA from 'rita'
+
+const InputField = styled.input`
+  border-radius: 25px;
+  background-color: #333;
+  height: 40px;
+`
+
+const Toggle = styled.input`
+  height: 40px;
+  width: 40px;
+`
 
 export default function App() {
   const [voice, setVoice] = useState(null)
   const [on, setOn] = useState(false)
 
-  var onMouseDown = () => {
-    if (voice == null) {
-      setVoice(new VIARDOT.Voice())
-      return
-    }
-    if (voice.ready) voice.start()
-    else voice.stop()
-  }
+  useEffect(()=>{
+    setVoice(new VIARDOT.voice())
+  },[]);
 
   var onMouseMove = (e) => {
-    if (voice == null) return
-    var freq = 440 + (1 - (e.clientY / window.innerHeight)) * 440
-    voice.setTargetFrequency(freq)
+    if (!voice) return
+    if (voice.busy) return
+    var intensity = (e.screenX / window.innerWidth) * 0.6
+    var frequency = 220 + (1 - e.screenY / window.innerHeight) * 440
+    voice.setFrequency(frequency)
+    voice.setIntensity(intensity)
   }
 
-  window.addEventListener('mousemove', onMouseMove, false)
-
   return (
-    <div onMouseDown={onMouseDown} className="App">
+    <div className="App" onMouseMove={onMouseMove}>
       <header className="App-header">
         <h1>Viardot</h1>
-        <Input/>
+        <Input voice={voice}/>
       </header>
     </div>
   )
 }
 
-function Input() {
+function Input(p) {
   const [IPA, setIPA] = useState('')
 
   var onChange = (e) => {
-    var words = e.target.value.split(/ /)
-    var ipa = ''
-    words.forEach(word => { ipa += VIARDOT.toPhonemes(word, true) + ' '; })
-    setIPA(ipa)
+    var phones = RITA.phones(e.target.value)
+    setIPA(phones)
+    // p.voice.recieve(phones)
+  }
+
+  var toggleVoice = (e) => {
+    if (e.target.checked) p.voice.start()
+    else p.voice.stop()
   }
 
   return (
     <div className='Input'>
-      <input onChange={onChange} placeholder="Enter transcription text" name="word"/>
+      <InputField onChange={onChange} placeholder='Enter text'/>
       <p id="values">{IPA}</p>
+      <Toggle type='checkbox' onChange={toggleVoice}/>
     </div>
   )
 }
