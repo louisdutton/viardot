@@ -3,19 +3,15 @@ import * as UTILS from '../math-utils'
 class TractProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
-      { name: 'tongueIndex', defaultValue: 2.3, automationRate: 'k-rate'},
-      { name: 'tongueDiameter', defaultValue: 12.75, automationRate: 'k-rate'},
+      { name: 'tongueIndex', defaultValue: 29.5, automationRate: 'k-rate'},
+      { name: 'tongueDiameter', defaultValue: 2.6, automationRate: 'k-rate'},
     ]
   }
 
   constructor() { 
     super() 
 
-    this.port.onmessage = (e) => {
-      // console.log(e.data)
-      // this.velumTarget = e.data
-      this.port.postMessage(this.diameter)
-    }
+    this.port.onmessage = (e) => this.port.postMessage(this.diameter)
 
     // Init cavities
     this.initOralCavity(44) // 44
@@ -53,18 +49,18 @@ class TractProcessor extends AudioWorkletProcessor {
     for (var m = 0; m < N; m++)
     {
         var diameter = 0
-        if (m < 7 - 0.5) diameter = 0.6
-        else if (m < 12) diameter = 1.1
-        else diameter = 1.5
-        this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter * 5
+        if (m < 6 - 0.5) diameter = 0.55
+        else if (m < 12) diameter = 1
+        else diameter = 3
+        this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter
     }
 
     this.A = []
     this.glottalReflection = 0.7
     this.lipReflection = -0.85
     this.lastObstruction = -1
-    this.fade = 0.999 //0.9999,
-    this.movementSpeed = 15 //cm per second
+    this.fade = 0.999 
+    this.movementSpeed = 20 //cm per second
     this.transients = []
     this.lipOutput = 0
   }
@@ -90,7 +86,7 @@ class TractProcessor extends AudioWorkletProcessor {
         if (d<1) diameter = 0.4 + (1.6 * d)
         else diameter = 0.5 + 1.5 * (2-d)
         diameter = Math.min(diameter, 1.9)
-        this.noseDiameter[i] = diameter
+        this.noseDiameter[i] = diameter 
     }
   }
 
@@ -126,10 +122,10 @@ class TractProcessor extends AudioWorkletProcessor {
     }
   }
 
-  step(glottalExcitation, noise) {
+  step(glottalExcitation, noise, index, diameter) {
     // mouth
     this.processTransients()
-    this.addNoise(noise)
+    this.addFricativeNoise(noise * 0.5, index, diameter)
     
     this.junctionOutputR[0] = this.L[0] * this.glottalReflection + glottalExcitation
     this.junctionOutputL[this.N] = this.R[this.N-1] * this.lipReflection 
@@ -179,9 +175,8 @@ class TractProcessor extends AudioWorkletProcessor {
   }
 
   // Turbulence noise
-  addNoise(noise) { this.addNoiseAtIndex(noise, 10, 10) } // * intensity
     
-  addNoiseAtIndex(noise, index, diameter)
+  addFricativeNoise(noise, index, diameter)
   {   
     var i = Math.floor(index)
     var delta = index - i
@@ -267,6 +262,33 @@ class TractProcessor extends AudioWorkletProcessor {
       this.targetDiameter[i] = this.restDiameter[i] = 1.5 - curve
     }
     // for (var i=0; i<Tract.n; i++) Tract.targetDiameter[i] = Tract.restDiameter[i];
+
+    // other stuff
+    this.velumTarget = diameter < 0 ? 0.04 : 0.01
+    diameter -= 0.3; // min diameter to produce sound
+    if (diameter<0) diameter = 0;         
+    var width;
+    if (index<25) width = 10;
+    else if (index>=tip) width= 5;
+    else width = 10-5*(index-25)/(tip-25);
+    if (index >= 2 && index < this.N) //&& diameter < 3)
+    {
+      var intIndex = Math.round(index);
+      for (var i=-Math.ceil(width)-1; i<width+1; i++) 
+      {   
+        if (intIndex+i<0 || intIndex+i>=this.N) continue;
+        var relpos = (intIndex+i) - index;
+        relpos = Math.abs(relpos)-0.5;
+        var shrink;
+        if (relpos <= 0) shrink = 0;
+        else if (relpos > width) shrink = 1;
+        else shrink = 0.5*(1-Math.cos(Math.PI * relpos / width));
+        if (diameter < this.targetDiameter[intIndex+i])
+        {
+          this.targetDiameter[intIndex+i] = diameter + (this.targetDiameter[intIndex+i]-diameter)*shrink;
+        }
+      }
+    }
   }
 
   process(IN, OUT, PARAMS) {
@@ -283,19 +305,16 @@ class TractProcessor extends AudioWorkletProcessor {
       const noise = fricativeNoise[n]
 
       // run step at twice the sample rate
-      this.step(source, noise)
-      this.step(source, noise)
+      this.step(source, noise, index, diameter)
+      this.step(source, noise, index, diameter)
 
       output[n] = this.lipOutput + this.noseOutput
     }
-    // block end
 
+    // block end
     this.updateTongue(index, diameter)
     this.reshapeTract(128/sampleRate) // 128 / sampleRate
     this.calculateReflections()
-
-    // port messages
-    // this.port.postMessage(this.diameter)
 
     return true
   }

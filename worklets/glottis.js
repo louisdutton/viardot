@@ -73,7 +73,8 @@ class Glottis extends AudioWorkletProcessor {
   vibrato(rate, depth) {
     var t = currentTime
     var vibrato = depth * Math.sin(2*Math.PI * t * rate);
-    vibrato += this.simplex(t * 4.07) * 6 // 6hz noise
+    vibrato += this.simplex(t * 1.5) * 3
+    vibrato += this.simplex(t * 2) * 1
     return vibrato
   }
 

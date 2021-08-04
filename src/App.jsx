@@ -40,7 +40,7 @@ export default function App() {
         <h1>Viardot</h1>
         <Input voice={voice}/>
         <PhonemeSelection voice={voice}/>
-        <TractUI voice={voice}/>
+        {/* <TractUI voice={voice}/> */}
       </header>
     </div>
   )
@@ -98,7 +98,7 @@ const DiameterUI = styled.div`
   border-radius: 50%;
   height: 5px;
   width: 5px;
-  margin-top: ${props => (props.value * 10).toString() + 'px'};
+  margin-top: ${props => (props.value * 100).toString() + 'px'};
 `
 
 function TractUI(p) {

@@ -16,17 +16,19 @@ class Aspirator extends AudioWorkletProcessor {
   }
 
   process(IN, OUT, PARAMS) {
-    const input = IN[0][0];
-    const output = OUT[0][0];
-    const intensity = PARAMS.intensity;
-    const tenseness = PARAMS.tenseness;
+    const input = IN[0][0]
+    const output = OUT[0][0]
+    const intensity = PARAMS.intensity
+    const tenseness = PARAMS.tenseness
+    const floor = 0.2
+    const amplitude = 0.02
 
     // pre block
     var mod = intensity[0] * (1-Math.sqrt(tenseness[0]));
 
     // block
     for (let n = 0; n < 128; n++) {
-      output[n] = (input[n] * mod) * (0.2 + 0.01 * this.simplex(currentTime))
+      output[n] = (input[n] * mod) * (floor + amplitude * this.simplex(currentTime))
     }
 
     return true;

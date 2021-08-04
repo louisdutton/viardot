@@ -7,23 +7,24 @@
 // Phoneme: [index, diameter]
 const dict = {
   // vowels
-  'aa': [2.3, 12.75], // part
-  'ae': [14.93, 2.78], // pat
-  'uh': [17.8, 2.46], // put
-  'ao': [12.0, 2.05], // pot
-  'ax': [20.7, 2.8], // dial
-  'oh': [2.3, 12.75], // daughter
-  'uw': [22.8, 2.05], // poot
-  'ih': [26.11, 2.87], // pit
-  'iy': [27.2, 2.2], // peat
-  'eh': [19.4, 3.43], // pet
+  'aa': [29.5, 2.6], // part
+  'ae': [35.93, 2.6], // pat
+  'uh': [33.8, 2], // put
+  'ao': [31, 2.75], // pot
+  'ax': [30.7, 2.1], // dial
+  'oh': [5.7, 2], // daughter
+  'uw': [2.8, 2.1], // poot
+  'ih': [24.8, 2.6], // pit
+  'iy': [20.2, 2.2], // peat
+  'eh': [27.2, 2.7], // pet
 
   // fricatives
-  'zh': [31.0, 0.6], // pleasure
-  's': [36.0, 0.2], // soon
-  'z': [36.0, 0.6], // zoo
-  'f': [41.0, 0.2], // fair
-  'v': [41.0, 0.5], // very
+  'sh': [33.98, 0.5], // shell
+  'zh': [34.7, 0.65], // pleasure
+  's': [37.8, 0.5], // soon
+  'z': [38, 0.75], // zoo
+  'f': [41.0, 0.6], // fair
+  'v': [41.0, 0.6], // very
 
   // stops
   'g': [20.0, 0], // go
@@ -65,7 +66,7 @@ export default class Voice {
     callback()
   }
 
-  init(onComplete) {
+  init() {
     // master gain
     this.master = this.ctx.createGain()
     this.master.gain.setValueAtTime(0.05, this.ctx.currentTime)
@@ -74,7 +75,7 @@ export default class Voice {
     this.tractData = []
     this.tract = new Nodes.TractFilterNode(this.ctx)
     this.tract.connect(this.master)
-    setInterval(() => this.tract.port.postMessage(0), 50)
+    setInterval(() => this.tract.port.postMessage(0), 100)
     
     // Glottal source
     this.glottalSource = this.ctx.createGain()
@@ -133,8 +134,8 @@ export default class Voice {
     this.fricativeGain = this.ctx.createGain()
     this.fricativeGain.connect(this.tract, 0, 1)
     this.noiseModulator.connect(this.fricativeGain.gain)
-    this.aspirationFilter = this.createFilter(500).connect(this.aspirator)
-    this.fricativeFilter = this.createFilter(1000).connect(this.fricativeGain)
+    this.aspirationFilter = this.createFilter(500, 0.5).connect(this.aspirator)
+    this.fricativeFilter = this.createFilter(1000, 0.65).connect(this.fricativeGain)
   }
 
   createLFO(frequency, target) {
@@ -144,7 +145,7 @@ export default class Voice {
     return lfo
   }
 
-  createFilter(frequency, q = 0.7) {
+  createFilter(frequency, q = 0.67) {
     var filter = this.ctx.createBiquadFilter()
     filter.type = "bandpass"
     filter.frequency.value = frequency
@@ -173,12 +174,12 @@ export default class Voice {
       channel[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
       channel[i] *= 0.11 // (roughly) compensate for gain
       b6 = white * 0.115926
-      // channel[i] = Math.random() * 2 - 1
     }
     return buffer
   }
 
-  static getPhonemeDict() { return dict };
+  static getPhonemeDict = () => dict
+
   setPhoneme(key) {
     var values = dict[key]
     var phoneme = { // for logging purposes
@@ -188,8 +189,8 @@ export default class Voice {
     }
 
     console.log(phoneme)
-    this.tract.tongueIndex.value = phoneme.index
-    this.tract.tongueDiameter.value = phoneme.diameter
+    this.tract.tongueIndex.linearRampToValueAtTime(phoneme.index, this.ctx.currentTime + 0.3)
+    this.tract.tongueDiameter.linearRampToValueAtTime(phoneme.diameter, this.ctx.currentTime + 0.3)
   }
     
   start() { this.ctx.resume() }
