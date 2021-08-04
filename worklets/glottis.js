@@ -6,7 +6,7 @@ class Glottis extends AudioWorkletProcessor {
       { name: 'tenseness', defaultValue: 0.6, automationRate: 'k-rate'},
       { name: 'intensity', defaultValue: 0.5, automationRate: 'k-rate'},
       { name: 'frequency', defaultValue: 440, automationRate: 'a-rate'},
-      { name: 'vibratoDepth', defaultValue: 8.0, automationRate: 'k-rate'},
+      { name: 'vibratoDepth', defaultValue: 7.5, automationRate: 'k-rate'},
       { name: 'vibratoRate', defaultValue: 5.4, automationRate: 'k-rate'},
       { name: 'loudness', defaultValue: 1.0, automationRate: 'k-rate'},
     ]
@@ -70,6 +70,13 @@ class Glottis extends AudioWorkletProcessor {
     return this.E0 * Math.exp(this.alpha*t) * Math.sin(this.omega * t)
   }
 
+  vibrato(rate, depth) {
+    var t = currentTime
+    var vibrato = depth * Math.sin(2*Math.PI * t * rate);
+    vibrato += this.simplex(t * 4.07) * 6 // 6hz noise
+    return vibrato
+  }
+
   process(IN, OUT, PARAMS) {
     const output = OUT[0][0]
     const tenseness = PARAMS.tenseness[0]
@@ -80,9 +87,7 @@ class Glottis extends AudioWorkletProcessor {
     // vibrato
     const vibratoRate = PARAMS.vibratoRate[0]
     const vibratoDepth = PARAMS.vibratoDepth[0]
-    var vibrato = vibratoDepth * Math.sin(2*Math.PI * currentTime * vibratoRate); 
-    vibrato += this.simplex(currentTime*4.07) * 6 // 6hz noise
-    const freq = freqs + vibrato
+    const freq = freqs + this.vibrato(vibratoRate, vibratoDepth)
 
     // pre block
     this.setupWaveform(tenseness)

@@ -30,8 +30,10 @@ export class AspiratorNode extends AudioWorkletNode {
 
 export class TractFilterNode extends AudioWorkletNode {
   constructor(ctx) {
-    super(ctx, 'tract-filter', { numberOfInputs: 2 })
+    super(ctx, 'tract', { numberOfInputs: 2 })
     this.intensity = this.parameters.get('intensity')
     this.tenseness = this.parameters.get('tenseness')
+    this.tongueIndex = this.parameters.get('tongueIndex')
+    this.tongueDiameter = this.parameters.get('tongueDiameter')
   }
 }

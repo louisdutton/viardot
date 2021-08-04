@@ -3,22 +3,23 @@ import * as UTILS from '../math-utils'
 class TractProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
-      { name: 'tenseness', defaultValue: 0.6, automationRate: 'k-rate'},
-      { name: 'intensity', defaultValue: 0.5, automationRate: 'k-rate'},
-    ];
+      { name: 'tongueIndex', defaultValue: 2.3, automationRate: 'k-rate'},
+      { name: 'tongueDiameter', defaultValue: 12.75, automationRate: 'k-rate'},
+    ]
   }
 
   constructor() { 
     super() 
 
     this.port.onmessage = (e) => {
-      console.log(e.data)
-      // this.port.postMessage('pong')
+      // console.log(e.data)
+      // this.velumTarget = e.data
+      this.port.postMessage(this.diameter)
     }
 
     // Init cavities
-    this.initBuccalCavity(44)
-    this.initNasalCavity(28)
+    this.initOralCavity(44) // 44
+    this.initNasalCavity(28) // 28
 
     // reflections
     this.reflectionLeft = this.reflectionRight = this.reflectionNose = 0
@@ -28,7 +29,7 @@ class TractProcessor extends AudioWorkletProcessor {
     this.noseDiameter[0] = this.velumTarget
   }
 
-  initBuccalCavity(N) {
+  initOralCavity(N) {
     // sections
     this.N = N
     this.bladeStart = 10
@@ -55,7 +56,7 @@ class TractProcessor extends AudioWorkletProcessor {
         if (m < 7 - 0.5) diameter = 0.6
         else if (m < 12) diameter = 1.1
         else diameter = 1.5
-        this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter
+        this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter * 5
     }
 
     this.A = []
@@ -127,7 +128,7 @@ class TractProcessor extends AudioWorkletProcessor {
 
   step(glottalExcitation, noise) {
     // mouth
-    // this.processTransients()
+    this.processTransients()
     this.addNoise(noise)
     
     this.junctionOutputR[0] = this.L[0] * this.glottalReflection + glottalExcitation
@@ -250,10 +251,31 @@ class TractProcessor extends AudioWorkletProcessor {
     }
   }
 
+  updateTongue(index, diameter)
+  {
+    // update rest & target diameter
+    for (var i=this.bladeStart; i<this.lipStart; i++)
+    {
+      var blade = this.bladeStart
+      var tip = this.tipStart
+      var lip = this.lipStart
+      var t = 1.1 * Math.PI * (index-i) / (tip-blade)
+      var fixedDiameter = 2 + (diameter-2) / 1.5
+      var curve = (1.5-fixedDiameter) * Math.cos(t)
+      if (i == blade-2 || i == lip-1) curve *= 0.8
+      if (i == blade || i == lip-2) curve *= 0.94              
+      this.targetDiameter[i] = this.restDiameter[i] = 1.5 - curve
+    }
+    // for (var i=0; i<Tract.n; i++) Tract.targetDiameter[i] = Tract.restDiameter[i];
+  }
+
   process(IN, OUT, PARAMS) {
     const glottalSource = IN[0][0] // single channel (0)
     const fricativeNoise = IN[1][0] // single channel (0)
     const output = OUT[0][0]
+    // tongue
+    const index = PARAMS.tongueIndex[0]
+    const diameter = PARAMS.tongueDiameter[0]
 
     // block start
     for (let n = 0; n < 128; n++) {
@@ -268,11 +290,15 @@ class TractProcessor extends AudioWorkletProcessor {
     }
     // block end
 
+    this.updateTongue(index, diameter)
     this.reshapeTract(128/sampleRate) // 128 / sampleRate
     this.calculateReflections()
+
+    // port messages
+    // this.port.postMessage(this.diameter)
 
     return true
   }
 }
 
-registerProcessor('tract-filter', TractProcessor)
+registerProcessor('tract', TractProcessor)

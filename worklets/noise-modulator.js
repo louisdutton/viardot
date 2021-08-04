@@ -16,7 +16,7 @@ class NoiseModulator extends AudioWorkletProcessor {
 
     // Single channel input & iutput
     for (let n = 0; n < 128; n++) {
-      var voiced = floor + 0.2 * Math.max(0, input[n])
+      var voiced = floor + (0.2 * Math.max(0, input[n]))
       output[n] = tenseness * intensity * voiced + (1-tenseness * intensity) * 0.3
     }
 

@@ -4,11 +4,46 @@
 * attribution is appreciated.
 */
 
-import * as Nodes from './audio-nodes'
+// Phoneme: [index, diameter]
+const dict = {
+  // vowels
+  'aa': [2.3, 12.75], // part
+  'ae': [14.93, 2.78], // pat
+  'uh': [17.8, 2.46], // put
+  'ao': [12.0, 2.05], // pot
+  'ax': [20.7, 2.8], // dial
+  'oh': [2.3, 12.75], // daughter
+  'uw': [22.8, 2.05], // poot
+  'ih': [26.11, 2.87], // pit
+  'iy': [27.2, 2.2], // peat
+  'eh': [19.4, 3.43], // pet
 
-export class voice {   
-  constructor() {
-    this.busy = true;
+  // fricatives
+  'zh': [31.0, 0.6], // pleasure
+  's': [36.0, 0.2], // soon
+  'z': [36.0, 0.6], // zoo
+  'f': [41.0, 0.2], // fair
+  'v': [41.0, 0.5], // very
+
+  // stops
+  'g': [20.0, 0], // go
+  'k': [25.0, 0], // king
+  'd': [36.0, 0], // den
+  't': [37.0, 0], // ten
+  'b': [41.0, 0], // bad
+  'p': [42.0, 0], // pad
+
+  // nasals
+  'ng': [20.0, -1], // thing
+  'n': [36.0, -1], // not
+  'm': [41.0, -1], // man
+
+}
+
+import * as Nodes from './worklets/worklet-nodes'
+
+export default class Voice {   
+  constructor(onComplete) {
     window.AudioContext = window.AudioContext || window.webkitAudioContext
     this.ctx = new window.AudioContext()   
     this.ctx.suspend()
@@ -18,23 +53,29 @@ export class voice {
     console.log('[viardot] Initializing...')
     var audioWorklet = this.ctx.audioWorklet
     Promise.all([
-      audioWorklet.addModule('audio-processors/noise-modulator.js'),
-      audioWorklet.addModule('audio-processors/aspirator.js'),
-      audioWorklet.addModule('audio-processors/tract-filter.js'),
-      audioWorklet.addModule('audio-processors/glottis.js'),
-    ]).then(() => this.init())
+      audioWorklet.addModule('worklets/tract.js'),
+      audioWorklet.addModule('worklets/noise-modulator.js'),
+      audioWorklet.addModule('worklets/aspirator.js'),
+      audioWorklet.addModule('worklets/glottis.js'),
+    ]).then(() => this.init()).then(() => this.onComplete(onComplete))
   }
 
-  init() {
+  onComplete(callback) {
+    console.log('[viardot] Intialization complete.')
+    callback()
+  }
+
+  init(onComplete) {
     // master gain
     this.master = this.ctx.createGain()
     this.master.gain.setValueAtTime(0.05, this.ctx.currentTime)
     this.master.connect(this.ctx.destination)
 
+    this.tractData = []
     this.tract = new Nodes.TractFilterNode(this.ctx)
     this.tract.connect(this.master)
-    this.tract.port.postMessage(12)
-
+    setInterval(() => this.tract.port.postMessage(0), 50)
+    
     // Glottal source
     this.glottalSource = this.ctx.createGain()
     this.glottalSource.connect(this.tract)
@@ -43,9 +84,14 @@ export class voice {
     
     // Noise source
     this.initNoise(2)
+  }
 
-    console.log('[viardot] Intialization complete.')
-    this.busy = false;
+  setNasal(value) {
+    this.tract.port.postMessage(value)
+  }
+
+  setVowel(vowel) {
+
   }
 
   setFrequency(value) {
@@ -127,12 +173,23 @@ export class voice {
       channel[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
       channel[i] *= 0.11 // (roughly) compensate for gain
       b6 = white * 0.115926
+      // channel[i] = Math.random() * 2 - 1
     }
     return buffer
   }
 
-  getTractData() {
-    // return this.tract.
+  static getPhonemeDict() { return dict };
+  setPhoneme(key) {
+    var values = dict[key]
+    var phoneme = { // for logging purposes
+      name: key,
+      index: values[0],
+      diameter: values[1]
+    }
+
+    console.log(phoneme)
+    this.tract.tongueIndex.value = phoneme.index
+    this.tract.tongueDiameter.value = phoneme.diameter
   }
     
   start() { this.ctx.resume() }
