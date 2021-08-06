@@ -42,6 +42,7 @@ const dict = {
 }
 
 import * as Nodes from './worklets/worklet-nodes'
+import * as Freeverb from 'freeverb'
 
 export default class Voice {   
   constructor(onComplete) {
@@ -72,9 +73,16 @@ export default class Voice {
     this.master.gain.setValueAtTime(0.05, this.ctx.currentTime)
     this.master.connect(this.ctx.destination)
 
+    this.reverb = new Freeverb(this.ctx)
+    this.reverb.roomSize = 0.7
+    this.reverb.dampening = 1500
+    this.reverb.wet.value = 0.1
+    this.reverb.dry.value = 0.9
+    this.reverb.connect(this.master)
+
     this.tractData = []
     this.tract = new Nodes.TractFilterNode(this.ctx)
-    this.tract.connect(this.master)
+    this.tract.connect(this.reverb)
     setInterval(() => this.tract.port.postMessage(0), 100)
     
     // Glottal source
@@ -101,20 +109,22 @@ export default class Voice {
   }
 
   setIntensity(value) {
-    this.glottalExcitation.tenseness.value = value
-    this.glottalExcitation.intensity.value = value
-    // this.glottalExcitation.vibratoDepth
+    var tenseness = value * 0.6
+    this.glottalExcitation.tenseness.value = tenseness
+    this.glottalExcitation.loudness.value = Math.pow(value, 0.25)
+    // this.glottalExcitation.intensity.value = value
+    // this.glottalExcitation.vibratoRate.value = value * 10
 
-    this.aspirator.tenseness.value = value
+    this.aspirator.tenseness.value = tenseness
     this.aspirator.intensity.value = value
 
-    this.noiseModulator.tenseness.value = value
+    this.noiseModulator.tenseness.value = tenseness
     this.noiseModulator.intensity.value = value
   }
 
   initNoise(duration) {
     this.aspirationGain = this.ctx.createGain()
-    this.aspirationGain.connect(this.master)
+    this.aspirationGain.connect(this.reverb)
 
     this.aspirator = new Nodes.AspiratorNode(this.ctx)
     this.aspirator.connect(this.aspirationGain)
@@ -134,7 +144,7 @@ export default class Voice {
     this.fricativeGain = this.ctx.createGain()
     this.fricativeGain.connect(this.tract, 0, 1)
     this.noiseModulator.connect(this.fricativeGain.gain)
-    this.aspirationFilter = this.createFilter(500, 0.5).connect(this.aspirator)
+    this.aspirationFilter = this.createFilter(500, 0.9).connect(this.aspirator)
     this.fricativeFilter = this.createFilter(1000, 0.7).connect(this.fricativeGain)
   }
 
@@ -164,16 +174,17 @@ export default class Voice {
     var buffer = this.ctx.createBuffer(1, bufferSize, sampleRate)
     var channel = buffer.getChannelData(0)
     for (var i = 0; i < bufferSize; i++) { 
-      var white = Math.random() * 2 - 1
-      b0 = 0.99886 * b0 + white * 0.0555179
-      b1 = 0.99332 * b1 + white * 0.0750759
-      b2 = 0.96900 * b2 + white * 0.1538520
-      b3 = 0.86650 * b3 + white * 0.3104856
-      b4 = 0.55000 * b4 + white * 0.5329522
-      b5 = -0.7616 * b5 - white * 0.0168980
-      channel[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
+      // var white = Math.random() * 2 - 1
+      // b0 = 0.99886 * b0 + white * 0.0555179
+      // b1 = 0.99332 * b1 + white * 0.0750759
+      // b2 = 0.96900 * b2 + white * 0.1538520
+      // b3 = 0.86650 * b3 + white * 0.3104856
+      // b4 = 0.55000 * b4 + white * 0.5329522
+      // b5 = -0.7616 * b5 - white * 0.0168980
+      // channel[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
+      channel[i] = Math.random() * 2 - 1
       channel[i] *= 0.11 // (roughly) compensate for gain
-      b6 = white * 0.115926
+      // b6 = white * 0.115926
     }
     return buffer
   }

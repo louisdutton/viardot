@@ -28,8 +28,8 @@ export default function App() {
   if (!ready) return null
 
   var onMouseMove = (e) => {
-    var intensity = (e.screenX / window.innerWidth) * 0.6
-    var frequency = 220 + (1 - e.screenY / window.innerHeight) * 440
+    var intensity = (e.screenX / window.innerWidth)
+    var frequency = 220 + (1 - e.screenY / window.innerHeight) * 220
     voice.setFrequency(frequency)
     voice.setIntensity(intensity)
     // voice.setFrequency(220)
@@ -105,7 +105,7 @@ function Input(p) {
         <p>{tongueDiameter}</p>
       </label>
 
-      <label>Lip Index
+      {/* <label>Lip Index
         <input onInput={onLipIndex} type="range" min='41' max='44' step='0.1'/>
         <p>{lipIndex}</p>
       </label>
@@ -113,7 +113,7 @@ function Input(p) {
       <label>Lip Diameter
         <input onInput={onLipDiameter} type="range" min='-1' max='10' step='0.1'/>
         <p>{lipDiameter}</p>
-      </label>
+      </label> */}
       <InputField onChange={onChange} placeholder='Enter text'/>
       <p id="values">{IPA}</p>
       <Toggle type='checkbox' onChange={toggleVoice}/>

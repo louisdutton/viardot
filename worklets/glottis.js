@@ -6,8 +6,8 @@ class Glottis extends AudioWorkletProcessor {
       { name: 'tenseness', defaultValue: 0.6, automationRate: 'k-rate'},
       { name: 'intensity', defaultValue: 0.5, automationRate: 'k-rate'},
       { name: 'frequency', defaultValue: 440, automationRate: 'a-rate'},
-      { name: 'vibratoDepth', defaultValue: 7.5, automationRate: 'k-rate'},
-      { name: 'vibratoRate', defaultValue: 5.4, automationRate: 'k-rate'},
+      { name: 'vibratoDepth', defaultValue: 5.5, automationRate: 'a-rate'},
+      { name: 'vibratoRate', defaultValue: 5.2, automationRate: 'a-rate'},
       { name: 'loudness', defaultValue: 1.0, automationRate: 'k-rate'},
     ]
   }
@@ -73,36 +73,40 @@ class Glottis extends AudioWorkletProcessor {
   vibrato(rate, depth) {
     var t = currentTime
     var vibrato = depth * Math.sin(2*Math.PI * t * rate);
-    vibrato += this.simplex(t * 1.5) * 3
+    vibrato += this.simplex(t * 0.5) * 4
     vibrato += this.simplex(t * 2) * 1
     return vibrato
   }
 
   process(IN, OUT, PARAMS) {
     const output = OUT[0][0]
-    const tenseness = PARAMS.tenseness[0]
+    
     const intensity = PARAMS.intensity[0]
     const loudness = PARAMS.loudness[0]
-    const freqs = PARAMS.frequency[0]
-
-    // vibrato
-    const vibratoRate = PARAMS.vibratoRate[0]
-    const vibratoDepth = PARAMS.vibratoDepth[0]
-    const freq = freqs + this.vibrato(vibratoRate, vibratoDepth)
+    const frequency = PARAMS.frequency
+    var freq = frequency[0]
+    
 
     // pre block
+    const tenseness = PARAMS.tenseness[0]
     this.setupWaveform(tenseness)
     
     // block
     for (let n = 0; n < 128; n++) {
+      
+      var vibratoRate = PARAMS.vibratoRate[0]
+      var vibratoDepth = PARAMS.vibratoDepth[0]
+      var vibrato = this.vibrato(vibratoRate, vibratoDepth)
+      const f0 = freq + vibrato
       var frame = (currentFrame + n) / sampleRate
-      this.d += frame * (this.prevFreq - freq)
-      this.prevFreq = freq
-      var t = (frame * freq + this.d) % 1
+      this.d += frame * (this.prevFreq - f0)
+      this.prevFreq = f0
+      var t = (frame * f0 + this.d) % 1
       output[n] = this.normalizedWaveform(t) * intensity * loudness
     }
 
     // post block
+    // intensity
 
     return true
   }

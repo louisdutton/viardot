@@ -15,6 +15,7 @@ export class GlottisNode extends AudioWorkletNode {
     this.frequency = this.parameters.get('frequency')
     this.tenseness = this.parameters.get('tenseness')
     this.intensity = this.parameters.get('intensity')
+    this.loudness = this.parameters.get('loudness')
     this.vibratoRate = this.parameters.get('vibratoRate')
     this.vibratoDepth = this.parameters.get('vibratoRate')
   }

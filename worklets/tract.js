@@ -31,9 +31,9 @@ class TractProcessor extends AudioWorkletProcessor {
   initOralCavity(N) {
     // sections
     this.N = N
-    this.bladeStart = 10
-    this.tipStart = 32
-    this.labialStart = 39
+    this.bladeStart = Math.round(N * 0.227)
+    this.tipStart = Math.round(N * 0.727)
+    this.labialStart = Math.round(N * 0.886)
 
     // values
     this.R = new Float64Array(N) // right-moving component
@@ -43,20 +43,24 @@ class TractProcessor extends AudioWorkletProcessor {
     this.junctionOutputL = new Float64Array(N+1)
 
     // diameter & cross-sectional area
-    this.oralDiameter = 3
-    this.glottalDiameter = 0.3
-    this.pharyngealDiameter = 1.8
+    this.maxDiameter = 3
+    this.oralDiameter = this.maxDiameter
+    this.glottalDiameter = this.maxDiameter / 6
+    this.pharyngealDiameter = this.maxDiameter / 1.5
     this.diameter = new Float64Array(N)
     this.restDiameter = new Float64Array(N)
     this.targetDiameter = new Float64Array(N)
     this.A = new Float64Array(N) // cross-sectional areas
 
+    var phraynxStart = N * 0.125
+    var oralStart = N * 0.273
+
     // magic numbers relative to 44
     for (var m = 0; m < N; m++)
     {
         var diameter = 0
-        if (m < 5.5) diameter = this.glottalDiameter
-        else if (m < 12) diameter = this.pharyngealDiameter
+        if (m < phraynxStart) diameter = this.glottalDiameter
+        else if (m < oralStart) diameter = this.pharyngealDiameter
         else diameter = this.oralDiameter
         this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter
     }
@@ -86,12 +90,9 @@ class TractProcessor extends AudioWorkletProcessor {
 
     for (var i = 0; i < N; i++)
     {
-        var diameter
         var d = 2 * (i/N)
-        if (d<1) diameter = 0.4 + (1.6 * d)
-        else diameter = 0.5 + 1.5 * (2-d)
-        diameter = Math.min(diameter, 1.9)
-        this.noseDiameter[i] = diameter 
+        var diameter = (d<1) ? 0.4 + (1.6 * d) : 0.5 + 1.5 * (2-d)
+        this.noseDiameter[i] = Math.min(diameter, 1.9)
     }
   }
 
@@ -262,11 +263,12 @@ class TractProcessor extends AudioWorkletProcessor {
     var tip = this.tipStart
     var labial = this.labialStart
 
+    var fixedDiameter = 2 + (diameter-2) / 1.5
+
     // update rest & target diameter
     for (var i=this.bladeStart; i<this.labialStart; i++)
     {
       var t = 1.1 * Math.PI * (index-i) / (tip-blade)
-      var fixedDiameter = 2 + (diameter-2) / 1.5
       var curve = (1.5-fixedDiameter) * Math.cos(t)
       if (i == blade-2 || i == labial-1) curve *= 0.8
       if (i == blade || i == labial-2) curve *= 0.94              
