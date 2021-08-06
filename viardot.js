@@ -7,16 +7,16 @@
 // Phoneme: [index, diameter]
 const dict = {
   // vowels
-  'aa': [29.5, 2.6], // part
-  'ae': [35.93, 2.6], // pat
+  'aa': [30, 2.6], // part
+  'ah': [29, 2.1], // pet
+  'ae': [35.93, 2.6], // pat ???????
   'uh': [33.8, 2], // put
-  'ao': [31, 2.75], // pot
+  'ao': [30, 2.85], // pot
   'ax': [30.7, 2.1], // dial
   'oh': [5.7, 2], // daughter
   'uw': [2.8, 2.1], // poot
   'ih': [24.8, 2.6], // pit
-  'iy': [20.2, 2.2], // peat
-  'eh': [27.2, 2.7], // pet
+  'iy': [30, 0.4], // peat
 
   // fricatives
   'sh': [33.98, 0.5], // shell
@@ -135,7 +135,7 @@ export default class Voice {
     this.fricativeGain.connect(this.tract, 0, 1)
     this.noiseModulator.connect(this.fricativeGain.gain)
     this.aspirationFilter = this.createFilter(500, 0.5).connect(this.aspirator)
-    this.fricativeFilter = this.createFilter(1000, 0.65).connect(this.fricativeGain)
+    this.fricativeFilter = this.createFilter(1000, 0.7).connect(this.fricativeGain)
   }
 
   createLFO(frequency, target) {
@@ -189,8 +189,22 @@ export default class Voice {
     }
 
     console.log(phoneme)
-    this.tract.tongueIndex.linearRampToValueAtTime(phoneme.index, this.ctx.currentTime + 0.3)
-    this.tract.tongueDiameter.linearRampToValueAtTime(phoneme.diameter, this.ctx.currentTime + 0.3)
+    this.setTongue(phoneme.index, phoneme.diameter)
+  }
+
+  setTongue(index, diameter, t = 0.3) {
+    this.tract.tongueIndex.cancelScheduledValues(0)
+    this.tract.tongueDiameter.cancelScheduledValues(0)
+    this.tract.tongueIndex.linearRampToValueAtTime(index, this.ctx.currentTime + t)
+    this.tract.tongueDiameter.linearRampToValueAtTime(diameter, this.ctx.currentTime + t)
+  }
+
+  setIndex(index, t = 0.3) {
+    this.tract.tongueIndex.value = index
+  }
+
+  setDiameter(diameter, t = 0.3) {
+    this.tract.tongueDiameter.value = diameter
   }
     
   start() { this.ctx.resume() }

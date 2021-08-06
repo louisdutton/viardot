@@ -3,22 +3,25 @@ import * as UTILS from '../math-utils'
 class TractProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
-      { name: 'tongueIndex', defaultValue: 29.5, automationRate: 'k-rate'},
+      { name: 'tongueIndex', defaultValue: 30, automationRate: 'k-rate'},
       { name: 'tongueDiameter', defaultValue: 2.6, automationRate: 'k-rate'},
+      { name: 'lipIndex', defaultValue: 41, automationRate: 'k-rate'},
+      { name: 'lipDiameter', defaultValue: 3, automationRate: 'k-rate'},
+      { name: 'tipIndex', defaultValue: 41, automationRate: 'k-rate'},
+      { name: 'tipDiameter', defaultValue: 3, automationRate: 'k-rate'},
     ]
   }
 
   constructor() { 
     super() 
-
     this.port.onmessage = (e) => this.port.postMessage(this.diameter)
 
     // Init cavities
     this.initOralCavity(44) // 44
     this.initNasalCavity(28) // 28
 
-    // reflections
-    this.reflectionLeft = this.reflectionRight = this.reflectionNose = 0
+    // Ks
+    this.KL = this.KR = this.KNose = 0
     this.calculateReflections()
     this.calculateNoseReflections()
 
@@ -30,39 +33,41 @@ class TractProcessor extends AudioWorkletProcessor {
     this.N = N
     this.bladeStart = 10
     this.tipStart = 32
-    this.lipStart = 39
+    this.labialStart = 39
 
     // values
     this.R = new Float64Array(N) // right-moving component
     this.L = new Float64Array(N) // left-moving component
-    this.reflection = new Float64Array(N+1)
+    this.K = new Float64Array(N+1)
     this.junctionOutputR = new Float64Array(N+1)
     this.junctionOutputL = new Float64Array(N+1)
 
     // diameter & cross-sectional area
+    this.oralDiameter = 3
+    this.glottalDiameter = 0.3
+    this.pharyngealDiameter = 1.8
     this.diameter = new Float64Array(N)
     this.restDiameter = new Float64Array(N)
     this.targetDiameter = new Float64Array(N)
-    this.A = new Float64Array(N)
+    this.A = new Float64Array(N) // cross-sectional areas
 
     // magic numbers relative to 44
     for (var m = 0; m < N; m++)
     {
         var diameter = 0
-        if (m < 6 - 0.5) diameter = 0.55
-        else if (m < 12) diameter = 1
-        else diameter = 3
+        if (m < 5.5) diameter = this.glottalDiameter
+        else if (m < 12) diameter = this.pharyngealDiameter
+        else diameter = this.oralDiameter
         this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter
     }
 
-    this.A = []
-    this.glottalReflection = 0.7
-    this.lipReflection = -0.85
+    this.glottalK = 0.7 // reflection at glottis
+    this.labialK = -0.85 // reflection at labia (lips)
     this.lastObstruction = -1
-    this.fade = 0.999 
-    this.movementSpeed = 20 //cm per second
-    this.transients = []
-    this.lipOutput = 0
+    this.decay = 0.999 // the coefficient of decay in the transfer function
+    this.movementSpeed = 30 // cm per second
+    this.transients = [] // stop consonants
+    this.labialOutput = 0 // outout at the labia (lips)
   }
 
   initNasalCavity(N) {
@@ -74,7 +79,7 @@ class TractProcessor extends AudioWorkletProcessor {
     this.noseL = new Float64Array(N)
     this.noseJunctionOutputR = new Float64Array(N+1)
     this.noseJunctionOutputL = new Float64Array(N+1)        
-    this.noseReflection = new Float64Array(N+1)
+    this.noseK = new Float64Array(N+1)
     this.noseDiameter = new Float64Array(N)
     this.noseA = new Float64Array(N)
     this.noseMaxAmplitude = new Float64Array(N)
@@ -90,6 +95,9 @@ class TractProcessor extends AudioWorkletProcessor {
     }
   }
 
+  // Kelly-Lochenbaum junction (sonic transfer function)
+  kl(A1, A2) { return (A1-A2)/(A1+A2) }
+
   calculateReflections()
   {
     for (var m=0; m<this.N; m++) 
@@ -98,15 +106,15 @@ class TractProcessor extends AudioWorkletProcessor {
     }
     for (var m=1; m<this.N; m++)
     {
-      if (this.A[m] == 0) this.reflection[m] = 0.999 //to prevent some bad behaviour if 0
-      else this.reflection[m] = (this.A[m-1]-this.A[m]) / (this.A[m-1]+this.A[m]) // kl junction
+      // prevent error if 0
+      this.K[m] = this.A[m] == 0 ? 0.999 : this.kl(this.A[m-1], this.A[m])
     }
     
-    //now at junction with nose
+    // now at velopharyngeal junction / port
     var sum = this.A[this.noseStart]+this.A[this.noseStart+1]+this.noseA[0]
-    this.reflectionLeft = (2*this.A[this.noseStart]-sum)/sum
-    this.reflectionRight = (2*this.A[this.noseStart+1]-sum)/sum   
-    this.reflectionNose = (2*this.noseA[0]-sum)/sum      
+    this.KL = (2*this.A[this.noseStart]-sum)/sum
+    this.KR = (2*this.A[this.noseStart+1]-sum)/sum   
+    this.KNose = (2*this.noseA[0]-sum)/sum      
   }
 
   calculateNoseReflections()
@@ -118,7 +126,7 @@ class TractProcessor extends AudioWorkletProcessor {
     }
     for (var m = 1; m < this.noseLength; m++)
     {
-      this.noseReflection[m] = (this.noseA[m-1]-this.noseA[m]) / (this.noseA[m-1]+this.noseA[m]) 
+      this.noseK[m] = this.kl(this.noseA[m-1], this.noseA[m]) 
     }
   }
 
@@ -127,48 +135,50 @@ class TractProcessor extends AudioWorkletProcessor {
     this.processTransients()
     this.addFricativeNoise(noise * 0.5, index, diameter)
     
-    this.junctionOutputR[0] = this.L[0] * this.glottalReflection + glottalExcitation
-    this.junctionOutputL[this.N] = this.R[this.N-1] * this.lipReflection 
+    this.junctionOutputR[0] = this.L[0] * this.glottalK + glottalExcitation
+    this.junctionOutputL[this.N] = this.R[this.N-1] * this.labialK 
     
-    for (var m=1; m<this.N; m++)
+    for (var v=1; v<this.N; v++)
     {
-        var r = this.reflection[m]
-        var w = r * (this.R[m-1] + this.L[m])
-        this.junctionOutputR[m] = this.R[m-1] - w
-        this.junctionOutputL[m] = this.L[m] + w
+        var r = this.K[v]
+        var w = r * (this.R[v-1] + this.L[v])
+        this.junctionOutputR[v] = this.R[v-1] - w
+        this.junctionOutputL[v] = this.L[v] + w
     }    
     
-    // now at junction with nose
-    var m = this.noseStart
-    var r = this.reflectionLeft
-    this.junctionOutputL[m] = r*this.R[m-1]+(1+r)*(this.noseL[0]+this.L[m])
-    r = this.reflectionRight
-    this.junctionOutputR[m] = r*this.L[m]+(1+r)*(this.R[m-1]+this.noseL[0])     
-    r = this.reflectionNose
-    this.noseJunctionOutputR[0] = r*this.noseL[0]+(1+r)*(this.L[m]+this.R[m-1])
-      
-    for (var m = 0; m < this.N; m++)
+    // now at junction with nose (velum)
+    var v = this.noseStart // velum
+    var r = this.KL
+    this.junctionOutputL[v] = r*this.R[v-1]+(1+r)*(this.noseL[0]+this.L[v])
+    r = this.KR
+    this.junctionOutputR[v] = r*this.L[v]+(1+r)*(this.R[v-1]+this.noseL[0])     
+    r = this.KNose
+    this.noseJunctionOutputR[0] = r*this.noseL[0]+(1+r)*(this.L[v]+this.R[v-1])
+    
+    // decay in oral cavity 
+    for (var v = 0; v < this.N; v++)
     {          
-        this.R[m] = this.junctionOutputR[m]*0.999
-        this.L[m] = this.junctionOutputL[m+1]*0.999 
+        this.R[v] = this.junctionOutputR[v]*this.decay
+        this.L[v] = this.junctionOutputL[v+1]*this.decay
     }
 
-    this.lipOutput = this.R[this.N-1]
+    this.labialOutput = this.R[this.N-1]
     
     //nose     
-    this.noseJunctionOutputL[this.noseLength] = this.noseR[this.noseLength-1] * this.lipReflection 
+    this.noseJunctionOutputL[this.noseLength] = this.noseR[this.noseLength-1] * this.labialK 
     
-    for (var m = 1; m < this.noseLength; m++)
+    for (var v = 1; v < this.noseLength; v++)
     {
-        var w = this.noseReflection[m] * (this.noseR[m-1] + this.noseL[m])
-        this.noseJunctionOutputR[m] = this.noseR[m-1] - w
-        this.noseJunctionOutputL[m] = this.noseL[m] + w
+        var w = this.noseK[v] * (this.noseR[v-1] + this.noseL[v])
+        this.noseJunctionOutputR[v] = this.noseR[v-1] - w
+        this.noseJunctionOutputL[v] = this.noseL[v] + w
     }
     
-    for (var m = 0; m < this.noseLength; m++)
+    // decay in nasal cavity 
+    for (var v = 0; v < this.noseLength; v++)
     {
-        this.noseR[m] = this.noseJunctionOutputR[m] * 1
-        this.noseL[m] = this.noseJunctionOutputL[m+1] * 1     
+        this.noseR[v] = this.noseJunctionOutputR[v] * this.decay
+        this.noseL[v] = this.noseJunctionOutputL[v+1] * this.decay   
     }
 
     this.noseOutput = this.noseR[this.noseLength-1]
@@ -223,7 +233,7 @@ class TractProcessor extends AudioWorkletProcessor {
     var trans = {}
     trans.position = position
     trans.timeAlive = 0
-    trans.lifeTime = 0.2
+    trans.lifeTime = 0.25
     trans.strength = 0.3
     trans.exponent = 200
     this.transients.push(trans)
@@ -248,47 +258,51 @@ class TractProcessor extends AudioWorkletProcessor {
 
   updateTongue(index, diameter)
   {
+    var blade = this.bladeStart
+    var tip = this.tipStart
+    var labial = this.labialStart
+
     // update rest & target diameter
-    for (var i=this.bladeStart; i<this.lipStart; i++)
+    for (var i=this.bladeStart; i<this.labialStart; i++)
     {
-      var blade = this.bladeStart
-      var tip = this.tipStart
-      var lip = this.lipStart
       var t = 1.1 * Math.PI * (index-i) / (tip-blade)
       var fixedDiameter = 2 + (diameter-2) / 1.5
       var curve = (1.5-fixedDiameter) * Math.cos(t)
-      if (i == blade-2 || i == lip-1) curve *= 0.8
-      if (i == blade || i == lip-2) curve *= 0.94              
+      if (i == blade-2 || i == labial-1) curve *= 0.8
+      if (i == blade || i == labial-2) curve *= 0.94              
       this.targetDiameter[i] = this.restDiameter[i] = 1.5 - curve
     }
-    // for (var i=0; i<Tract.n; i++) Tract.targetDiameter[i] = Tract.restDiameter[i];
+  }
 
-    // other stuff
+  // THIS FOR SOME READSON PERMANENTLY REDUCES VOLUME
+  updateConstrictions(index, diameter) {
+    var tip = this.tipStart
+
     this.velumTarget = diameter < 0 ? 0.04 : 0.01
-    diameter -= 0.3; // min diameter to produce sound
+    diameter -= 0.3; // min diameter required to produce sound
     if (diameter<0) diameter = 0;         
-    var width;
-    if (index<25) width = 10;
-    else if (index>=tip) width= 5;
-    else width = 10-5*(index-25)/(tip-25);
-    if (index >= 2 && index < this.N) //&& diameter < 3)
-    {
-      var intIndex = Math.round(index);
-      for (var i=-Math.ceil(width)-1; i<width+1; i++) 
-      {   
-        if (intIndex+i<0 || intIndex+i>=this.N) continue;
-        var relpos = (intIndex+i) - index;
-        relpos = Math.abs(relpos)-0.5;
-        var shrink;
-        if (relpos <= 0) shrink = 0;
-        else if (relpos > width) shrink = 1;
-        else shrink = 0.5*(1-Math.cos(Math.PI * relpos / width));
-        if (diameter < this.targetDiameter[intIndex+i])
-        {
-          this.targetDiameter[intIndex+i] = diameter + (this.targetDiameter[intIndex+i]-diameter)*shrink;
-        }
-      }
-    }
+    // var width;
+    // if (index<25) width = 10;
+    // else if (index>=tip) width= 5;
+    // else width = 10-5*(index-25)/(tip-25);
+    // if (index >= 2 && index < this.N && diameter < this.oralDiameter)
+    // {
+    //   var intIndex = Math.round(index);
+    //   for (var i=-Math.ceil(width)-1; i<width+1; i++) 
+    //   {   
+    //     if (intIndex+i<0 || intIndex+i>=this.N) continue;
+    //     var relpos = (intIndex+i) - index;
+    //     relpos = Math.abs(relpos)-0.5;
+    //     var shrink;
+    //     if (relpos <= 0) shrink = 0;
+    //     else if (relpos > width) shrink = 1;
+    //     else shrink = 0.5*(1-Math.cos(Math.PI * relpos / width));
+    //     if (diameter < this.targetDiameter[intIndex+i])
+    //     {
+    //       this.targetDiameter[intIndex+i] = diameter + (this.targetDiameter[intIndex+i]-diameter)*shrink;
+    //     }
+    //   }
+    // }
   }
 
   process(IN, OUT, PARAMS) {
@@ -296,8 +310,15 @@ class TractProcessor extends AudioWorkletProcessor {
     const fricativeNoise = IN[1][0] // single channel (0)
     const output = OUT[0][0]
     // tongue
-    const index = PARAMS.tongueIndex[0]
-    const diameter = PARAMS.tongueDiameter[0]
+    const tongueIndex = PARAMS.tongueIndex[0]
+    const tongueDiameter = PARAMS.tongueDiameter[0]
+    const tipIndex = PARAMS.tipIndex[0]
+    const tipDiameter = PARAMS.tipDiameter[0]
+    // const lipIndex = PARAMS.tongueIndex[0]
+    // const lipDiameter = PARAMS.tongueDiameter[0]
+
+    // var turbulenceIndex, turbulenceDiameter;
+    // if tipIndex > lip
 
     // block start
     for (let n = 0; n < 128; n++) {
@@ -305,14 +326,15 @@ class TractProcessor extends AudioWorkletProcessor {
       const noise = fricativeNoise[n]
 
       // run step at twice the sample rate
-      this.step(source, noise, index, diameter)
-      this.step(source, noise, index, diameter)
+      this.step(source, noise, tipIndex, tipDiameter)
+      this.step(source, noise, tipIndex, tipDiameter)
 
-      output[n] = this.lipOutput + this.noseOutput
+      output[n] = this.labialOutput + this.noseOutput
     }
 
     // block end
-    this.updateTongue(index, diameter)
+    this.updateTongue(tongueIndex, tongueDiameter)
+    this.updateConstrictions(tipIndex, tipDiameter)
     this.reshapeTract(128/sampleRate) // 128 / sampleRate
     this.calculateReflections()
 

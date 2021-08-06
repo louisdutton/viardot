@@ -32,6 +32,7 @@ export default function App() {
     var frequency = 220 + (1 - e.screenY / window.innerHeight) * 440
     voice.setFrequency(frequency)
     voice.setIntensity(intensity)
+    // voice.setFrequency(220)
   }
 
   return (
@@ -48,6 +49,34 @@ export default function App() {
 
 function Input(p) {
   const [IPA, setIPA] = useState('')
+  const [tongueIndex, setTongueIndex] = useState(0)
+  const [tongueDiameter, setTongueDiameter] = useState(0)
+  const [lipIndex, setLipIndex] = useState(0)
+  const [lipDiameter, setLipDiameter] = useState(0)
+
+  var onTongueIndex = (e) => {
+    var value = e.target.value
+    p.voice.setIndex(value)
+    setTongueIndex(value)
+  }
+
+  var onTongueDiameter = (e) => {
+    var value = e.target.value
+    p.voice.setDiameter(value)
+    setTongueDiameter(value)
+  }
+
+  var onLipIndex = (e) => {
+    var value = e.target.value
+    p.voice.tract.tipIndex.value = value
+    setLipIndex(value)
+  }
+
+  var onLipDiameter = (e) => {
+    var value = e.target.value
+    p.voice.tract.tipDiameter.value = value
+    setLipDiameter(value)
+  }
 
   var onChange = (e) => {
     var phones = RITA.phones(e.target.value)
@@ -66,6 +95,25 @@ function Input(p) {
 
   return (
     <div className='Input'>
+      <label>Tongue Index
+        <input onInput={onTongueIndex} type="range" min='0' max='40' step='0.1'/>
+        <p>{tongueIndex}</p>
+      </label>
+      
+      <label>Tongue Diameter
+        <input onInput={onTongueDiameter} type="range" min='0' max='3' step='0.1'/>
+        <p>{tongueDiameter}</p>
+      </label>
+
+      <label>Lip Index
+        <input onInput={onLipIndex} type="range" min='41' max='44' step='0.1'/>
+        <p>{lipIndex}</p>
+      </label>
+
+      <label>Lip Diameter
+        <input onInput={onLipDiameter} type="range" min='-1' max='10' step='0.1'/>
+        <p>{lipDiameter}</p>
+      </label>
       <InputField onChange={onChange} placeholder='Enter text'/>
       <p id="values">{IPA}</p>
       <Toggle type='checkbox' onChange={toggleVoice}/>
@@ -107,7 +155,6 @@ function TractUI(p) {
   useEffect(()=>{
     p.voice.tract.port.onmessage = (e) => {
       setData(Array.from(e.data))
-      // console.log(e.data[20])
     }
   },[])
 

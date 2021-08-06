@@ -35,5 +35,7 @@ export class TractFilterNode extends AudioWorkletNode {
     this.tenseness = this.parameters.get('tenseness')
     this.tongueIndex = this.parameters.get('tongueIndex')
     this.tongueDiameter = this.parameters.get('tongueDiameter')
+    this.tipIndex = this.parameters.get('tipIndex')
+    this.tipDiameter = this.parameters.get('tipDiameter')
   }
 }
