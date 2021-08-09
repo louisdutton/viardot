@@ -7,16 +7,16 @@
 // Phoneme: [index, diameter]
 const dict = {
   // vowels
-  'aa': [0.68, 0.6], // part
-  'ah': [0.58, 0.6], // pet
+  'aa': [0.84, 0.73], // part
+  'ah': [0.84, 0.55], // pet
   'ae': [35.93, 2.6], // pat ???????
   'uh': [33.8, 2], // put
-  'ao': [30, 2.85], // pot
+  'ao': [0.79, 0.76], // pot
   'ax': [30.7, 2.1], // dial
   'oh': [5.7, 2], // daughter
   'uw': [2.8, 2.1], // poot
   'ih': [24.8, 2.6], // pit
-  'iy': [30, 0.4], // peat
+  'iy': [0.72, 0.22], // peat
 
   // fricatives
   'sh': [33.98, 0.5], // shell
@@ -109,8 +109,8 @@ export default class Voice {
   }
 
   setIntensity(value) {
-    var tenseness = value * 0.25
-    this.glottalExcitation.tenseness.value = tenseness
+    var tenseness = value * 0.3
+    this.glottalExcitation.tenseness.value = tenseness / 2
     this.glottalExcitation.loudness.value = Math.pow(value, 0.25)
     this.glottalExcitation.intensity.value = value * 0.2
     // this.glottalExcitation.vibratoRate.value = value * 10
@@ -174,17 +174,17 @@ export default class Voice {
     var buffer = this.ctx.createBuffer(1, bufferSize, sampleRate)
     var channel = buffer.getChannelData(0)
     for (var i = 0; i < bufferSize; i++) { 
-      var white = Math.random() * 2 - 1
-      b0 = 0.99886 * b0 + white * 0.0555179
-      b1 = 0.99332 * b1 + white * 0.0750759
-      b2 = 0.96900 * b2 + white * 0.1538520
-      b3 = 0.86650 * b3 + white * 0.3104856
-      b4 = 0.55000 * b4 + white * 0.5329522
-      b5 = -0.7616 * b5 - white * 0.0168980
-      channel[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
-      // channel[i] = Math.random() * 2 - 1
+      // var white = Math.random() * 2 - 1
+      // b0 = 0.99886 * b0 + white * 0.0555179
+      // b1 = 0.99332 * b1 + white * 0.0750759
+      // b2 = 0.96900 * b2 + white * 0.1538520
+      // b3 = 0.86650 * b3 + white * 0.3104856
+      // b4 = 0.55000 * b4 + white * 0.5329522
+      // b5 = -0.7616 * b5 - white * 0.0168980
+      // channel[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
+      channel[i] = Math.random() * 2 - 1
       channel[i] *= 0.11 // (roughly) compensate for gain
-      b6 = white * 0.115926
+      // b6 = white * 0.115926
     }
     return buffer
   }

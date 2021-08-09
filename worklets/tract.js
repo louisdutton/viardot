@@ -3,8 +3,8 @@ import * as UTILS from '../math-utils'
 class TractProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
-      { name: 'tongueIndex', defaultValue: 0.65, automationRate: 'k-rate'},
-      { name: 'tongueDiameter', defaultValue: 0.6, automationRate: 'k-rate'},
+      { name: 'tongueIndex', defaultValue: 0.84, automationRate: 'k-rate'},
+      { name: 'tongueDiameter', defaultValue: 0.73, automationRate: 'k-rate'},
       { name: 'lipIndex', defaultValue: 41, automationRate: 'k-rate'},
       { name: 'lipDiameter', defaultValue: 3, automationRate: 'k-rate'},
       { name: 'tipIndex', defaultValue: 41, automationRate: 'k-rate'},
@@ -17,8 +17,8 @@ class TractProcessor extends AudioWorkletProcessor {
     this.port.onmessage = (e) => this.port.postMessage(this.diameter)
 
     // Init cavities
-    this.initOralCavity(44) // 44
-    this.initNasalCavity(28) // 28
+    this.initOralCavity(38) // 44=tenor, 
+    this.initNasalCavity(24) // 28
 
     // Ks
     this.KL = this.KR = this.KNose = 0
@@ -43,16 +43,16 @@ class TractProcessor extends AudioWorkletProcessor {
     this.junctionOutputL = new Float64Array(N+1)
 
     // diameter & cross-sectional area
-    this.maxDiameter = this.oralDiameter = 3
-    this.glottalDiameter = this.oralDiameter / 5
+    this.maxDiameter = this.oralDiameter = 3.9
+    this.glottalDiameter = this.oralDiameter * 0.2
     this.pharyngealDiameter = this.oralDiameter * 0.75
     this.diameter = new Float64Array(N)
     this.restDiameter = new Float64Array(N)
     this.targetDiameter = new Float64Array(N)
     this.A = new Float64Array(N) // cross-sectional areas
 
-    var phraynxStart = N * 0.125
-    var oralStart = N * 0.273
+    var phraynxStart = N * 0.2
+    var oralStart = N * 0.275
 
     // tract diameter calc
     for (var m = 0; m < N; m++)
