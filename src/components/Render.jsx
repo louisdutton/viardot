@@ -1,104 +1,73 @@
-import React, { useState } from 'react'
-import { Component } from 'react'
-import * as THREE from "three"
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import React, { Suspense, useRef } from 'react'
+import { useLoader, Canvas, useFrame, useThree } from '@react-three/fiber'
+import { ShaderMaterial, Color, Vector3 } from 'three'
+// import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import styled from 'styled-components'
 
-class Render extends Component {
-  componentDidMount() {
-    // === THREE.JS CODE START ===
-    const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000)
-    const renderer = new THREE.WebGLRenderer({ alpha: true })
-    renderer.setPixelRatio(window.devicePixelRatio)
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    this.mount.appendChild(renderer.domElement)
-    var geometry = new THREE.BoxGeometry(1, 1, 1)
-    var material = new THREE.MeshBasicMaterial()
-    // var cube = new THREE.Mesh( geometry, material )
-    // scene.add( cube )
-    camera.position.z = 100
-  
-    const controls = new OrbitControls(camera, renderer.domElement);
+const Frame = styled(Canvas)`
+  width: 500px;
+  height: 500px;
+  background: none;
+`
 
-    // lights 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444)
-    hemiLight.position.set(0, 200, 0)
-    scene.add(hemiLight)
-    const dirLight = new THREE.DirectionalLight(0xffffff);
-    dirLight.position.set(0, 200, 100);
-    dirLight.castShadow = true;
-    dirLight.shadow.camera.top = 180;
-    dirLight.shadow.camera.bottom = - 100;
-    dirLight.shadow.camera.left = - 120;
-    dirLight.shadow.camera.right = 120;
-    scene.add( dirLight );
+function Head() {
+  // const mesh = useLoader(FBXLoader, '/assets/head.fbx').children[0]
+  const scene = useLoader(GLTFLoader, '/assets/viardot.glb').scene
+  const nodes = []
+  scene.traverse(function(node) {
+    if (node.morphTargetInfluences) nodes.push(node)
+  })
 
-    // load model
-    var loader = new FBXLoader()
-    var texLoader = new THREE.TextureLoader()
-    loader.load('./assets/louise/louise.fbx', function (object) {
+  const { camera, gl, mouse, viewport } = useThree();
+  const ref = useRef()
+  const t = 0.1
 
-      // mixer = new THREE.AnimationMixer( object );
-
-      // const action = mixer.clipAction( object.animations[ 0 ] );
-      // action.play();
-
-      object.traverse(function(child) {
-
-        if (child.isMesh) {
-          // assign additional textures
-          // child.material[0].map = texLoader.load('./assets/louise/Head_Diffuse.png')
-          // child.material[0].aoMap = texLoader.load('./assets/louise/Head_AO.png')
-          // child.material[0].bumpMap = texLoader.load('./assets/louise/Head_Normal.png')
-          // child.material[0].specularMap = texLoader.load('./assets/louise/Head_Specular.png')
-          // child.material[0].roughnessMap = texLoader.load('./assets/louise/Head_Roughness.png')
-          // child.material[0].displacementMap = texLoader.load('./assets/louise/Head_Displacement.png')
-          for (var i = 0; i < 8; i++) {
-            child.material[i].wireframe = true;
-            child.material[i].color = THREE.Color.white;
-          }
-          
-          console.log(child.material)
-
-          // lighting
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-
-      } );
-
-      scene.add( object );
-
-    }, undefined, function ( e ) {
-
-      console.error( e );
-    
-    });
-
-    window.addEventListener( 'resize', onWindowResize )
-
-    var onWindowResize = function () {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-  
-      renderer.setSize( window.innerWidth, window.innerHeight );
-    }
-
-    var animate = function () {
-      requestAnimationFrame( animate )
-      controls.update()
-      renderer.render( scene, camera )
-    };
-
-    animate();
+  var setMorph = (name, value) => {
+    var index = nodes[0].morphTargetDictionary[name]
+    nodes[0].morphTargetInfluences[index] = value
+    nodes[1].morphTargetInfluences[index] = value
   }
 
-  render() {
-    return (
-      <div className='Render' ref={ref => (this.mount = ref)} />
-    )
-  }
+  var x;
+  var y;
+  useFrame(({ mouse }) => {
+    x = (mouse.x * viewport.width) / 2
+    y = (mouse.y * viewport.height) / 2
+
+    // linear interpolate rotation
+    var rot = ref.current.rotation
+    var rX = -y/2
+    var rY = x/2
+    var newRot = new Vector3(rot.x * (1-t) + rX * t, rot.y * (1-t) + rY * t, 0)
+    ref.current.rotation.set(newRot.x, newRot.y, newRot.z) 
+  })
+
+  return (
+    <primitive 
+      object={scene}
+      ref={ref}
+      scale={1, 1, 1}
+      position={[0, -0.6, 0]}
+      rotation={[0, 0, 0]}
+    />
+  )
 }
 
-export default Render
+export default function Render(props) {
+  return (
+    <Frame 
+      style={{width: '500px', height: '500px'}}
+      dpr={ window.devicePixelRatio }
+      camera={{ aspectRatio: 1, fov: 30, position: [0, 0, 1.2]}}
+    >
+      <ambientLight intensity={0.2}/>
+      <pointLight position={[-5, 2, -7]} intensity={2} color={'magenta'}/>
+      <pointLight position={[5, 5, -5]} intensity={2} color={'cyan'}/>
+      <pointLight position={[5, 4, 5]} intensity={0.5}/>
+      <Suspense fallback={null}>
+       <Head/>
+      </Suspense>
+    </Frame>
+  )
+}

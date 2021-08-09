@@ -1,6 +1,6 @@
 body {
   overflow: hidden;
-  background: #222;
+  background: linear-gradient(60deg, magenta, cyan);
 }
 
 .App {
@@ -25,7 +25,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  /* font-size: calc(10px + 2vmin); */
   color: white;
 }
 

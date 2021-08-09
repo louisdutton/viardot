@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import Render from './components/Render'
 import styled from 'styled-components'
 import './App.css'
 
@@ -8,8 +9,15 @@ import * as RITA from 'rita'
 
 const InputField = styled.input`
   border-radius: 25px;
-  background-color: #333;
+  background-color: black;
+  opacity: 50%;
   height: 40px;
+`
+
+const Title = styled.h1`
+  font-size: 9em;
+  opacity: 15%;
+  position: absolute;
 `
 
 const Toggle = styled.input`
@@ -29,7 +37,7 @@ export default function App() {
 
   var onMouseMove = (e) => {
     var intensity = (e.screenX / window.innerWidth)
-    var frequency = 220 + (1 - e.screenY / window.innerHeight) * 220
+    var frequency = 440 + (1 - e.screenY / window.innerHeight) * 440
     voice.setFrequency(frequency)
     voice.setIntensity(intensity)
     // voice.setFrequency(220)
@@ -38,7 +46,7 @@ export default function App() {
   return (
     <div className="App" onMouseMove={onMouseMove}>
       <header className="App-header">
-        <h1>Viardot</h1>
+        <Title>Viardot</Title>
         <Input voice={voice}/>
         <PhonemeSelection voice={voice}/>
         {/* <TractUI voice={voice}/> */}
@@ -89,31 +97,19 @@ function Input(p) {
     else p.voice.stop()
   }
 
-  var setNasal = (e) => {
-    p.voice.setNasal(e.target.value)
-  }
-
   return (
     <div className='Input'>
       <label>Tongue Index
-        <input onInput={onTongueIndex} type="range" min='0' max='40' step='0.1'/>
+        <input onInput={onTongueIndex} type="range" min='0' max='1' step='0.01'/>
         <p>{tongueIndex}</p>
       </label>
       
       <label>Tongue Diameter
-        <input onInput={onTongueDiameter} type="range" min='0' max='3' step='0.1'/>
+        <input onInput={onTongueDiameter} type="range" min='0' max='1' step='0.01'/>
         <p>{tongueDiameter}</p>
       </label>
+      <Render/>
 
-      {/* <label>Lip Index
-        <input onInput={onLipIndex} type="range" min='41' max='44' step='0.1'/>
-        <p>{lipIndex}</p>
-      </label>
-
-      <label>Lip Diameter
-        <input onInput={onLipDiameter} type="range" min='-1' max='10' step='0.1'/>
-        <p>{lipDiameter}</p>
-      </label> */}
       <InputField onChange={onChange} placeholder='Enter text'/>
       <p id="values">{IPA}</p>
       <Toggle type='checkbox' onChange={toggleVoice}/>
@@ -132,38 +128,4 @@ function PhonemeSelection(p) {
   return (
     <select onChange={onChange} name="phonemes" id="phonemes">{phonemes}</select>
   )
-}
-
-const TractUIWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-  width: 400px;
-`
-
-const DiameterUI = styled.div`
-  background: white;
-  border-radius: 50%;
-  height: 5px;
-  width: 5px;
-  margin-top: ${props => (props.value * 100).toString() + 'px'};
-`
-
-function TractUI(p) {
-  const [data, setData] = useState([])
-
-  useEffect(()=>{
-    p.voice.tract.port.onmessage = (e) => {
-      setData(Array.from(e.data))
-    }
-  },[])
-
-  return (
-    <TractUIWrapper>
-      {data.map((value, key) =>
-        <DiameterUI key={key} value={value}/>
-      )}
-    </TractUIWrapper>
-  )
-
 }

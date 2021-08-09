@@ -7,8 +7,8 @@
 // Phoneme: [index, diameter]
 const dict = {
   // vowels
-  'aa': [30, 2.6], // part
-  'ah': [29, 2.1], // pet
+  'aa': [0.68, 0.6], // part
+  'ah': [0.58, 0.6], // pet
   'ae': [35.93, 2.6], // pat ???????
   'uh': [33.8, 2], // put
   'ao': [30, 2.85], // pot
@@ -75,9 +75,9 @@ export default class Voice {
 
     this.reverb = new Freeverb(this.ctx)
     this.reverb.roomSize = 0.7
-    this.reverb.dampening = 1500
-    this.reverb.wet.value = 0.1
-    this.reverb.dry.value = 0.9
+    this.reverb.dampening = 3000
+    this.reverb.wet.value = 0.15
+    this.reverb.dry.value = 0.85
     this.reverb.connect(this.master)
 
     this.tractData = []
@@ -109,10 +109,10 @@ export default class Voice {
   }
 
   setIntensity(value) {
-    var tenseness = value * 0.6
+    var tenseness = value * 0.25
     this.glottalExcitation.tenseness.value = tenseness
     this.glottalExcitation.loudness.value = Math.pow(value, 0.25)
-    // this.glottalExcitation.intensity.value = value
+    this.glottalExcitation.intensity.value = value * 0.2
     // this.glottalExcitation.vibratoRate.value = value * 10
 
     this.aspirator.tenseness.value = tenseness
@@ -144,7 +144,7 @@ export default class Voice {
     this.fricativeGain = this.ctx.createGain()
     this.fricativeGain.connect(this.tract, 0, 1)
     this.noiseModulator.connect(this.fricativeGain.gain)
-    this.aspirationFilter = this.createFilter(500, 0.9).connect(this.aspirator)
+    this.aspirationFilter = this.createFilter(500, 0.6).connect(this.aspirator)
     this.fricativeFilter = this.createFilter(1000, 0.7).connect(this.fricativeGain)
   }
 
@@ -174,17 +174,17 @@ export default class Voice {
     var buffer = this.ctx.createBuffer(1, bufferSize, sampleRate)
     var channel = buffer.getChannelData(0)
     for (var i = 0; i < bufferSize; i++) { 
-      // var white = Math.random() * 2 - 1
-      // b0 = 0.99886 * b0 + white * 0.0555179
-      // b1 = 0.99332 * b1 + white * 0.0750759
-      // b2 = 0.96900 * b2 + white * 0.1538520
-      // b3 = 0.86650 * b3 + white * 0.3104856
-      // b4 = 0.55000 * b4 + white * 0.5329522
-      // b5 = -0.7616 * b5 - white * 0.0168980
-      // channel[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
-      channel[i] = Math.random() * 2 - 1
+      var white = Math.random() * 2 - 1
+      b0 = 0.99886 * b0 + white * 0.0555179
+      b1 = 0.99332 * b1 + white * 0.0750759
+      b2 = 0.96900 * b2 + white * 0.1538520
+      b3 = 0.86650 * b3 + white * 0.3104856
+      b4 = 0.55000 * b4 + white * 0.5329522
+      b5 = -0.7616 * b5 - white * 0.0168980
+      channel[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
+      // channel[i] = Math.random() * 2 - 1
       channel[i] *= 0.11 // (roughly) compensate for gain
-      // b6 = white * 0.115926
+      b6 = white * 0.115926
     }
     return buffer
   }
@@ -204,10 +204,8 @@ export default class Voice {
   }
 
   setTongue(index, diameter, t = 0.3) {
-    this.tract.tongueIndex.cancelScheduledValues(0)
-    this.tract.tongueDiameter.cancelScheduledValues(0)
-    this.tract.tongueIndex.linearRampToValueAtTime(index, this.ctx.currentTime + t)
-    this.tract.tongueDiameter.linearRampToValueAtTime(diameter, this.ctx.currentTime + t)
+    this.tract.tongueIndex.value = index
+    this.tract.tongueDiameter.value = diameter
   }
 
   setIndex(index, t = 0.3) {

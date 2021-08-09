@@ -6,8 +6,8 @@ class Glottis extends AudioWorkletProcessor {
       { name: 'tenseness', defaultValue: 0.6, automationRate: 'k-rate'},
       { name: 'intensity', defaultValue: 0.5, automationRate: 'k-rate'},
       { name: 'frequency', defaultValue: 440, automationRate: 'a-rate'},
-      { name: 'vibratoDepth', defaultValue: 5.5, automationRate: 'a-rate'},
-      { name: 'vibratoRate', defaultValue: 5.2, automationRate: 'a-rate'},
+      { name: 'vibratoDepth', defaultValue: 6, automationRate: 'a-rate'},
+      { name: 'vibratoRate', defaultValue: 5.8, automationRate: 'a-rate'},
       { name: 'loudness', defaultValue: 1.0, automationRate: 'k-rate'},
     ]
   }
