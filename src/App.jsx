@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import Render from './components/Render'
 import GUI from './components/GUI'
-import styled from 'styled-components'
-import './App.css'
-import Voice from '../viardot'
+import Voice from './viardot/viardot'
 import Anime from 'react-anime'
+import './App.css'
 
 export default function App() {
   const [voice, setVoice] = useState(null)
@@ -38,7 +37,10 @@ export default function App() {
 
 const Title = () => (
   <h1>
-    <Anime easing='easeInOutElastic' duration={2250} delay={(el, i) => 100 * (i+1)} scale={[0.5, 1]}opacity={[0, 1]}>
+    <Anime
+    easing='easeInOutElastic' duration={2250}
+    delay={(el, i) => 100 * (i+1)}
+    scale={[0.5, 1]} opacity={[0, 1]}>
       {'Viardot'.split('').map(function(char, index){
         return (<div key={index}>{char}</div>)
       })}

@@ -55,10 +55,10 @@ export default class Voice {
     console.log('[viardot] Initializing...')
     var audioWorklet = this.ctx.audioWorklet
     Promise.all([
-      audioWorklet.addModule('worklets/tract.js'),
-      audioWorklet.addModule('worklets/noise-modulator.js'),
-      audioWorklet.addModule('worklets/aspirator.js'),
-      audioWorklet.addModule('worklets/glottis.js'),
+      audioWorklet.addModule('src/viardot/worklets/tract.js'),
+      audioWorklet.addModule('src/viardot/worklets/noise-modulator.js'),
+      audioWorklet.addModule('src/viardot/worklets/aspirator.js'),
+      audioWorklet.addModule('src/viardot/worklets/glottis.js'),
     ]).then(() => this.init()).then(() => this.onComplete(onComplete))
   }
 

@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import eventBus from '../EventBus'
 import { BiInfoCircle } from 'react-icons/bi'
 import * as RITA from 'rita'
-import { phonemeDict } from '/viardot'
+import { phonemeDict } from '../viardot/viardot'
 
 const InfoWrapper = styled.div`
   position: absolute;
