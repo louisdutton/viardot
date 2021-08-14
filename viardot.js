@@ -5,7 +5,7 @@
 */
 
 // Phoneme: [index, diameter]
-const dict = {
+export const phonemeDict = {
   // vowels
   'aa': [0.84, 0.73], // part
   'ah': [0.84, 0.55], // pet
@@ -189,17 +189,17 @@ export default class Voice {
     return buffer
   }
 
-  static getPhonemeDict = () => dict
+  static getPhonemeDict = () => phonemeDict
 
   setPhoneme(key) {
-    var values = dict[key]
+    var values = phonemeDict[key]
     var phoneme = { // for logging purposes
       name: key,
       index: values[0],
       diameter: values[1]
     }
 
-    console.log(phoneme)
+    // console.log(phoneme)
     this.setTongue(phoneme.index, phoneme.diameter)
   }
 
@@ -215,9 +215,13 @@ export default class Voice {
   setDiameter(diameter, t = 0.3) {
     this.tract.tongueDiameter.value = diameter
   }
+
+  getIntensity() {
+    return this.glottalExcitation.tenseness.value
+  }
     
-  start() { this.ctx.resume() }
-  stop() { this.ctx.suspend() }
+  start() { this.ctx.resume(); this.tract.connect(this.reverb) }
+  stop() { this.tract.disconnect(this.reverb) }
 
   recieve = (phones) => {console.log(phones)}
 }

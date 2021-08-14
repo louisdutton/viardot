@@ -11,7 +11,9 @@
     "fast-simplex-noise": "^4.0.0",
     "freeverb": "^1.1.2",
     "react": "^17.0.0",
+    "react-anime": "^4.0.4",
     "react-dom": "^17.0.0",
+    "react-icons": "^4.2.0",
     "rita": "^2.4.200",
     "styled-components": "^5.3.0",
     "three": "^0.130.1"
