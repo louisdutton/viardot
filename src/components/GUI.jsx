@@ -1,85 +1,43 @@
 import React, { useState, useEffect } from 'react'
-import styled from 'styled-components'
 import eventBus from '../EventBus'
 import { BiInfoCircle } from 'react-icons/bi'
+import { phonemeDict, IPA } from '../viardot/viardot'
 import * as RITA from 'rita'
-import { phonemeDict } from '../viardot/viardot'
+import Anime from 'react-anime'
+import ReactMarkdown from 'react-markdown'
 
-const InfoWrapper = styled.div`
-  position: absolute;
-  height: 40px;
-  width: 40px;
-  left: 5%;
-  top: 5%;
-`
+const GUI = (props) => {
+  const [state, setState] = useState({ipa: 'Viardot'})
+  const infoURL = 'https://github.com/louisdutton/viardot'
 
-const InputField = styled.input`
-  position: absolute;
-  left: 50%;
-  bottom: 5%;
-  transform: translateX(-50%);
-  border-radius: 25px;
-  background-color: black;
-  opacity: 50%;
-  height: 40px;
-`
-
-const Values = styled.p`
-  position: absolute;
-  left: 50%;
-  bottom: 10%;
-  transform: translateX(-50%);
-  background: none;
-  color: white;
-`
-
-const Phonemes = styled.select`
-  position: absolute;
-  right: 5%;
-  bottom: 15%;
-  width: 40px;
-  background: none;
-  color: white;
-`
-
-export default function GUI(props) {
-  const onChange = (e) => {
-    var v = parseInt(e.target.value)
-    if (isNaN(v)) return
-    props.setSeed(v)
-  }
-
-  return (<div className='fade-in'>
-      <InfoWrapper>
-        <button onClick={() => console.log('test')}>
-          <BiInfoCircle/>
-        </button>
-      </InfoWrapper>
-      <Input voice={props.voice}/>
-      <PhonemeSelection voice={props.voice}/>
-    </div>)
-}
-
-function Input(props) {
-  const [state, setState] = useState({ipa: 'ipa'})
-
-  const onChange = (e) => {
-    var phones = RITA.phones(e.target.value)
-    setState({ipa: phones})
-    // p.voice.recieve(phones)
-  }
-
-  return (
-    <div className='Input'>
-      <InputField onChange={onChange} placeholder='Enter text'/>
-      <Values>{state.ipa}</Values>
+  return(
+    <div>
+      <Title text={state.ipa}/>
+      <button className='info-button' onClick={() => window.open(infoURL, '_blank')}><BiInfoCircle/></button>
+      <Input voice={props.voice} callback={setState} className='fade-in'/>
+      <PhonemeSelection voice={props.voice} className='fade-in'/>
     </div>
   )
 }
 
+function Input(props) {
+
+  const onChange = (e) => {
+    var value = e.target.value
+    if (!value) return
+    var phones = RITA.phones(value)
+    var words = phones.split(/\s/)
+    var phones = words[0].split(/-/).map(x => IPA[x]).join('')
+    props.callback({ipa: phones})
+    // p.voice.recieve(phones)
+  }
+
+  return <input className='text-input' onChange={onChange} placeholder='Enter text'/>
+}
+
 function PhonemeSelection(p) {
   const phonemes = Object.keys(phonemeDict).map((phone) =>
-    <option key={phone} value={phone}>{phone}</option>
+    <option key={phone} value={phone}>{phone} : {IPA[phone]}</option>
   )
 
   const setPhoneme = (e) => {
@@ -87,5 +45,22 @@ function PhonemeSelection(p) {
     p.voice.setPhoneme(e.target.value)
   }
 
-  return <Phonemes onChange={setPhoneme}>{phonemes}</Phonemes>
+  return <select className='phoneme-select' onChange={setPhoneme}>{phonemes}</select>
 }
+
+const Title = (props) => (
+  <h1>
+    <Anime
+    easing='easeOutElastic' duration={1500}
+    delay={(el, i) => 100 * (i+1)}
+    scale={[0.5, 1]} opacity={[0, 1]}>
+      {
+        props.text.split('').map(function(char, index){
+        return (<div key={index}>{char}</div>)
+      })}
+    </Anime>
+  </h1>
+)
+
+
+export default GUI

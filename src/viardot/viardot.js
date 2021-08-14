@@ -4,6 +4,78 @@
 * attribution is appreciated.
 */
 
+class NoiseModulatorNode extends AudioWorkletNode {
+  constructor(ctx) {
+    super(ctx, 'noise-modulator', { numberOfInputs: 1, numberOfOutputs: 2 })
+    this.tenseness = this.parameters.get('tenseness')
+    this.intensity = this.parameters.get('intensity')
+    this.frequency = this.parameters.get('frequency')
+  }
+
+  start(t) {
+    this.intensity.cancelScheduledValues(0)
+    this.intensity.exponentialRampToValueAtTime(1, t + 0.1)
+  }
+
+  stop(t) {
+    this.intensity.cancelScheduledValues(0)
+    this.intensity.exponentialRampToValueAtTime(0.0001, t + 0.5)
+  }
+}
+
+class GlottisNode extends AudioWorkletNode {
+  constructor(ctx) {
+    super(ctx, 'glottis', { channelCount: 1, numberOfInputs: 0, numberOfOutputs: 1 })
+    this.frequency = this.parameters.get('frequency')
+    this.tenseness = this.parameters.get('tenseness')
+    this.intensity = this.parameters.get('intensity')
+    this.loudness = this.parameters.get('loudness')
+    this.vibratoRate = this.parameters.get('vibratoRate')
+    this.vibratoDepth = this.parameters.get('vibratoDepth')
+    this.active = false
+  }
+
+  start(t) {
+    this.intensity.cancelScheduledValues(0)
+    this.intensity.exponentialRampToValueAtTime(1, t + 0.1)
+  }
+
+  stop(t) {
+    this.intensity.cancelScheduledValues(0)
+    this.intensity.exponentialRampToValueAtTime(0.0001, t + 0.5)
+  }
+}
+
+class AspiratorNode extends AudioWorkletNode {
+  constructor(ctx) {
+    super(ctx, 'aspirator', { numberOfInputs: 1 })
+    this.tenseness = this.parameters.get('tenseness')
+    this.intensity = this.parameters.get('intensity')
+  }
+
+  start(t) {
+    this.intensity.cancelScheduledValues(0)
+    this.intensity.exponentialRampToValueAtTime(1, t + 0.1)
+  }
+
+  stop(t) {
+    this.intensity.cancelScheduledValues(0)
+    this.intensity.exponentialRampToValueAtTime(0.0001, t + 0.5)
+  }
+}
+
+class TractFilterNode extends AudioWorkletNode {
+  constructor(ctx) {
+    super(ctx, 'tract', { numberOfInputs: 2 })
+    this.intensity = this.parameters.get('intensity')
+    this.tenseness = this.parameters.get('tenseness')
+    this.tongueIndex = this.parameters.get('tongueIndex')
+    this.tongueDiameter = this.parameters.get('tongueDiameter')
+    this.tipIndex = this.parameters.get('tipIndex')
+    this.tipDiameter = this.parameters.get('tipDiameter')
+  }
+}
+
 // Phoneme: [index, diameter]
 export const phonemeDict = {
   // vowels
@@ -32,17 +104,67 @@ export const phonemeDict = {
   'd': [36.0, 0], // den
   't': [37.0, 0], // ten
   'b': [41.0, 0], // bad
-  'p': [42.0, 0], // pad
+  'p': [0.99, 0], // pad
 
   // nasals
   'ng': [20.0, -1], // thing
   'n': [36.0, -1], // not
-  'm': [41.0, -1], // man
-
+  'm': [0.8, -1], // man
 }
 
-import * as Nodes from './worklets/worklet-nodes'
+export const IPA = {
+  'aa':	'ɑ',
+  'ae':	'æ',
+  'ah':	'ʌ',
+  'ao':	'ɔ',
+  'aw':	'aʊ',
+  'ax':	'ə',
+  'ay':	'aɪ',
+  'eh':	'ɛ',
+  'er':	'ɝ',
+  'ey':	'eɪ',
+  'ih':	'ɪ',
+  'ix':	'ɨ',
+  'iy':	'i',
+  'ow':	'oʊ',
+  'oy':	'ɔɪ',
+  'uh':	'ʊ',
+  'uw':	'u',
+  'b': 'b',
+  'ch':	'tʃ',
+  'd':	'd',
+  'dh':	'ð',
+  'dx':	'ɾ',
+  'el':	'l̩',
+  'em':	'm̩',
+  'en':	'n̩',
+  'f': 'f',
+  'g': 'ɡ',
+  'hh':	'h',
+  'jh': 'dʒ',
+  'k':	'k',
+  'l':	'l',
+  'm':	'm',
+  'n':	'n',
+  'ng':	'ŋ',
+  'p':	'p',
+  'q':	'ʔ',
+  'r':	'ɹ',
+  's':	's',
+  'sh':	'ʃ',
+  't':	't',
+  'th':	'θ',
+  'v':	'v',
+  'w':	'w',
+  'wh':	'ʍ',
+  'y':	'j',
+  'z':	'z',
+  'zh':	'ʒ',
+}
+
 import * as Freeverb from 'freeverb'
+
+const workletPath = 'worklets/'
 
 export default class Voice {   
   constructor(onComplete) {
@@ -54,12 +176,10 @@ export default class Voice {
     // async import custom audio nodes
     console.log('[viardot] Initializing...')
     var audioWorklet = this.ctx.audioWorklet
-    Promise.all([
-      audioWorklet.addModule('src/viardot/worklets/tract.js'),
-      audioWorklet.addModule('src/viardot/worklets/noise-modulator.js'),
-      audioWorklet.addModule('src/viardot/worklets/aspirator.js'),
-      audioWorklet.addModule('src/viardot/worklets/glottis.js'),
-    ]).then(() => this.init()).then(() => this.onComplete(onComplete))
+    var modules = ['tract', 'noise-modulator', 'aspirator', 'glottis']
+    Promise.all(modules.map(m => 
+      audioWorklet.addModule(workletPath + m + '.js'))
+    ).then(() => this.init()).then(() => this.onComplete(onComplete))
   }
 
   onComplete(callback) {
@@ -76,19 +196,19 @@ export default class Voice {
     this.reverb = new Freeverb(this.ctx)
     this.reverb.roomSize = 0.7
     this.reverb.dampening = 3000
-    this.reverb.wet.value = 0.15
-    this.reverb.dry.value = 0.85
+    this.reverb.wet.value = 0.2
+    this.reverb.dry.value = 0.8
     this.reverb.connect(this.master)
 
     this.tractData = []
-    this.tract = new Nodes.TractFilterNode(this.ctx)
+    this.tract = new TractFilterNode(this.ctx)
     this.tract.connect(this.reverb)
     setInterval(() => this.tract.port.postMessage(0), 100)
     
     // Glottal source
     this.glottalSource = this.ctx.createGain()
     this.glottalSource.connect(this.tract)
-    this.glottalExcitation = new Nodes.GlottisNode(this.ctx)
+    this.glottalExcitation = new GlottisNode(this.ctx)
     this.glottalExcitation.connect(this.glottalSource)
     
     // Noise source
@@ -99,52 +219,44 @@ export default class Voice {
     this.tract.port.postMessage(value)
   }
 
-  setVowel(vowel) {
-
-  }
-
   setFrequency(value) {
-    this.noiseLFO.frequency.value = value
-    this.glottalExcitation.frequency.value = value
+    var freq = 440 + value * 880
+    this.noiseModulator.frequency.value = freq
+    this.glottalExcitation.frequency.value = freq
+    this.aspirationFilter.frequency.value = freq
+    // this.glottalExcitation.vibratoRate.value = 6 + value * 1
+    // this.glottalExcitation.vibratoDepth.value = 6 + value * 7
   }
 
   setIntensity(value) {
     var tenseness = value * 0.3
-    this.glottalExcitation.tenseness.value = tenseness / 2
+    this.glottalExcitation.tenseness.value = value * 0.4
     this.glottalExcitation.loudness.value = Math.pow(value, 0.25)
-    this.glottalExcitation.intensity.value = value * 0.2
-    // this.glottalExcitation.vibratoRate.value = value * 10
-
     this.aspirator.tenseness.value = tenseness
-    this.aspirator.intensity.value = value
-
     this.noiseModulator.tenseness.value = tenseness
-    this.noiseModulator.intensity.value = value
   }
 
   initNoise(duration) {
     this.aspirationGain = this.ctx.createGain()
-    this.aspirationGain.connect(this.reverb)
+    this.aspirationGain.connect(this.glottalSource)
 
-    this.aspirator = new Nodes.AspiratorNode(this.ctx)
+    this.aspirator = new AspiratorNode(this.ctx)
     this.aspirator.connect(this.aspirationGain)
 
     this.noise = this.ctx.createBufferSource()
-    this.noise.buffer = this.createPinkNoise(duration, this.sampleRate)
+    this.noise.buffer = this.whiteNoiseBuffer(duration, this.sampleRate)
     this.noise.loop = true
     this.noise.start()
 
-    this.noiseModulator = new Nodes.NoiseModulatorNode(this.ctx)
+    this.noiseModulator = new NoiseModulatorNode(this.ctx)
     this.noiseModulator.connect(this.aspirationGain.gain)
-
-    this.noiseLFO = this.createLFO(220, this.noiseModulator)
-    this.noiseLFO.start()
     
     // filters
     this.fricativeGain = this.ctx.createGain()
     this.fricativeGain.connect(this.tract, 0, 1)
     this.noiseModulator.connect(this.fricativeGain.gain)
-    this.aspirationFilter = this.createFilter(500, 0.6).connect(this.aspirator)
+    this.aspirationFilter = this.createFilter(600, 0.9, 'lowpass')
+    this.aspirationFilter.connect(this.aspirator)
     this.fricativeFilter = this.createFilter(1000, 0.7).connect(this.fricativeGain)
   }
 
@@ -155,9 +267,9 @@ export default class Voice {
     return lfo
   }
 
-  createFilter(frequency, q = 0.67) {
+  createFilter(frequency, q=0.67, type='bandpass') {
     var filter = this.ctx.createBiquadFilter()
-    filter.type = "bandpass"
+    filter.type = type
     filter.frequency.value = frequency
     filter.Q.value = q
     this.noise.connect(filter)
@@ -165,26 +277,14 @@ export default class Voice {
   }
 
   // Paul Kellet's refined method
-  createPinkNoise(duration, sampleRate)
+  whiteNoiseBuffer(duration, sampleRate)
   {
-    var b0, b1, b2, b3, b4, b5, b6
-    b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0
-
     var bufferSize = duration * sampleRate; // duration * sampleRate
     var buffer = this.ctx.createBuffer(1, bufferSize, sampleRate)
     var channel = buffer.getChannelData(0)
     for (var i = 0; i < bufferSize; i++) { 
-      // var white = Math.random() * 2 - 1
-      // b0 = 0.99886 * b0 + white * 0.0555179
-      // b1 = 0.99332 * b1 + white * 0.0750759
-      // b2 = 0.96900 * b2 + white * 0.1538520
-      // b3 = 0.86650 * b3 + white * 0.3104856
-      // b4 = 0.55000 * b4 + white * 0.5329522
-      // b5 = -0.7616 * b5 - white * 0.0168980
-      // channel[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
       channel[i] = Math.random() * 2 - 1
-      channel[i] *= 0.11 // (roughly) compensate for gain
-      // b6 = white * 0.115926
+      // channel[i] *= 0.5 // (roughly) compensate for gain
     }
     return buffer
   }
@@ -193,14 +293,7 @@ export default class Voice {
 
   setPhoneme(key) {
     var values = phonemeDict[key]
-    var phoneme = { // for logging purposes
-      name: key,
-      index: values[0],
-      diameter: values[1]
-    }
-
-    // console.log(phoneme)
-    this.setTongue(phoneme.index, phoneme.diameter)
+    this.setTongue(values[0], values[1])
   }
 
   setTongue(index, diameter, t = 0.3) {
@@ -216,12 +309,19 @@ export default class Voice {
     this.tract.tongueDiameter.value = diameter
   }
 
-  getIntensity() {
-    return this.glottalExcitation.tenseness.value
-  }
+  getIntensity = () => this.glottalExcitation.tenseness.value
     
-  start() { this.ctx.resume(); this.tract.connect(this.reverb) }
-  stop() { this.tract.disconnect(this.reverb) }
+  start() {
+    this.ctx.resume() 
+    this.glottalExcitation.start(this.ctx.currentTime)
+    this.noiseModulator.start(this.ctx.currentTime)
+    this.aspirator.start(this.ctx.currentTime)
+  }
+  stop = () => {
+    this.glottalExcitation.stop(this.ctx.currentTime)
+    this.noiseModulator.stop(this.ctx.currentTime)
+    this.aspirator.stop(this.ctx.currentTime)
+  }
 
   recieve = (phones) => {console.log(phones)}
 }

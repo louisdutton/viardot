@@ -2,49 +2,36 @@ import React, { useState, useEffect } from 'react'
 import Render from './components/Render'
 import GUI from './components/GUI'
 import Voice from './viardot/viardot'
-import Anime from 'react-anime'
 import './App.css'
 
 export default function App() {
-  const [voice, setVoice] = useState(null)
+  const [voice, setVoice] = useState()
   const [ready, setReady] = useState(false)
+  const [render, setRender] = useState(false)
+  const [gui, setGui] = useState(false)
 
   useEffect(()=>{
-    setVoice(new Voice((e) => setReady(true)))
+    setVoice(new Voice(() => setReady(true)))
   },[])
 
-  if (!ready) return null
+  if (!ready) return <div className="App"/>
 
   const onMouseMove = (e) => {
     var intensity = (e.screenX / window.innerWidth)
-    var frequency = 440 + (1 - e.screenY / window.innerHeight) * 440
-    voice.setFrequency(frequency)
+    var f0 = (1 - e.screenY / window.innerHeight)
     voice.setIntensity(intensity)
-    // voice.setFrequency(220)
+    voice.setFrequency(f0)
   }
 
   return (
     <div className="App"
       onMouseMove={onMouseMove}
-      onMouseDown={() => voice.start()}
-      onMouseUp={() => voice.stop()}>
-      <Title/>
+      onMouseDown={() => {voice.start()}}
+      onMouseUp={() => {voice.stop()}}
+      onMouseLeave={() => {voice.stop()}}>
       <Render voice={voice}/>
       <GUI voice={voice}/>
     </div>
   )
 }
-
-const Title = () => (
-  <h1>
-    <Anime
-    easing='easeInOutElastic' duration={2250}
-    delay={(el, i) => 100 * (i+1)}
-    scale={[0.5, 1]} opacity={[0, 1]}>
-      {'Viardot'.split('').map(function(char, index){
-        return (<div key={index}>{char}</div>)
-      })}
-    </Anime>
-  </h1>
-)
 

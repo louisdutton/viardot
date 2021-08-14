@@ -1,4 +1,12 @@
-import * as UTILS from './math-utils'
+function clamp(value, a, b) {
+  return Math.max(a, Math.min(value, b))
+}
+
+function moveTowards(a, b, value) {
+  return (a<b)
+    ? Math.min(a+value, b)
+    : Math.max(a-value, b)
+}
 
 class TractProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
@@ -7,8 +15,8 @@ class TractProcessor extends AudioWorkletProcessor {
       { name: 'tongueDiameter', defaultValue: 0.73, automationRate: 'k-rate'},
       { name: 'lipIndex', defaultValue: 41, automationRate: 'k-rate'},
       { name: 'lipDiameter', defaultValue: 3, automationRate: 'k-rate'},
-      { name: 'tipIndex', defaultValue: 41, automationRate: 'k-rate'},
-      { name: 'tipDiameter', defaultValue: 3, automationRate: 'k-rate'},
+      { name: 'tipIndex', defaultValue: 0.7, automationRate: 'k-rate'},
+      { name: 'tipDiameter', defaultValue: 1, automationRate: 'k-rate'},
     ]
   }
 
@@ -17,8 +25,9 @@ class TractProcessor extends AudioWorkletProcessor {
     this.port.onmessage = (e) => this.port.postMessage(this.diameter)
 
     // Init cavities
-    this.initOralCavity(38) // 44=tenor, 
-    this.initNasalCavity(24) // 28
+    // var tractLength = 37 + Math.round(Math.random() * 6)
+    this.initOralCavity(40) // 44=tenor, 
+    this.initNasalCavity(28) // 28
 
     // Ks
     this.KL = this.KR = this.KNose = 0
@@ -43,9 +52,9 @@ class TractProcessor extends AudioWorkletProcessor {
     this.junctionOutputL = new Float64Array(N+1)
 
     // diameter & cross-sectional area
-    this.maxDiameter = this.oralDiameter = 3.9
-    this.glottalDiameter = this.oralDiameter * 0.2
-    this.pharyngealDiameter = this.oralDiameter * 0.75
+    this.maxDiameter = this.oralDiameter = 3
+    this.glottalDiameter = this.oralDiameter * 0.4
+    this.pharyngealDiameter = this.oralDiameter * 0.9
     this.diameter = new Float64Array(N)
     this.restDiameter = new Float64Array(N)
     this.targetDiameter = new Float64Array(N)
@@ -75,7 +84,7 @@ class TractProcessor extends AudioWorkletProcessor {
 
   initNasalCavity(N) {
     this.noseOutput = 0
-    this.velumOpen = 0.04
+    this.velumOpen = 0.1
     this.velumTarget = 0.01
     this.noseLength = N
     this.noseStart = this.N - N + 1
@@ -192,8 +201,8 @@ class TractProcessor extends AudioWorkletProcessor {
     var i = Math.floor(index)
     var delta = index - i
     // noise amplitude modulation now occurs in source node !!!
-    var thinness = UTILS.clamp(8*(0.7-diameter),0,1)
-    var openness = UTILS.clamp(30*(diameter-0.3), 0, 1)
+    var thinness = clamp(8*(0.7-diameter),0,1)
+    var openness = clamp(30*(diameter-0.3), 0, 1)
 
     // divided by two for L-R split
     var noise0 = noise*(1-delta)*thinness*openness / 2
@@ -217,7 +226,7 @@ class TractProcessor extends AudioWorkletProcessor {
       if (m<this.noseStart) slowReturn = 0.6
       else if (m >= this.tipStart) slowReturn = 1.0 
       else slowReturn = 0.6+0.4*(m-this.noseStart)/(this.tipStart-this.noseStart)
-      this.diameter[m] = UTILS.moveTowards(diameter, targetDiameter, slowReturn*amount, 2*amount)
+      this.diameter[m] = moveTowards(diameter, targetDiameter, slowReturn*amount, 2*amount)
     }
     if (this.lastObstruction>-1 && newLastObstruction == -1 && this.noseA[0]<0.05)
     {
@@ -226,7 +235,7 @@ class TractProcessor extends AudioWorkletProcessor {
     this.lastObstruction = newLastObstruction
     
     amount = deltaTime * this.movementSpeed 
-    this.noseDiameter[0] = UTILS.moveTowards(this.noseDiameter[0], this.velumTarget, amount*0.25, amount*0.1)
+    this.noseDiameter[0] = moveTowards(this.noseDiameter[0], this.velumTarget, amount*0.25, amount*0.1)
     this.noseA[0] = this.noseDiameter[0]*this.noseDiameter[0]        
   }
 
@@ -263,8 +272,8 @@ class TractProcessor extends AudioWorkletProcessor {
     var tip = this.tipStart
     var lip = this.lipStart
 
-    var d = this.oralDiameter // ??
-    var fixedDiameter = 2 + (diameter-2) / 1.5
+    var d = this.oralDiameter * 0.66
+    var fixedDiameter = d + (diameter-d) / (this.oralDiameter * 0.5)
 
     // update rest & target diameter
     for (var i=this.bladeStart; i<this.lipStart; i++)
@@ -278,34 +287,36 @@ class TractProcessor extends AudioWorkletProcessor {
   }
 
   // THIS FOR SOME READSON PERMANENTLY REDUCES VOLUME
-  updateConstrictions(index, diameter) {
+  updateConstrictions(ind, dia) {
     var tip = this.tipStart
 
-    this.velumTarget = diameter < 0 ? this.velumOpen : this.velumOpen / 4
+    var index = ind * this.N
+    var diameter = dia * this.oralDiameter
+    this.velumTarget = diameter < 0 ? this.velumOpen : this.velumTarget
     diameter -= 0.3; // min diameter required to produce sound
     if (diameter<0) diameter = 0;         
-    // var width;
-    // if (index<25) width = 10;
-    // else if (index>=tip) width= 5;
-    // else width = 10-5*(index-25)/(tip-25);
-    // if (index >= 2 && index < this.N && diameter < this.maxDiameter)
-    // {
-    //   var intIndex = Math.round(index);
-    //   for (var i=-Math.ceil(width)-1; i<width+1; i++) 
-    //   {   
-    //     if (intIndex+i<0 || intIndex+i>=this.N) continue;
-    //     var relpos = (intIndex+i) - index;
-    //     relpos = Math.abs(relpos)-0.5;
-    //     var shrink;
-    //     if (relpos <= 0) shrink = 0;
-    //     else if (relpos > width) shrink = 1;
-    //     else shrink = 0.5*(1-Math.cos(Math.PI * relpos / width));
-    //     if (diameter < this.targetDiameter[intIndex+i])
-    //     {
-    //       this.targetDiameter[intIndex+i] = diameter + (this.targetDiameter[intIndex+i]-diameter)*shrink;
-    //     }
-    //   }
-    // }
+    var width;
+    if (index<25) width = 10;
+    else if (index>=tip) width= 5;
+    else width = 10-5*(index-25)/(tip-25);
+    if (index >= 2 && index < this.N && diameter < this.maxDiameter)
+    {
+      var intIndex = Math.round(index);
+      for (var i=-Math.ceil(width)-1; i<width+1; i++) 
+      {   
+        if (intIndex+i<0 || intIndex+i>=this.N) continue;
+        var relpos = (intIndex+i) - index;
+        relpos = Math.abs(relpos)-0.5;
+        var shrink;
+        if (relpos <= 0) shrink = 0;
+        else if (relpos > width) shrink = 1;
+        else shrink = 0.5*(1-Math.cos(Math.PI * relpos / width));
+        if (diameter < this.targetDiameter[intIndex+i])
+        {
+          this.targetDiameter[intIndex+i] = diameter + (this.targetDiameter[intIndex+i]-diameter)*shrink;
+        }
+      }
+    }
   }
 
   process(IN, OUT, PARAMS) {

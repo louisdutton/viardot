@@ -2,14 +2,7 @@ import React, { Suspense, useEffect, useRef, useState } from 'react'
 import { useLoader, Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import styled from 'styled-components'
 import eventBus from '../EventBus'
-
-const Frame = styled(Canvas)`
-  width: 500px;
-  height: 500px;
-  background: none;
-`
 
 const visemeDict = {
   'zh': 'viseme_sil',
@@ -40,8 +33,8 @@ function Head(props) {
 
   const setMorphTarget = (value) => {
     var index = viseme
-    // nodes[0].morphTargetInfluences[index] = value
-    // nodes[1].morphTargetInfluences[index] = value
+    nodes[0].morphTargetInfluences[index] = value
+    nodes[1].morphTargetInfluences[index] = value
   }
   
   const visemeIndex = (phoneme) => {
@@ -90,13 +83,12 @@ function Head(props) {
     state.eyes[1].rotation.z = Math.PI + (Math.PI/1.5) * rY
   })
 
-
   return <primitive object={scene} ref={ref} position={[0, -0.6, 0]}/>
 }
 
 export default function Render(props) {
   return (
-    <Frame 
+    <Canvas className='render'
       style={{width: '500px', height: '500px'}}
       dpr={ window.devicePixelRatio }
       camera={{ aspectRatio: 1, fov: 30, position: [0, 0, 1.2]}}
@@ -108,6 +100,6 @@ export default function Render(props) {
       <Suspense fallback={null}>
        <Head voice={props.voice}/>
       </Suspense>
-    </Frame>
+    </Canvas>
   )
 }

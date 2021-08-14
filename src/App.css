@@ -1,6 +1,11 @@
 body {
   overflow: hidden;
- 
+  user-select: none;
+  cursor: default;
+  -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+  user-select: none;     
 }
 
 h1 {
@@ -10,10 +15,11 @@ h1 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: white;
+  color: black;
   margin: 0;
   display: flex;
   flex-direction: row;
+  z-index: 0;
 }
 
 .App {
@@ -23,33 +29,32 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+
 }
 
-.Render {
+.render {
   position: absolute;
   z-index: 1;
-}
-
-.App-header {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  /* font-size: calc(10px + 2vmin); */
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
+  width: 500px;
+  height: 500px;
+  background: none;
 }
 
 input {
-  background: none;
+  opacity: 50%;
+  background: white;
+  color: #222;
   font-size: large;
-  color: white;
+  font-weight: 400;
   text-align: center;
   border: none;
+  transition: all 0.2s;
+  outline: none;
+  z-index: 1;
+}
+
+input:focus {
+  opacity: 100%;
 }
 
 #values {
@@ -89,4 +94,57 @@ button {
 button:hover {
   opacity: 100%;
   transform: scale(1.1);
+}
+
+.info-button {
+  position: absolute;
+  height: 40px;
+  width: 40px;
+  left: 5%;
+  top: 5%;
+}
+
+.text-input {
+  position: absolute;
+  left: 50%;
+  bottom: 5%;
+  transform: translateX(-50%);
+  border-radius: 25px;
+  height: 40px;
+}
+
+.ipa {
+  position: absolute;
+  left: 50%;
+  bottom: 10%;
+  transform: translateX(-50%);
+  background: none;
+  color: white;
+}
+
+.phoneme-select {
+  position: absolute;
+  right: 5%;
+  bottom: 15%;
+  width: 40px;
+  background: none;
+  color: white;
+}
+
+.info-splash {
+  top: 0;
+  left: 0;
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-splash p, .info-splash h2, .info-splash h3 {
+  color: white;
 }
