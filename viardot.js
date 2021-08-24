@@ -194,10 +194,10 @@ export default class Voice {
     this.master.connect(this.ctx.destination)
 
     this.reverb = new Freeverb(this.ctx)
-    this.reverb.roomSize = 0.7
+    this.reverb.roomSize = 0.6
     this.reverb.dampening = 3000
-    this.reverb.wet.value = 0.2
-    this.reverb.dry.value = 0.8
+    this.reverb.wet.value = 0.15
+    this.reverb.dry.value = 0.85
     this.reverb.connect(this.master)
 
     this.tractData = []
