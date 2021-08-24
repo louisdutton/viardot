@@ -4,6 +4,8 @@
 * attribution is appreciated.
 */
 
+import * as Freeverb from 'freeverb'
+
 class NoiseModulatorNode extends AudioWorkletNode {
   constructor(ctx) {
     super(ctx, 'noise-modulator', { numberOfInputs: 1, numberOfOutputs: 2 })
@@ -112,7 +114,7 @@ export const phonemeDict = {
   'm': [0.8, -1], // man
 }
 
-export const IPA = {
+const arpaToIPA = {
   'aa':	'ɑ',
   'ae':	'æ',
   'ah':	'ʌ',
@@ -162,11 +164,10 @@ export const IPA = {
   'zh':	'ʒ',
 }
 
-import * as Freeverb from 'freeverb'
 
 const workletPath = 'worklets/'
 
-export default class Voice {   
+export class Voice {   
   constructor(onComplete) {
     window.AudioContext = window.AudioContext || window.webkitAudioContext
     this.ctx = new window.AudioContext()   

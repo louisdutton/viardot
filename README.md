@@ -1,10 +1,12 @@
-# Viardot &middot; [![npm version](https://img.shields.io/npm/v/react.svg?style=flat)](https://www.npmjs.com/package/viardot)
+# Viardot &middot; [![npm version](https://img.shields.io/npm/v/react.svg?style=flat)](https://www.npmjs.com/package/viardot) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Viardot is a virtual voice library powered by the WebAudioAPI's AudioWorklet.
+Viardot is a virtual voice library powered by the WebAudioAPI AudioWorklet.
 
 ## Installation
 
-[npm](https://www.npmjs.com/package/viardot).
+```bash
+npm i viardot
+```
 
 ## Documentation
 
@@ -23,9 +25,4 @@ ReactDOM.render(
 
 ## To-Do
 
-...
-
-
-### License
-
-Viardot is MIT licensed.
+- optimise worklet processors
