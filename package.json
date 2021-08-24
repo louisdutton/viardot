@@ -2,6 +2,7 @@
   "name": "viardot",
   "version": "1.0.1",
   "description": "Vocal engine",
+  "type": "module",
   "main": "src/viardot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -1,10 +1,10 @@
 /*
 * Viardot vocal synthesizer by Louis Dutton (louisdutton.com)
-* Based on Pink Trombone by Neil Thapen 
+* Based on Pink Trombone by Neil Thapen
 * attribution is greatly appreciated.
 */
 
-import * as Freeverb from 'freeverb'
+const Freeverb = require('freeverb')
 import { TractFilterNode, GlottisNode, AspiratorNode, NoiseModulatorNode } from './nodes'
 
 // Phoneme: [index, diameter]
@@ -93,7 +93,7 @@ const arpaToIPA = {
   'zh':	'ʒ',
 }
 
-const workletPath = 'worklets/'
+const workletPath = 'sr/worklets/'
 // voice type
 export const FACH = {
   SOPRANO: 'soprano',
