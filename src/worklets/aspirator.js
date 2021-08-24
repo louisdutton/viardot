@@ -9,8 +9,8 @@
  * attribution is appreciated.
  */
 
-var G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
-var Grad = [
+const G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
+const Grad = [
     [1, 1],
     [-1, 1],
     [1, -1],
@@ -90,9 +90,8 @@ class Aspirator extends AudioWorkletProcessor {
   
   constructor() { 
     super();
-    // other code
-    var simplex2D = makeNoise2D()
-    this.simplex = (t) => simplex2D(t*1.2, -t*0.7) 
+    const simplex2D = makeNoise2D()
+    this.simplex = t => simplex2D(t*1.2, -t*0.7) 
   }
 
   process(IN, OUT, PARAMS) {
@@ -104,15 +103,15 @@ class Aspirator extends AudioWorkletProcessor {
     const amplitude = 0.05
 
     // pre block
-    var mod = intensity[0] * (1-Math.sqrt(tenseness[0]));
+    var mod = intensity[0] * (1-Math.sqrt(tenseness[0]))
 
     // block
     for (let n = 0; n < 128; n++) {
       output[n] = (input[n] * mod) * (floor + amplitude * this.simplex(currentTime * 2))
     }
 
-    return true;
+    return true
   }
 }
 
-registerProcessor('aspirator', Aspirator);
+registerProcessor('aspirator', Aspirator)

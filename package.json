@@ -1,8 +1,8 @@
 {
   "name": "viardot",
   "version": "1.0.0",
-  "description": "Virtual opera singer",
-  "main": "viardot.js",
+  "description": "Vocal engine",
+  "main": "src/viardot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,10 +11,14 @@
     "url": "git+https://github.com/louisdutton/viardot.git"
   },
   "keywords": [
-    "AudioWorklet"
+    "audioworklet",
+    "Webaudioapi",
+    "instrument",
+    "music",
+    "audio"
   ],
-  "author": "Louis Dutton",
-  "license": "ISC",
+  "author": "Louis Dutton <clouisdutton@gmail.com> (https://louisdutton.com/)",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/louisdutton/viardot/issues"
   },
