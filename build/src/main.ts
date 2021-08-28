@@ -1,12 +1,15 @@
 import './style.css'
-import { Voice, FACH } from './viardot/viardot'
+import { Voice, FACH } from './viardot'
 
-const voice = new Voice(FACH.SOPRANO);
+const voice = new Voice(FACH.BASS);
 
+onpointerdown = () => voice.start()
+onpointerup = () => voice.stop()
+onmousemove = e => {
+  const normalizedPos = 1 - clamp(e.y / window.innerHeight, 0, 1)
+  voice.setFrequency(normalizedPos)
+}
 
-
-
-
-window.addEventListener('pointermove', e => voice.setFrequency(1 - (e.screenY / window.innerHeight)), false)
-window.addEventListener('pointerdown', () => voice.start(), false)
-window.addEventListener('pointerup', () => voice.stop(), false)
+const clamp = (value: number, min: number, max: number): number => {
+  return Math.max(min, Math.min(value, max))
+}

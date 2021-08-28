@@ -1,4 +1,5 @@
-import { AudioWorkletNode, AudioContext, IAudioParam, IAudioContext, IAudioNode } from "standardized-audio-context"
+import { AudioWorkletNode, AudioContext, IAudioParam } from "standardized-audio-context"
+import { FACH } from './enums'
 
 abstract class CustomNode {
   public readonly tenseness: IAudioParam
@@ -32,6 +33,12 @@ export class NoiseModulatorNode extends CustomNode {
   }
 }
 
+export class AspiratorNode extends CustomNode {
+  constructor(ctx: AudioContext) {
+    super(ctx, 'aspirator', { numberOfInputs: 1 })
+  }
+}
+
 export class GlottisNode extends CustomNode {
   public readonly frequency: IAudioParam
   public readonly loudness: IAudioParam
@@ -49,10 +56,12 @@ export class GlottisNode extends CustomNode {
   }
 }
 
-export class AspiratorNode extends CustomNode {
-  constructor(ctx: AudioContext) {
-    super(ctx, 'aspirator', { numberOfInputs: 1 })
-  }
+interface TractProportions {
+  oralLength: number
+  nasalLength: number
+  maxDiameter: number
+  glottalRatio: number
+  pharyngealRatio: number
 }
 
 export class TractFilterNode {
@@ -63,11 +72,64 @@ export class TractFilterNode {
 
   public worklet!: AudioWorkletNode<AudioContext> 
 
-  constructor(ctx: AudioContext) {
-    this.worklet = new AudioWorkletNode<AudioContext>(ctx, 'tract', { numberOfInputs: 2 })
+  constructor(ctx: AudioContext, fach: FACH) {
+    const proportions = this.calculateProportions(fach)
+    this.worklet = new AudioWorkletNode<AudioContext>(ctx, 'tract', { 
+      numberOfInputs: 2, 
+      processorOptions: { proportions: proportions }
+    })
     this.tongueIndex = this.worklet.parameters.get('tongueIndex') as IAudioParam
     this.tongueDiameter = this.worklet.parameters.get('tongueDiameter') as IAudioParam
     this.tipIndex = this.worklet.parameters.get('tipIndex') as IAudioParam
     this.tipDiameter = this.worklet.parameters.get('tipDiameter') as IAudioParam
   }
+
+  calculateProportions(fach: FACH): TractProportions {
+    return TRACT_PROPORTIONS[fach]
+  }
 }
+
+const TRACT_PROPORTIONS = [
+  { // Soprano
+    oralLength: 40,
+    nasalLength: 28,
+    maxDiameter: 3,
+    glottalRatio: .4,
+    pharyngealRatio: .9
+  },
+  { // Mezzo
+    oralLength: 42,
+    nasalLength: 28,
+    maxDiameter: 3,
+    glottalRatio: .4,
+    pharyngealRatio: .9
+  },
+  { // Contralto
+    oralLength: 44,
+    nasalLength: 28,
+    maxDiameter: 3,
+    glottalRatio: .4,
+    pharyngealRatio: .9
+  },
+  { // Tenor
+    oralLength: 46,
+    nasalLength: 28,
+    maxDiameter: 3,
+    glottalRatio: .4,
+    pharyngealRatio: .9
+  },
+  { // Baritone
+    oralLength: 50,
+    nasalLength: 28,
+    maxDiameter: 3,
+    glottalRatio: .4,
+    pharyngealRatio: .9
+  },
+  { // Bass
+    oralLength: 60,
+    nasalLength: 30,
+    maxDiameter: 4,
+    glottalRatio: .4,
+    pharyngealRatio: .9
+  }
+]

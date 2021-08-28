@@ -1,51 +1,8 @@
-/*
-* Viardot vocal synthesizer by Louis Dutton (louisdutton.com)
-* Based on Pink Trombone by Neil Thapen
-* attribution is greatly appreciated.
-*/
-
 import NoiseNode from './noise'
-import { ArpaToIPA, PhonemeToTonguePosition } from './dictionaries'
-import { 
-  AudioContext, 
-  GainNode,
-} from 'standardized-audio-context'
-import { 
-  TractFilterNode, 
-  GlottisNode, 
-  AspiratorNode, 
-} from './nodes'
-
-const workletPath = 'worklets/'
-
-/**
- * Voice type from highest to lowest:
- * 
- * Soprano, Mezzo, Tenor, Baritone, Bass.
- */
- export enum FACH {
-  SOPRANO = 'soprano',
-  MEZZO = 'mezzo',
-  TENOR = 'tenor',
-  BARITONE ='baritone',
-  BASS = 'bass',
-}
-
-/**
- * Collection of 4 @link Voice
- */
-export class Quartet {
-  voices: Voice[]
-
-  constructor() {
-    this.voices = [
-      new Voice(FACH.SOPRANO),
-      new Voice(FACH.MEZZO),
-      new Voice(FACH.TENOR),
-      new Voice(FACH.BASS),
-    ]
-  }
-}
+import { FACH } from './enums'
+import { PhonemeToTonguePosition } from './dictionaries'
+import { AudioContext, GainNode } from 'standardized-audio-context'
+import { TractFilterNode, GlottisNode, AspiratorNode } from './nodes'
 
 /**
  * Monophonic vocal instrument.
@@ -63,6 +20,8 @@ export class Voice {
   private aspirator!: AspiratorNode
   private aspirationGain!: GainNode<AudioContext>
   private noise!: NoiseNode
+  public fach: FACH
+  public range: IVocalRange
   
   /**
    * 
@@ -73,6 +32,8 @@ export class Voice {
     const ctx = new AudioContext()
     ctx.suspend()
     this.sampleRate = ctx.sampleRate
+    this.fach = fach
+    this.range = getVocalRange(fach)
 
      // master gain
     const master = ctx.createGain()
@@ -83,6 +44,7 @@ export class Voice {
     this.ctx = ctx
     
     // async import custom audio nodes
+    const workletPath = 'worklets/'
     console.log('[viardot] Initializing...')
     const audioWorklet = this.ctx.audioWorklet
     Promise.all(['tract', 'noise-modulator', 'aspirator', 'glottis'].map(m => 
@@ -96,7 +58,7 @@ export class Voice {
   }
 
   init(ctx: AudioContext) {
-    const tract = new TractFilterNode(ctx)
+    const tract = new TractFilterNode(ctx, this.fach)
     tract.worklet.connect(this.master)
     // setInterval(() => this.tract.port.postMessage(0), 100)
     
@@ -117,7 +79,6 @@ export class Voice {
     noise.fricative.connect(tract.worklet, 0, 1)
     noise.aspiration.connect(aspirator.worklet)
     noise.modulator.worklet.connect(aspirationGain.gain)
-    // noise.source.connect(this.master)
 
     // Store
     this.tract = tract
@@ -133,7 +94,7 @@ export class Voice {
   // }
 
   setFrequency(value: number) {
-    const freq = 440 + value * 880
+    const freq = this.range.bottom + value * (this.range.top - this.range.bottom)
     this.noise.modulator.frequency.value = freq
     this.glottalExcitation.frequency.value = freq
     this.noise.aspiration.frequency.value = freq
@@ -178,4 +139,24 @@ export class Voice {
   }
 
   recieve = (phones: any) => {console.log(phones)}
+}
+
+interface IVocalRange { 
+  bottom: number, 
+  top: number, 
+  passagio?: { 
+    primo: number,
+    secondo: number
+  } 
+}
+
+function getVocalRange(fach: FACH) {
+  switch (fach) {
+    case FACH.SOPRANO:    return { bottom: 261.63, top: 1046.50 } as IVocalRange
+    case FACH.MEZZO:      return { bottom: 196.00, top: 880.00  } as IVocalRange
+    case FACH.CONTRALTO:  return { bottom: 174.61, top: 698.46  } as IVocalRange
+    case FACH.TENOR:      return { bottom: 130.81, top: 525.25  } as IVocalRange
+    case FACH.BARITONE:   return { bottom: 98.00,  top: 392.00  } as IVocalRange
+    case FACH.BASS:       return { bottom: 41.20,  top: 329.63  } as IVocalRange
+  }
 }

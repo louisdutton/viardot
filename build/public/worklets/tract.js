@@ -6,7 +6,7 @@ function moveTowards(a, b, value) {
   return (a<b)
     ? Math.min(a+value, b)
     : Math.max(a-value, b)
-}
+} 
 
 class TractProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
@@ -20,14 +20,15 @@ class TractProcessor extends AudioWorkletProcessor {
     ]
   }
 
-  constructor() { 
+  constructor({processorOptions: {proportions}}) { 
     super() 
     this.port.onmessage = (e) => this.port.postMessage(this.diameter)
 
+    console.log(proportions)
+  
     // Init cavities
-    // var tractLength = 37 + Math.round(Math.random() * 6)
-    this.initOralCavity(48) // 44=tenor, 
-    this.initNasalCavity(28) // 28
+    this.initOralCavity(proportions) // 44=tenor, 
+    this.initNasalCavity(proportions) // 28
 
     // Ks
     this.KL = this.KR = this.KNose = 0
@@ -37,7 +38,7 @@ class TractProcessor extends AudioWorkletProcessor {
     this.noseDiameter[0] = this.velumTarget
   }
 
-  initOralCavity(N) {
+  initOralCavity({oralLength:N, maxDiameter, glottalRatio, pharyngealRatio}) {
     // sections
     this.N = N
     this.bladeStart = Math.round(N * 0.227)
@@ -52,9 +53,9 @@ class TractProcessor extends AudioWorkletProcessor {
     this.junctionOutputL = new Float64Array(N+1)
 
     // diameter & cross-sectional area
-    this.maxDiameter = this.oralDiameter = 3
-    this.glottalDiameter = this.oralDiameter * 0.4
-    this.pharyngealDiameter = this.oralDiameter * 0.9
+    this.maxDiameter = this.oralDiameter = maxDiameter
+    this.glottalDiameter = this.oralDiameter * glottalRatio
+    this.pharyngealDiameter = this.oralDiameter * pharyngealRatio
     this.diameter = new Float64Array(N)
     this.restDiameter = new Float64Array(N)
     this.targetDiameter = new Float64Array(N)
@@ -82,7 +83,7 @@ class TractProcessor extends AudioWorkletProcessor {
     this.lipOutput = 0 // outout at the labia (lips)
   }
 
-  initNasalCavity(N) {
+  initNasalCavity({nasalLength:N}) {
     this.noseOutput = 0
     this.velumOpen = 0.1
     this.velumTarget = 0.01
@@ -108,8 +109,7 @@ class TractProcessor extends AudioWorkletProcessor {
   // Kelly-Lochenbaum junction (sonic transfer function)
   kl(A1, A2) { return (A1-A2)/(A1+A2) }
 
-  calculateReflections()
-  {
+  calculateReflections() {
     for (let m=0; m<this.N; m++) {
       this.A[m] = this.diameter[m] * this.diameter[m] //ignoring PI etc.
     }
@@ -125,8 +125,7 @@ class TractProcessor extends AudioWorkletProcessor {
     this.KNose = (2*this.noseA[0]-sum)/sum      
   }
 
-  calculateNoseReflections()
-  {
+  calculateNoseReflections() {
     for (let m = 0; m < this.noseLength; m++) 
     {
       const r = this.noseDiameter[m]
@@ -146,8 +145,7 @@ class TractProcessor extends AudioWorkletProcessor {
     this.junctionOutputR[0] = this.L[0] * this.glottalK + glottalExcitation
     this.junctionOutputL[this.N] = this.R[this.N-1] * this.lipK 
     
-    for (let v=1; v<this.N; v++)
-    {
+    for (let v=1; v<this.N; v++) {
         const r = this.K[v]
         const w = r * (this.R[v-1] + this.L[v])
         this.junctionOutputR[v] = this.R[v-1] - w
