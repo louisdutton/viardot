@@ -4,11 +4,37 @@
 * attribution is greatly appreciated.
 */
 
-const Freeverb = require('freeverb')
-import { TractFilterNode, GlottisNode, AspiratorNode, NoiseModulatorNode } from './nodes'
+import { 
+  AudioContext, 
+  GainNode,
+  AudioBufferSourceNode, 
+  BiquadFilterNode, 
+  TBiquadFilterType, 
+} from 'standardized-audio-context'
+import { 
+  TractFilterNode, 
+  GlottisNode, 
+  AspiratorNode, 
+  NoiseModulatorNode 
+} from './nodes'
+
+const workletPath = 'worklets/'
+
+/**
+ * Voice type from highest to lowest:
+ * 
+ * Soprano, Mezzo, Tenor, Baritone, Bass.
+ */
+ export enum FACH {
+  SOPRANO = 'soprano',
+  MEZZO = 'mezzo',
+  TENOR = 'tenor',
+  BARITONE ='baritone',
+  BASS = 'bass',
+}
 
 // Phoneme: [index, diameter]
-export const phonemeDict = {
+export const phonemeDict: { [key: string]: number[] } = {
   // vowels
   'aa': [0.84, 0.73], // part
   'ah': [0.84, 0.55], // pet
@@ -43,7 +69,7 @@ export const phonemeDict = {
   'm': [0.8, -1], // man
 }
 
-const arpaToIPA = {
+const arpaToIPA: { [key: string]: string } = {
   'aa':	'ɑ',
   'ae':	'æ',
   'ah':	'ʌ',
@@ -93,17 +119,12 @@ const arpaToIPA = {
   'zh':	'ʒ',
 }
 
-const workletPath = 'sr/worklets/'
-// voice type
-export const FACH = {
-  SOPRANO: 'soprano',
-  MEZZO: 'mezzo',
-  TENOR: 'tenor',
-  BARITONE: 'baritone',
-  BASS: 'bass',
-}
-
+/**
+ * Collection of 4 @link Voice
+ */
 export class Quartet {
+  voices: Voice[]
+
   constructor() {
     this.voices = [
       new Voice(FACH.SOPRANO),
@@ -114,25 +135,49 @@ export class Quartet {
   }
 }
 
+/**
+ * Monophonic vocal instrument.
+ * @example 
+ * const voice = new Voice(FACH.SOPRANO)
+ * voice.on('C4')
+ */
 export class Voice {   
-  constructor(fach=FACH.SOPRANO, onComplete) {
-    window.AudioContext = window.AudioContext || window.webkitAudioContext
-    this.ctx = new window.AudioContext()   
+  ctx: AudioContext
+  master!: GainNode<AudioContext>
+  sampleRate: number
+  tract!: TractFilterNode
+  glottalSource!: GainNode<AudioContext>
+  glottalExcitation!: GlottisNode
+  aspirator!: AspiratorNode
+  aspirationGain!: GainNode<AudioContext>
+  aspirationFilter!: BiquadFilterNode<AudioContext>
+  fricativeGain!: GainNode<AudioContext>
+  fricativeFilter!: BiquadFilterNode<AudioContext>
+  noise!: AudioBufferSourceNode<AudioContext>
+  noiseModulator!: NoiseModulatorNode
+  
+  /**
+   * 
+   * @param  {FACH}     fach        Voice type
+   * @param  {Function} onComplete  Completion callback
+   */
+  constructor(fach:FACH, onComplete?:Function) {
+    this.ctx = new AudioContext()
     this.ctx.suspend()
     this.sampleRate = this.ctx.sampleRate
     
     // async import custom audio nodes
     console.log('[viardot] Initializing...')
-    var audioWorklet = this.ctx.audioWorklet
-    var modules = ['tract', 'noise-modulator', 'aspirator', 'glottis']
+    const audioWorklet = this.ctx.audioWorklet
+    const modules = ['tract', 'noise-modulator', 'aspirator', 'glottis']
     Promise.all(modules.map(m => 
-      audioWorklet.addModule(workletPath + m + '.js'))
+      audioWorklet?.addModule(workletPath + m + '.js'))
     ).then(() => this.init()).then(() => this.onComplete(onComplete))
   }
 
-  onComplete(callback) {
+  onComplete(callback?: Function) {
     console.log('[viardot] Intialization complete.')
-    callback()
+    if (callback) callback()
   }
 
   init() {
@@ -141,17 +186,9 @@ export class Voice {
     this.master.gain.setValueAtTime(0.05, this.ctx.currentTime)
     this.master.connect(this.ctx.destination)
 
-    this.reverb = new Freeverb(this.ctx)
-    this.reverb.roomSize = 0.6
-    this.reverb.dampening = 3000
-    this.reverb.wet.value = 0.15
-    this.reverb.dry.value = 0.85
-    this.reverb.connect(this.master)
-
-    this.tractData = []
     this.tract = new TractFilterNode(this.ctx)
-    this.tract.connect(this.reverb)
-    setInterval(() => this.tract.port.postMessage(0), 100)
+    this.tract.connect(this.master)
+    // setInterval(() => this.tract.port.postMessage(0), 100)
     
     // Glottal source
     this.glottalSource = this.ctx.createGain()
@@ -163,28 +200,26 @@ export class Voice {
     this.initNoise(2)
   }
 
-  setNasal(value) {
+  setNasal(value: number) {
     this.tract.port.postMessage(value)
   }
 
-  setFrequency(value) {
-    var freq = 440 + value * 880
+  setFrequency(value: number) {
+    const freq = 440 + value * 880
     this.noiseModulator.frequency.value = freq
     this.glottalExcitation.frequency.value = freq
     this.aspirationFilter.frequency.value = freq
-    // this.glottalExcitation.vibratoRate.value = 6 + value * 1
-    // this.glottalExcitation.vibratoDepth.value = 6 + value * 7
   }
 
-  setIntensity(value) {
-    var tenseness = value * 0.3
+  setIntensity(value: number) {
+    const tenseness = value * 0.3
     this.glottalExcitation.tenseness.value = value * 0.4
     this.glottalExcitation.loudness.value = Math.pow(value, 0.25)
     this.aspirator.tenseness.value = tenseness
     this.noiseModulator.tenseness.value = tenseness
   }
 
-  initNoise(duration) {
+  initNoise(duration: number) {
     this.aspirationGain = this.ctx.createGain()
     this.aspirationGain.connect(this.glottalSource)
 
@@ -205,18 +240,12 @@ export class Voice {
     this.noiseModulator.connect(this.fricativeGain.gain)
     this.aspirationFilter = this.createFilter(600, 0.9, 'lowpass')
     this.aspirationFilter.connect(this.aspirator)
-    this.fricativeFilter = this.createFilter(1000, 0.7).connect(this.fricativeGain)
+    this.fricativeFilter = this.createFilter(1000, 0.7)
+    this.fricativeFilter.connect(this.fricativeGain)
   }
 
-  createLFO(frequency, target) {
-    var lfo = this.ctx.createOscillator()
-    lfo.frequency.value = frequency
-    lfo.connect(target)
-    return lfo
-  }
-
-  createFilter(frequency, q=0.67, type='bandpass') {
-    var filter = this.ctx.createBiquadFilter()
+  createFilter(frequency: number, q=0.67, type:TBiquadFilterType='bandpass') {
+    const filter = this.ctx.createBiquadFilter()
     filter.type = type
     filter.frequency.value = frequency
     filter.Q.value = q
@@ -224,8 +253,7 @@ export class Voice {
     return filter
   }
 
-  // Paul Kellet's refined method
-  whiteNoiseBuffer(duration, sampleRate)
+  whiteNoiseBuffer(duration: number, sampleRate: number)
   {
     const bufferSize = duration * sampleRate; // duration * sampleRate
     const buffer = this.ctx.createBuffer(1, bufferSize, sampleRate)
@@ -235,21 +263,21 @@ export class Voice {
 
   static getPhonemeDict = () => phonemeDict
 
-  setPhoneme(key) {
-    var values = phonemeDict[key]
+  setPhoneme(key:string) {
+    const values = phonemeDict[key]
     this.setTongue(values[0], values[1])
   }
 
-  setTongue(index, diameter, t = 0.3) {
+  setTongue(index: number, diameter: number, t = 0.3) {
     this.tract.tongueIndex.value = index
     this.tract.tongueDiameter.value = diameter
   }
 
-  setIndex(index, t = 0.3) {
+  setIndex(index: number, t = 0.3) {
     this.tract.tongueIndex.value = index
   }
 
-  setDiameter(diameter, t = 0.3) {
+  setDiameter(diameter: number, t = 0.3) {
     this.tract.tongueDiameter.value = diameter
   }
 
@@ -267,5 +295,5 @@ export class Voice {
     this.aspirator.stop(this.ctx.currentTime)
   }
 
-  recieve = (phones) => {console.log(phones)}
+  recieve = (phones: any) => {console.log(phones)}
 }

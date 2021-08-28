@@ -26,7 +26,7 @@ class TractProcessor extends AudioWorkletProcessor {
 
     // Init cavities
     // var tractLength = 37 + Math.round(Math.random() * 6)
-    this.initOralCavity(40) // 44=tenor, 
+    this.initOralCavity(48) // 44=tenor, 
     this.initNasalCavity(28) // 28
 
     // Ks
@@ -60,14 +60,14 @@ class TractProcessor extends AudioWorkletProcessor {
     this.targetDiameter = new Float64Array(N)
     this.A = new Float64Array(N) // cross-sectional areas
 
-    const phraynxStart = N * 0.2
+    const pharynxStart = N * 0.2
     const oralStart = N * 0.275
 
     // tract diameter calc
     for (let m = 0; m < N; m++)
     {
-        const diameter = 0
-        if (m < phraynxStart) diameter = this.glottalDiameter
+        let diameter = 0
+        if (m < pharynxStart) diameter = this.glottalDiameter
         else if (m < oralStart) diameter = this.pharyngealDiameter
         else diameter = this.oralDiameter
         this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter
@@ -110,12 +110,10 @@ class TractProcessor extends AudioWorkletProcessor {
 
   calculateReflections()
   {
-    for (let m=0; m<this.N; m++) 
-    {
+    for (let m=0; m<this.N; m++) {
       this.A[m] = this.diameter[m] * this.diameter[m] //ignoring PI etc.
     }
-    for (let m=1; m<this.N; m++)
-    {
+    for (let m=1; m<this.N; m++) {
       // prevent error if 0
       this.K[m] = this.A[m] == 0 ? 0.999 : this.kl(this.A[m-1], this.A[m])
     }

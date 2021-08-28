@@ -2,8 +2,8 @@
   "name": "viardot",
   "version": "1.0.2",
   "description": "Vocal engine",
-  "type": "module",
   "main": "src/viardot.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,8 +12,8 @@
     "url": "git+https://github.com/louisdutton/viardot.git"
   },
   "keywords": [
-    "audioworklet",
-    "Webaudioapi",
+    "AudioWorklet",
+    "Web Audio API",
     "instrument",
     "music",
     "audio"
@@ -25,7 +25,10 @@
   },
   "homepage": "https://github.com/louisdutton/viardot#readme",
   "dependencies": {
-    "freeverb": "^1.1.2",
-    "rita": "^2.4.200"
+    "rita": "^2.4.200",
+    "standardized-audio-context": "^25.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^4.4.2"
   }
 }

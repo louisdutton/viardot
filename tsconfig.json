@@ -1,0 +1,20 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "watch": true,
+    "target": "ES6",                                     
+    "module": "ES2015",                                        
+    "strict": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "outDir": "build",
+    "allowJs": false,
+    "strictPropertyInitialization": true,
+		"downlevelIteration": true,
+    "removeComments": false,
+    "moduleResolution": "node",
+    "lib": ["ES6", "DOM", "ES2015"],
+    "baseUrl": "./"
+  }
+}
