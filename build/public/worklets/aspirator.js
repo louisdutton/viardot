@@ -99,7 +99,7 @@ class Aspirator extends AudioWorkletProcessor {
     const output = OUT[0][0]
     const intensity = PARAMS.intensity
     const tenseness = PARAMS.tenseness
-    const floor = 0.15
+    const floor = 0.02
     const amplitude = 0.05
 
     // pre block

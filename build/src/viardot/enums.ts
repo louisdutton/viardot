@@ -3,11 +3,11 @@
 * 
 * Soprano, Mezzo, Contralto, Tenor, Baritone, Bass.
 */
-export enum FACH {
- SOPRANO,
- MEZZO,
- CONTRALTO,
- TENOR,
- BARITONE,
- BASS,
+export enum Fach {
+ Soprano,
+ Mezzo,
+ Contralto,
+ Tenor,
+ Baritone,
+ Bass,
 }

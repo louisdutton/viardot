@@ -11,6 +11,8 @@
     "vite": "^2.5.1"
   },
   "dependencies": {
+    "@tonaljs/tonal": "^4.6.2",
+    "freeverb": "^1.1.2",
     "standardized-audio-context": "^25.3.6"
   }
 }

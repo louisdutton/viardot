@@ -1,2 +1,3 @@
 export * from './enums'
-export { Voice } from './voice'
+export { Voice, Start } from './voice'
+export { Quartet } from './ensembles'

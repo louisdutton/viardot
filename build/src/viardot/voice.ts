@@ -1,8 +1,15 @@
 import NoiseNode from './noise'
-import { FACH } from './enums'
+import { Fach } from './enums'
 import { PhonemeToTonguePosition } from './dictionaries'
 import { AudioContext, GainNode } from 'standardized-audio-context'
 import { TractFilterNode, GlottisNode, AspiratorNode } from './nodes'
+import Freeverb from 'freeverb'
+
+let globalContext: AudioContext;
+
+export const Start = (): void => {
+  globalContext = new AudioContext()
+}
 
 /**
  * Monophonic vocal instrument.
@@ -20,16 +27,18 @@ export class Voice {
   private aspirator!: AspiratorNode
   private aspirationGain!: GainNode<AudioContext>
   private noise!: NoiseNode
-  public fach: FACH
+  public fach: Fach
   public range: IVocalRange
+  private reverb: GainNode<AudioContext>
   
   /**
    * 
-   * @param  {FACH}     fach        Voice type
+   * @param  {Fach}     fach        Voice type
    * @param  {Function} onComplete  Completion callback
    */
-  constructor(fach:FACH, onComplete?:Function) {
-    const ctx = new AudioContext()
+  constructor(fach: Fach, onComplete?: Function) {
+    if (!globalContext) return null
+    const ctx = globalContext
     ctx.suspend()
     this.sampleRate = ctx.sampleRate
     this.fach = fach
@@ -40,8 +49,16 @@ export class Voice {
     master.gain.setValueAtTime(0.05, ctx.currentTime)
     master.connect(ctx.destination)
 
+    const reverb = Freeverb(ctx)
+    reverb.roomSize = 0.9
+    reverb.dampening = 5000
+    reverb.wet.value = .5
+    reverb.dry.value = 0
+    reverb.connect(master)
+    
     this.master = master
     this.ctx = ctx
+    this.reverb = reverb
     
     // async import custom audio nodes
     const workletPath = 'worklets/'
@@ -59,13 +76,15 @@ export class Voice {
 
   init(ctx: AudioContext) {
     const tract = new TractFilterNode(ctx, this.fach)
-    tract.worklet.connect(this.master)
+    tract.worklet.connect(this.reverb)
     // setInterval(() => this.tract.port.postMessage(0), 100)
     
     // Glottal source
     const glottalGain = ctx.createGain()
     const glottalExcitation = new GlottisNode(ctx)
     glottalGain.connect(tract.worklet)
+    glottalExcitation.vibratoRate.value = 4 + Math.random() * 2
+    glottalExcitation.vibratoDepth.value = 5 + Math.random() * 3
     glottalExcitation.worklet.connect(glottalGain)
     
     // Aspiration
@@ -87,6 +106,8 @@ export class Voice {
     this.aspirator = aspirator
     this.aspirationGain = aspirationGain
     this.noise = noise
+
+    this.setIntensity(0.5)
   }
 
   // setNasal(value: number) {
@@ -94,10 +115,12 @@ export class Voice {
   // }
 
   setFrequency(value: number) {
-    const freq = this.range.bottom + value * (this.range.top - this.range.bottom)
+    // const freq = this.range.bottom + value * (this.range.top - this.range.bottom)
+    const freq = value
     this.noise.modulator.frequency.value = freq
-    this.glottalExcitation.frequency.value = freq
+    this.glottalExcitation.frequency.exponentialRampToValueAtTime(freq, this.ctx.currentTime + .15)
     this.noise.aspiration.frequency.value = freq
+    this.setIntensity(1-(freq / (this.range.top - this.range.bottom)))
   }
 
   setIntensity(value: number) {
@@ -150,13 +173,13 @@ interface IVocalRange {
   } 
 }
 
-function getVocalRange(fach: FACH) {
+function getVocalRange(fach: Fach) {
   switch (fach) {
-    case FACH.SOPRANO:    return { bottom: 261.63, top: 1046.50 } as IVocalRange
-    case FACH.MEZZO:      return { bottom: 196.00, top: 880.00  } as IVocalRange
-    case FACH.CONTRALTO:  return { bottom: 174.61, top: 698.46  } as IVocalRange
-    case FACH.TENOR:      return { bottom: 130.81, top: 525.25  } as IVocalRange
-    case FACH.BARITONE:   return { bottom: 98.00,  top: 392.00  } as IVocalRange
-    case FACH.BASS:       return { bottom: 41.20,  top: 329.63  } as IVocalRange
+    case Fach.Soprano:    return { bottom: 261.63, top: 1046.50 } as IVocalRange
+    case Fach.Mezzo:      return { bottom: 196.00, top: 880.00  } as IVocalRange
+    case Fach.Contralto:  return { bottom: 174.61, top: 698.46  } as IVocalRange
+    case Fach.Tenor:      return { bottom: 130.81, top: 525.25  } as IVocalRange
+    case Fach.Baritone:   return { bottom: 98.00,  top: 392.00  } as IVocalRange
+    case Fach.Bass:       return { bottom: 41.20,  top: 329.63  } as IVocalRange
   }
 }

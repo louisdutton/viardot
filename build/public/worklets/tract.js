@@ -11,8 +11,8 @@ function moveTowards(a, b, value) {
 class TractProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
-      { name: 'tongueIndex', defaultValue: 0.84, automationRate: 'k-rate'},
-      { name: 'tongueDiameter', defaultValue: 0.73, automationRate: 'k-rate'},
+      { name: 'tongueIndex', defaultValue: 0.9, automationRate: 'k-rate'},
+      { name: 'tongueDiameter', defaultValue: 0.4, automationRate: 'k-rate'},
       { name: 'lipIndex', defaultValue: 41, automationRate: 'k-rate'},
       { name: 'lipDiameter', defaultValue: 3, automationRate: 'k-rate'},
       { name: 'tipIndex', defaultValue: 0.7, automationRate: 'k-rate'},
@@ -74,7 +74,7 @@ class TractProcessor extends AudioWorkletProcessor {
         this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter
     }
 
-    this.glottalK = 0.7 // reflection at glottis
+    this.glottalK = 0.75 // reflection at glottis
     this.lipK = -0.85 // reflection at labia (lips)
     this.lastObstruction = -1
     this.decay = 0.999 // the coefficient of decay in the transfer function
@@ -102,7 +102,7 @@ class TractProcessor extends AudioWorkletProcessor {
     {
         const d = 2 * (i/N)
         const diameter = (d<1) ? 0.4 + (1.6 * d) : 0.5 + 1.5 * (2-d)
-        this.noseDiameter[i] = Math.min(diameter, 1.9) * this.noseLength / 28 // fix magic numbers
+        this.noseDiameter[i] = Math.min(diameter, 1.5) * this.noseLength / 28 // fix magic numbers
     }
   }
 
@@ -126,13 +126,11 @@ class TractProcessor extends AudioWorkletProcessor {
   }
 
   calculateNoseReflections() {
-    for (let m = 0; m < this.noseLength; m++) 
-    {
+    for (let m = 0; m < this.noseLength; m++) {
       const r = this.noseDiameter[m]
       this.noseA[m] = Math.PI * (r*r)
     }
-    for (let m = 1; m < this.noseLength; m++)
-    {
+    for (let m = 1; m < this.noseLength; m++) {
       this.noseK[m] = this.kl(this.noseA[m-1], this.noseA[m]) 
     }
   }
@@ -162,8 +160,7 @@ class TractProcessor extends AudioWorkletProcessor {
     this.noseJunctionOutputR[0] = r*this.noseL[0]+(1+r)*(this.L[v]+this.R[v-1])
     
     // decay in oral cavity 
-    for (let v = 0; v < this.N; v++)
-    {          
+    for (let v = 0; v < this.N; v++) {          
         this.R[v] = this.junctionOutputR[v]*this.decay
         this.L[v] = this.junctionOutputL[v+1]*this.decay
     }
@@ -173,16 +170,14 @@ class TractProcessor extends AudioWorkletProcessor {
     // nose
     this.noseJunctionOutputL[this.noseLength] = this.noseR[this.noseLength-1] * this.lipK 
     
-    for (let v = 1; v < this.noseLength; v++)
-    {
+    for (let v = 1; v < this.noseLength; v++) {
         const w = this.noseK[v] * (this.noseR[v-1] + this.noseL[v])
         this.noseJunctionOutputR[v] = this.noseR[v-1] - w
         this.noseJunctionOutputL[v] = this.noseL[v] + w
     }
     
     // decay in nasal cavity 
-    for (let v = 0; v < this.noseLength; v++)
-    {
+    for (let v = 0; v < this.noseLength; v++) {
         this.noseR[v] = this.noseJunctionOutputR[v] * this.decay
         this.noseL[v] = this.noseJunctionOutputL[v+1] * this.decay   
     }
@@ -192,8 +187,7 @@ class TractProcessor extends AudioWorkletProcessor {
 
   // Turbulence noise
     
-  addFricativeNoise(noise, index, diameter)
-  {   
+  addFricativeNoise(noise, index, diameter) {   
     const i = Math.floor(index)
     const delta = index - i
     // noise amplitude modulation now occurs in source node !!!
@@ -211,12 +205,10 @@ class TractProcessor extends AudioWorkletProcessor {
     this.L[i+2] += noise1
   }
 
-  reshapeTract(deltaTime)
-  {
+  reshapeTract(deltaTime) {
     let amount = deltaTime * this.movementSpeed     
     let newLastObstruction = -1
-    for (var m = 0; m < this.N; m++)
-    {
+    for (var m = 0; m < this.N; m++) {
       const diameter = this.diameter[m]
       var targetDiameter = this.targetDiameter[m]
       if (diameter <= 0) newLastObstruction = m
@@ -226,8 +218,7 @@ class TractProcessor extends AudioWorkletProcessor {
       else slowReturn = 0.6+0.4*(m-this.noseStart)/(this.tipStart-this.noseStart)
       this.diameter[m] = moveTowards(diameter, targetDiameter, slowReturn*amount, 2*amount)
     }
-    if (this.lastObstruction>-1 && newLastObstruction == -1 && this.noseA[0]<0.05)
-    {
+    if (this.lastObstruction>-1 && newLastObstruction == -1 && this.noseA[0]<0.05) {
       this.addTransient(this.lastObstruction)
     }
     this.lastObstruction = newLastObstruction

@@ -1,18 +1,14 @@
-import { FACH } from '.'
+import { Fach } from '.'
 import { Voice } from '.'
 
+type Fachs = [Fach, Fach, Fach, Fach]
 /**
  * Collection of 4 voices
  */
- export class Quartet {
+export class Quartet {
   voices: Voice[]
 
-  constructor() {
-    this.voices = [
-      new Voice(FACH.SOPRANO),
-      new Voice(FACH.MEZZO),
-      new Voice(FACH.TENOR),
-      new Voice(FACH.BASS),
-    ]
+  constructor(fachs: Fachs) {
+    this.voices = fachs.map(f => new Voice(f))
   }
 }

@@ -1,5 +1,5 @@
 import { AudioWorkletNode, AudioContext, IAudioParam } from "standardized-audio-context"
-import { FACH } from './enums'
+import { Fach } from './enums'
 
 abstract class CustomNode {
   public readonly tenseness: IAudioParam
@@ -15,12 +15,12 @@ abstract class CustomNode {
 
   start(t: number): void {
     this.intensity.cancelScheduledValues(0)
-    this.intensity.exponentialRampToValueAtTime(1, t + 0.1)
+    this.intensity.exponentialRampToValueAtTime(1, t + .25)
   }
 
   stop(t: number): void {
     this.intensity.cancelScheduledValues(0)
-    this.intensity.exponentialRampToValueAtTime(0.0001, t + 0.5)
+    this.intensity.exponentialRampToValueAtTime(0.0001, t + 1)
   }
 }
 
@@ -72,8 +72,8 @@ export class TractFilterNode {
 
   public worklet!: AudioWorkletNode<AudioContext> 
 
-  constructor(ctx: AudioContext, fach: FACH) {
-    const proportions = this.calculateProportions(fach)
+  constructor(ctx: AudioContext, Fach: Fach) {
+    const proportions = this.calculateProportions(Fach)
     this.worklet = new AudioWorkletNode<AudioContext>(ctx, 'tract', { 
       numberOfInputs: 2, 
       processorOptions: { proportions: proportions }
@@ -84,8 +84,8 @@ export class TractFilterNode {
     this.tipDiameter = this.worklet.parameters.get('tipDiameter') as IAudioParam
   }
 
-  calculateProportions(fach: FACH): TractProportions {
-    return TRACT_PROPORTIONS[fach]
+  calculateProportions(Fach: Fach): TractProportions {
+    return TRACT_PROPORTIONS[Fach]
   }
 }
 
@@ -93,43 +93,43 @@ const TRACT_PROPORTIONS = [
   { // Soprano
     oralLength: 40,
     nasalLength: 28,
-    maxDiameter: 3,
-    glottalRatio: .4,
-    pharyngealRatio: .9
+    maxDiameter: 4,
+    glottalRatio: .45,
+    pharyngealRatio: 1
   },
   { // Mezzo
     oralLength: 42,
     nasalLength: 28,
-    maxDiameter: 3,
-    glottalRatio: .4,
-    pharyngealRatio: .9
+    maxDiameter: 4,
+    glottalRatio: .45,
+    pharyngealRatio: 1
   },
   { // Contralto
     oralLength: 44,
     nasalLength: 28,
-    maxDiameter: 3,
-    glottalRatio: .4,
-    pharyngealRatio: .9
+    maxDiameter: 4,
+    glottalRatio: .45,
+    pharyngealRatio: 1
   },
   { // Tenor
-    oralLength: 46,
-    nasalLength: 28,
-    maxDiameter: 3,
-    glottalRatio: .4,
-    pharyngealRatio: .9
-  },
-  { // Baritone
     oralLength: 50,
     nasalLength: 28,
-    maxDiameter: 3,
+    maxDiameter: 3.5,
     glottalRatio: .4,
-    pharyngealRatio: .9
+    pharyngealRatio: 1
+  },
+  { // Baritone
+    oralLength: 54,
+    nasalLength: 36,
+    maxDiameter: 3.5,
+    glottalRatio: .4,
+    pharyngealRatio: 1
   },
   { // Bass
-    oralLength: 60,
-    nasalLength: 30,
-    maxDiameter: 4,
+    oralLength: 58,
+    nasalLength: 40,
+    maxDiameter: 3.5,
     glottalRatio: .4,
-    pharyngealRatio: .9
+    pharyngealRatio: 1
   }
 ]
