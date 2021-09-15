@@ -1,14 +1,6 @@
 "use strict";
-/*
- * Based on example code by Stefan Gustavson (stegu@itn.liu.se).
- * Optimisations by Peter Eastman (peastman@drizzle.stanford.edu).
- * Better rank ordering method by Stefan Gustavson in 2012.
- *
- * This code was placed in the public domain by its original author,
- * Stefan Gustavson. You may use it as you see fit, but
- * attribution is appreciated.
- */
 
+// Stefan Gustavson's Perlin Noise
 const G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
 const Grad = [
     [1, 1],
@@ -85,11 +77,11 @@ class Aspirator extends AudioWorkletProcessor {
     return [
       { name: 'tenseness', defaultValue: 0.6, automationRate: 'k-rate'},
       { name: 'intensity', defaultValue: 0.5, automationRate: 'k-rate'},
-    ];
+    ]
   }
   
   constructor() { 
-    super();
+    super()
     const simplex2D = makeNoise2D()
     this.simplex = t => simplex2D(t*1.2, -t*0.7) 
   }
@@ -97,17 +89,17 @@ class Aspirator extends AudioWorkletProcessor {
   process(IN, OUT, PARAMS) {
     const input = IN[0][0]
     const output = OUT[0][0]
-    const intensity = PARAMS.intensity
-    const tenseness = PARAMS.tenseness
-    const floor = 0.02
+    const intensity = PARAMS.intensity[0] 
+    const tenseness = PARAMS.tenseness[0]
+    const floor = 0.1
     const amplitude = 0.05
 
     // pre block
-    var mod = intensity[0] * (1-Math.sqrt(tenseness[0]))
+    var mod = intensity * (Math.sqrt(tenseness))
 
     // block
     for (let n = 0; n < 128; n++) {
-      output[n] = (input[n] * mod) * (floor + amplitude * this.simplex(currentTime * 2))
+      output[n] = (input[n] * mod) * (floor + amplitude * this.simplex(currentTime * 4))
     }
 
     return true

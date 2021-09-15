@@ -5,86 +5,76 @@ import { AudioContext, GainNode } from 'standardized-audio-context'
 import { TractFilterNode, GlottisNode, AspiratorNode } from './nodes'
 import Freeverb from 'freeverb'
 
-let globalContext: AudioContext;
+let $audioContext: AudioContext;
+let $master: GainNode<AudioContext>
+let $reverb: any
 
-export const Start = (): void => {
-  globalContext = new AudioContext()
+const workletModules = ['tract', 'noise-modulator', 'aspirator', 'glottis']
+export const Start = async (): Promise<void[]> => {
+  const ctx = $audioContext = new AudioContext()
+
+  // global master gain
+  $master = ctx.createGain()
+  $master.gain.setValueAtTime(0.05, ctx.currentTime)
+  $master.connect(ctx.destination)
+
+  // global reverb
+  $reverb = Freeverb(ctx)
+  $reverb.roomSize = 0.8
+  $reverb.dampening = 3000
+  $reverb.wet.value = .2
+  $reverb.dry.value = 1
+  $reverb.connect($master)
+
+  const workletPath = 'worklets/'
+  console.log('[viardot] Initializing...')
+  const audioWorklet = ctx.audioWorklet
+  return Promise.all(workletModules.map(m => 
+    audioWorklet?.addModule(workletPath + m + '.js'))
+  )
 }
 
 /**
- * Monophonic vocal instrument.
+ * Monophonic vocal synthesizer.
  * @example 
  * const voice = new Voice(FACH.SOPRANO)
- * voice.on('C4')
+ * voice.start('C4')
  */
 export class Voice {   
-  public readonly ctx: AudioContext
-  public readonly master: GainNode<AudioContext>
-  public readonly sampleRate: number
-  private tract!: TractFilterNode
-  private glottalGain!: GainNode<AudioContext>
-  private glottalExcitation!: GlottisNode
-  private aspirator!: AspiratorNode
-  private aspirationGain!: GainNode<AudioContext>
-  private noise!: NoiseNode
-  public fach: Fach
-  public range: IVocalRange
-  private reverb: GainNode<AudioContext>
+  private readonly ctx: AudioContext
+  private tract: TractFilterNode
+  private glottalGain: GainNode<AudioContext>
+  private glottalExcitation: GlottisNode
+  private aspirator: AspiratorNode
+  private aspirationGain: GainNode<AudioContext>
+  private noise: NoiseNode
+  public readonly fach: Fach
+  public readonly range: IVocalRange
+  public portamento: number
   
   /**
    * 
    * @param  {Fach}     fach        Voice type
    * @param  {Function} onComplete  Completion callback
    */
-  constructor(fach: Fach, onComplete?: Function) {
-    if (!globalContext) return null
-    const ctx = globalContext
-    ctx.suspend()
-    this.sampleRate = ctx.sampleRate
+  constructor(fach: Fach) {
+    if (!$audioContext) return null
+    const ctx = $audioContext
+
     this.fach = fach
     this.range = getVocalRange(fach)
 
-     // master gain
-    const master = ctx.createGain()
-    master.gain.setValueAtTime(0.05, ctx.currentTime)
-    master.connect(ctx.destination)
-
-    const reverb = Freeverb(ctx)
-    reverb.roomSize = 0.9
-    reverb.dampening = 5000
-    reverb.wet.value = .5
-    reverb.dry.value = 0
-    reverb.connect(master)
-    
-    this.master = master
-    this.ctx = ctx
-    this.reverb = reverb
-    
-    // async import custom audio nodes
-    const workletPath = 'worklets/'
-    console.log('[viardot] Initializing...')
-    const audioWorklet = this.ctx.audioWorklet
-    Promise.all(['tract', 'noise-modulator', 'aspirator', 'glottis'].map(m => 
-      audioWorklet?.addModule(workletPath + m + '.js'))
-    ).then(() => this.init(this.ctx)).then(() => this.onComplete(onComplete))
-  }
-
-  onComplete(callback?: Function) {
-    console.log('[viardot] Intialization complete.')
-    if (callback) callback()
-  }
-
-  init(ctx: AudioContext) {
     const tract = new TractFilterNode(ctx, this.fach)
-    tract.worklet.connect(this.reverb)
+    tract.worklet.connect($reverb)
     // setInterval(() => this.tract.port.postMessage(0), 100)
     
     // Glottal source
     const glottalGain = ctx.createGain()
     const glottalExcitation = new GlottisNode(ctx)
-    glottalGain.connect(tract.worklet)
-    glottalExcitation.vibratoRate.value = 4 + Math.random() * 2
-    glottalExcitation.vibratoDepth.value = 5 + Math.random() * 3
+    glottalGain.connect(tract.worklet, 0, 0)
+    // glottalGain.connect($master)
+    glottalExcitation.vibratoRate.value = 5.5 + Math.random() * .5
+    glottalExcitation.vibratoDepth.value = 6 // pitch extent
     glottalExcitation.worklet.connect(glottalGain)
     
     // Aspiration
@@ -100,14 +90,18 @@ export class Voice {
     noise.modulator.worklet.connect(aspirationGain.gain)
 
     // Store
+    this.ctx = ctx
     this.tract = tract
     this.glottalGain = glottalGain
     this.glottalExcitation = glottalExcitation
     this.aspirator = aspirator
     this.aspirationGain = aspirationGain
     this.noise = noise
+    this.portamento = 0.1
 
-    this.setIntensity(0.5)
+    this.setIntensity(1)
+    this.stop()
+    // this.setFrequency(0)
   }
 
   // setNasal(value: number) {
@@ -118,14 +112,14 @@ export class Voice {
     // const freq = this.range.bottom + value * (this.range.top - this.range.bottom)
     const freq = value
     this.noise.modulator.frequency.value = freq
-    this.glottalExcitation.frequency.exponentialRampToValueAtTime(freq, this.ctx.currentTime + .15)
+    this.glottalExcitation.frequency.exponentialRampToValueAtTime(freq, this.ctx.currentTime + this.portamento)
     this.noise.aspiration.frequency.value = freq
-    this.setIntensity(1-(freq / (this.range.top - this.range.bottom)))
+    // this.setIntensity(1-(freq / (this.range.top - this.range.bottom)))
   }
 
   setIntensity(value: number) {
-    const tenseness = value * 0.3
-    this.glottalExcitation.tenseness.value = value * 0.4
+    const tenseness = value * 0.7
+    this.glottalExcitation.tenseness.value = tenseness
     this.glottalExcitation.loudness.value = Math.pow(value, 0.25)
     this.aspirator.tenseness.value = tenseness
     this.noise.modulator.tenseness.value = tenseness

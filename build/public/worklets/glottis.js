@@ -152,7 +152,7 @@ class Glottis extends AudioWorkletProcessor {
     const simplexA = this.simplex(t * 1.4)
     const simplexB = this.simplex(t * 2.7)
     let vibrato = depth * Math.sin(2*Math.PI * t * rate)
-    vibrato += simplexA * depth/2 + simplexB * depth/4
+    vibrato += simplexA * depth/3 + simplexB * depth/6
     return vibrato
   }
 

@@ -12,7 +12,7 @@ class TractProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
       { name: 'tongueIndex', defaultValue: 0.9, automationRate: 'k-rate'},
-      { name: 'tongueDiameter', defaultValue: 0.4, automationRate: 'k-rate'},
+      { name: 'tongueDiameter', defaultValue: 0.0, automationRate: 'k-rate'},
       { name: 'lipIndex', defaultValue: 41, automationRate: 'k-rate'},
       { name: 'lipDiameter', defaultValue: 3, automationRate: 'k-rate'},
       { name: 'tipIndex', defaultValue: 0.7, automationRate: 'k-rate'},
@@ -61,7 +61,7 @@ class TractProcessor extends AudioWorkletProcessor {
     this.targetDiameter = new Float64Array(N)
     this.A = new Float64Array(N) // cross-sectional areas
 
-    const pharynxStart = N * 0.2
+    const pharynxStart = N * 0.167
     const oralStart = N * 0.275
 
     // tract diameter calc
@@ -74,10 +74,10 @@ class TractProcessor extends AudioWorkletProcessor {
         this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter
     }
 
-    this.glottalK = 0.75 // reflection at glottis
-    this.lipK = -0.85 // reflection at labia (lips)
+    this.glottalK = .85 // reflection at glottis
+    this.lipK = -.8 // reflection at labia (lips)
     this.lastObstruction = -1
-    this.decay = 0.999 // the coefficient of decay in the transfer function
+    this.decay = .999999 // the coefficient of decay in the transfer function
     this.movementSpeed = 15 // cm per second
     this.transients = [] // stop consonants
     this.lipOutput = 0 // outout at the labia (lips)
@@ -85,8 +85,8 @@ class TractProcessor extends AudioWorkletProcessor {
 
   initNasalCavity({nasalLength:N}) {
     this.noseOutput = 0
-    this.velumOpen = 0.1
-    this.velumTarget = 0.01
+    this.velumOpen = .0
+    this.velumTarget = .01
     this.noseLength = N
     this.noseStart = this.N - N + 1
     this.noseR = new Float64Array(N)
@@ -111,7 +111,7 @@ class TractProcessor extends AudioWorkletProcessor {
 
   calculateReflections() {
     for (let m=0; m<this.N; m++) {
-      this.A[m] = this.diameter[m] * this.diameter[m] //ignoring PI etc.
+      this.A[m] = this.diameter[m] * this.diameter[m] * Math.PI//ignoring PI etc.
     }
     for (let m=1; m<this.N; m++) {
       // prevent error if 0
@@ -128,7 +128,7 @@ class TractProcessor extends AudioWorkletProcessor {
   calculateNoseReflections() {
     for (let m = 0; m < this.noseLength; m++) {
       const r = this.noseDiameter[m]
-      this.noseA[m] = Math.PI * (r*r)
+      this.noseA[m] = r*r
     }
     for (let m = 1; m < this.noseLength; m++) {
       this.noseK[m] = this.kl(this.noseA[m-1], this.noseA[m]) 

@@ -20,7 +20,7 @@ abstract class CustomNode {
 
   stop(t: number): void {
     this.intensity.cancelScheduledValues(0)
-    this.intensity.exponentialRampToValueAtTime(0.0001, t + 1)
+    this.intensity.exponentialRampToValueAtTime(0.0001, t + .25)
   }
 }
 
@@ -119,11 +119,11 @@ const TRACT_PROPORTIONS = [
     pharyngealRatio: 1
   },
   { // Baritone
-    oralLength: 54,
-    nasalLength: 36,
-    maxDiameter: 3.5,
-    glottalRatio: .4,
-    pharyngealRatio: 1
+    oralLength: 60,
+    nasalLength: 26,
+    maxDiameter: 4.8,
+    glottalRatio: 0.167,
+    pharyngealRatio: .667
   },
   { // Bass
     oralLength: 58,
