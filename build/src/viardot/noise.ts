@@ -2,12 +2,22 @@ import {
   AudioContext, 
   AudioBufferSourceNode, 
   BiquadFilterNode, 
+  GainNode,
+  OscillatorNode,
   TBiquadFilterType, 
 } from 'standardized-audio-context'
 import { NoiseModulatorNode } from './nodes'
 
+// normal-distrubted noise (mean: 0, sd: 1)
+function gaussian() {
+  var u = 0, v = 0;
+  while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
+  while(v === 0) v = Math.random();
+  return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+}
+
 export default class NoiseNode {
-  public readonly aspiration!: BiquadFilterNode<AudioContext>
+  public readonly aspiration!: GainNode<AudioContext>
   public readonly fricative!: BiquadFilterNode<AudioContext>
   public readonly source!: AudioBufferSourceNode<AudioContext>
   public readonly modulator!: NoiseModulatorNode
@@ -15,7 +25,7 @@ export default class NoiseNode {
   constructor(ctx: AudioContext, duration: number) {
     // source
     const source = ctx.createBufferSource()
-    source.buffer = this.whiteNoiseBuffer(duration, ctx)
+    source.buffer = this.gaussianBuffer(duration, ctx)
     source.loop = true
     source.start(0)
 
@@ -23,15 +33,20 @@ export default class NoiseNode {
     const modulator = new NoiseModulatorNode(ctx)
     
     // filters
-    const aspirationFilter = this.createFilter(ctx, 500, 0.9)
+    const aspirationFilter = this.createFilter(ctx, 800, .5, 'bandpass')
     const fricativeFilter = this.createFilter(ctx, 1000, 0.5)
 
     // connect source to filters
     source.connect(aspirationFilter)
     source.connect(fricativeFilter)
+
+    const gain = new GainNode(ctx)
+    aspirationFilter.connect(modulator.worklet)
+    // gain.gain.value = 0
+    modulator.worklet.connect(gain) // TODO: FIX THIS SHIT 
       
     // store
-    this.aspiration = aspirationFilter
+    this.aspiration = gain
     this.source = source
     this.modulator = modulator
     this.fricative = fricativeFilter
@@ -45,13 +60,12 @@ export default class NoiseNode {
     return filter
   }
 
-  whiteNoiseBuffer(duration: number, ctx: AudioContext) {
+  gaussianBuffer(duration: number, ctx: AudioContext) {
     const bufferSize = duration * ctx.sampleRate;
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
     const channel = buffer.getChannelData(0)
-    for (let n = 0; n < channel.length; n++) {
-      channel[n] = Math.random() * 2 - 1
-    }
+    for (let n = 0; n < channel.length; n++) 
+      channel[n] = gaussian() * 0.05
     return buffer
   }
 }

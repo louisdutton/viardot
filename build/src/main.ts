@@ -23,6 +23,10 @@ diameterInput.onchange = (e: Event) => {
   voice.setDiameter(parseFloat(value));
 }
 
+// Tract UI
+const tractUI = document.getElementById('tractUI') as HTMLCanvasElement
+// tractUI.
+
 // const quartet = new Quartet([
 //   Fach.Mezzo,
 //   Fach.Contralto,

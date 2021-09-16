@@ -102,23 +102,21 @@ class Glottis extends AudioWorkletProcessor {
   }
 
   /**
-   * Creates an waveFunction model glottal function based on tenseness variable
+   * Creates an glottalWave model glottal function based on tenseness variable
    * @author 
    * @param {tenseness} tenseness dependent variable controlling interpolation between pressed and breathy glottal action
-   * @returns The function for the normalized waveFunction waveform 
+   * @returns The function for the normalized glottalWave waveform 
    */
-  createWaveFunction(tenseness) {
+  transformedLF(tenseness) {
     // convert tenseness to Rd variable
-    let Rd = 3*(1-tenseness)
-    if (Rd<0.5) Rd = 0.5
-    if (Rd>2.7) Rd = 2.7
+    let Rd = .5 + 2.2 * (1-tenseness) // must be in range: [.5, 2.7]
 
     // normalized to time = 1, Ee = 1
-    const Ra = -0.01 + 0.048*Rd
-    const Rk = 0.224 + 0.118*Rd
-    const Rg = (Rk/4)*(0.5+1.2*Rk)/(0.11*Rd-Ra*(0.5+1.2*Rk))
+    const Ra = -.01 + .048*Rd
+    const Rk = .224 + .118*Rd
+    const Rg = (Rk/4) * (.5+1.2*Rk) / (.11*Rd-Ra*(.5+1.2*Rk))
     
-    // Time
+    // Timing parameters
     const Ta = Ra
     const Tp = 1 / (2*Rg) // instant of maximum glottal flow
     const Te = Tp + Tp*Rk //
@@ -141,10 +139,9 @@ class Glottis extends AudioWorkletProcessor {
     const E0 = -1 / (s*Math.exp(alpha*Te))
 
     // normalized waveform function
-    return function (t) {
-      if (t>Te) return (-Math.exp(-epsilon * (t-Te)) + shift)/Delta
-      return E0 * Math.exp(alpha*t) * Math.sin(omega*t)
-    }
+    return t => (t>Te)
+      ? (-Math.exp(-epsilon * (t-Te)) + shift)/Delta
+      : E0 * Math.exp(alpha*t) * Math.sin(omega*t)
   }
 
   vibrato(rate, depth) {
@@ -152,7 +149,7 @@ class Glottis extends AudioWorkletProcessor {
     const simplexA = this.simplex(t * 1.4)
     const simplexB = this.simplex(t * 2.7)
     let vibrato = depth * Math.sin(2*Math.PI * t * rate)
-    vibrato += simplexA * depth/3 + simplexB * depth/6
+    vibrato += simplexA * depth/2 + simplexB * depth/3
     return vibrato
   }
 
@@ -166,7 +163,7 @@ class Glottis extends AudioWorkletProcessor {
     
     // Pre block
     const tenseness = PARAMS.tenseness[0]
-    const waveFunction = this.createWaveFunction(tenseness)
+    const glottalWave = this.transformedLF(tenseness)
    
     // In block
     for (let n = 0; n < 128; n++) {
@@ -178,7 +175,7 @@ class Glottis extends AudioWorkletProcessor {
       this.d += frame * (this.prevFreq - f0)
       this.prevFreq = f0
       const t = (frame * f0 + this.d) % 1
-      output[n] = waveFunction(t) * intensity * loudness
+      output[n] = glottalWave(t) * intensity * loudness
     }
 
     return true

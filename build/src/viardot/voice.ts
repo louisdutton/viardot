@@ -20,7 +20,7 @@ export const Start = async (): Promise<void[]> => {
 
   // global reverb
   $reverb = Freeverb(ctx)
-  $reverb.roomSize = 0.8
+  $reverb.roomSize = 0.7
   $reverb.dampening = 3000
   $reverb.wet.value = .2
   $reverb.dry.value = 1
@@ -43,10 +43,9 @@ export const Start = async (): Promise<void[]> => {
 export class Voice {   
   private readonly ctx: AudioContext
   private tract: TractFilterNode
-  private glottalGain: GainNode<AudioContext>
+  private glottalSource: GainNode<AudioContext>
   private glottalExcitation: GlottisNode
-  private aspirator: AspiratorNode
-  private aspirationGain: GainNode<AudioContext>
+  private aspiration: GainNode<AudioContext>
   private noise: NoiseNode
   public readonly fach: Fach
   public readonly range: IVocalRange
@@ -69,33 +68,24 @@ export class Voice {
     // setInterval(() => this.tract.port.postMessage(0), 100)
     
     // Glottal source
-    const glottalGain = ctx.createGain()
+    const glottalSource = ctx.createGain()
     const glottalExcitation = new GlottisNode(ctx)
-    glottalGain.connect(tract.worklet, 0, 0)
-    // glottalGain.connect($master)
+    glottalSource.connect(tract.worklet, 0, 0)
+    // glottalSource.connect($master)
     glottalExcitation.vibratoRate.value = 5.5 + Math.random() * .5
     glottalExcitation.vibratoDepth.value = 6 // pitch extent
-    glottalExcitation.worklet.connect(glottalGain)
-    
-    // Aspiration
-    const aspirationGain = ctx.createGain()
-    const aspirator = new AspiratorNode(ctx)
-    aspirationGain.connect(glottalGain)
-    aspirator.worklet.connect(aspirationGain)
+    glottalExcitation.worklet.connect(glottalSource)
 
     // Noise
     const noise = new NoiseNode(ctx, 2)
     noise.fricative.connect(tract.worklet, 0, 1)
-    noise.aspiration.connect(aspirator.worklet)
-    noise.modulator.worklet.connect(aspirationGain.gain)
+    noise.aspiration.connect(glottalSource)
 
     // Store
     this.ctx = ctx
     this.tract = tract
-    this.glottalGain = glottalGain
+    this.glottalSource = glottalSource
     this.glottalExcitation = glottalExcitation
-    this.aspirator = aspirator
-    this.aspirationGain = aspirationGain
     this.noise = noise
     this.portamento = 0.1
 
@@ -111,9 +101,8 @@ export class Voice {
   setFrequency(value: number) {
     // const freq = this.range.bottom + value * (this.range.top - this.range.bottom)
     const freq = value
-    this.noise.modulator.frequency.value = freq
     this.glottalExcitation.frequency.exponentialRampToValueAtTime(freq, this.ctx.currentTime + this.portamento)
-    this.noise.aspiration.frequency.value = freq
+    this.noise.modulator.frequency.value = freq
     // this.setIntensity(1-(freq / (this.range.top - this.range.bottom)))
   }
 
@@ -121,7 +110,6 @@ export class Voice {
     const tenseness = value * 0.7
     this.glottalExcitation.tenseness.value = tenseness
     this.glottalExcitation.loudness.value = Math.pow(value, 0.25)
-    this.aspirator.tenseness.value = tenseness
     this.noise.modulator.tenseness.value = tenseness
   }
 
@@ -147,12 +135,10 @@ export class Voice {
     this.ctx.resume() 
     this.glottalExcitation.start(this.ctx.currentTime)
     this.noise.modulator.start(this.ctx.currentTime)
-    this.aspirator.start(this.ctx.currentTime)
   }
-  stop = () => {
+  stop() {
     this.glottalExcitation.stop(this.ctx.currentTime)
     this.noise.modulator.stop(this.ctx.currentTime)
-    this.aspirator.stop(this.ctx.currentTime)
   }
 
   recieve = (phones: any) => {console.log(phones)}

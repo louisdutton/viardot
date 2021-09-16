@@ -60,8 +60,6 @@ interface TractProportions {
   oralLength: number
   nasalLength: number
   maxDiameter: number
-  glottalRatio: number
-  pharyngealRatio: number
 }
 
 export class TractFilterNode {
@@ -94,42 +92,30 @@ const TRACT_PROPORTIONS = [
     oralLength: 40,
     nasalLength: 28,
     maxDiameter: 4,
-    glottalRatio: .45,
-    pharyngealRatio: 1
   },
   { // Mezzo
     oralLength: 42,
     nasalLength: 28,
     maxDiameter: 4,
-    glottalRatio: .45,
-    pharyngealRatio: 1
   },
   { // Contralto
     oralLength: 44,
     nasalLength: 28,
     maxDiameter: 4,
-    glottalRatio: .45,
-    pharyngealRatio: 1
   },
   { // Tenor
     oralLength: 50,
     nasalLength: 28,
     maxDiameter: 3.5,
-    glottalRatio: .4,
-    pharyngealRatio: 1
   },
   { // Baritone
-    oralLength: 60,
-    nasalLength: 26,
-    maxDiameter: 4.8,
-    glottalRatio: 0.167,
-    pharyngealRatio: .667
+    oralLength: 58,
+    nasalLength: 28,
+    maxDiameter: 4,
   },
   { // Bass
     oralLength: 58,
     nasalLength: 40,
     maxDiameter: 3.5,
-    glottalRatio: .4,
-    pharyngealRatio: 1
   }
 ]
