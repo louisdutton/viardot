@@ -4,8 +4,8 @@ const moveTowards = (a, b, target) => (a<b)
   ? Math.min(a+target, b)
   : Math.max(a-target, b)
 
-// Circular area from radius
-const calculateArea = (radius) => radius * radius * Math.PI
+// Circular area from diameter
+const calculateArea = (d) => d*d / 4 * Math.PI
 
 // Kelly-Lochbaum junction (acoustic scattering function)
 const kellyLochbaum = (A1, A2) => (A1-A2) / (A1+A2) 
@@ -26,7 +26,7 @@ class TractProcessor extends AudioWorkletProcessor {
 
   constructor({processorOptions: {proportions}}) { 
     super() 
-    this.port.onmessage = (e) => this.port.postMessage(this.radius)
+    this.port.onmessage = (e) => this.port.postMessage(this.diameter)
 
     console.log(proportions)
   
@@ -38,6 +38,7 @@ class TractProcessor extends AudioWorkletProcessor {
     this.KL = this.KR = this.KNose = 0
     this.calculateReflectionCoefficients()
     this.calculateNoseReflections()
+
 
     this.noseDiameter[0] = this.velumTarget
   }
@@ -57,14 +58,14 @@ class TractProcessor extends AudioWorkletProcessor {
     this.junctionOutputR = new Float64Array(N+1)
     this.junctionOutputL = new Float64Array(N+1)
 
-    // Radius & cross-sectional area
+    // diameter & cross-sectional area
     const glottalRatio = 1/6 // (1/6)^2
     const pharyngealRatio = 1
     this.maxDiameter = maxDiameter
-    var r = this.oralRadius = maxDiameter/2
-    this.glottalRadius = r * glottalRatio
-    this.pharyngealRadius = r * pharyngealRatio
-    this.radius = new Float64Array(N)
+    var d = this.oralDiameter = maxDiameter
+    this.glottalDiameter = d * glottalRatio
+    this.pharyngealDiameter = d * pharyngealRatio
+    this.diameter = new Float64Array(N)
     this.restDiameter = new Float64Array(N)
     this.targetDiameter = new Float64Array(N)
     this.A = new Float64Array(N) // cross-sectional areas
@@ -76,10 +77,10 @@ class TractProcessor extends AudioWorkletProcessor {
     for (let m = 0; m < N; m++)
     {
         let diameter = 0
-        if (m < this.glottisEnd) diameter = this.glottalRadius
-        else if (m < this.pharynxEnd) diameter = this.pharyngealRadius
-        else diameter = this.oralRadius
-        this.radius[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter
+        if (m < this.glottisEnd) diameter = this.glottalDiameter
+        else if (m < this.pharynxEnd) diameter = this.pharyngealDiameter
+        else diameter = this.oralDiameter
+        this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter
     }
 
     // Reflection (can probably make a bunch of these constants)
@@ -120,7 +121,7 @@ class TractProcessor extends AudioWorkletProcessor {
 
   calculateReflectionCoefficients() {
     for (let m=0; m<this.N; m++) {
-      this.A[m] = calculateArea(this.radius[m])
+      this.A[m] = calculateArea(this.diameter[m])
     }
     for (let m=1; m<this.N; m++) {
       const coefficient = m > this.pharynxEnd ? this.hardK : this.softK
@@ -137,7 +138,7 @@ class TractProcessor extends AudioWorkletProcessor {
 
   calculateNoseReflections() {
     for (let m = 0; m < this.noseLength; m++) {
-      this.noseA[m] = this.noseDiameter[m]*this.noseDiameter[m] * Math.PI
+      this.noseA[m] = calculateArea(this.noseDiameter[m])
     }
     for (let m = 1; m < this.noseLength; m++) {
       this.noseK[m] = kellyLochbaum(this.noseA[m-1], this.noseA[m]) 
@@ -147,7 +148,7 @@ class TractProcessor extends AudioWorkletProcessor {
   step(glottalExcitation, noise, index, diameter) {
     // mouth
     this.processTransients()
-    this.addFricativeNoise(noise * 0.5, index, diameter)
+    this.addFricativeNoise(noise * .2, index, diameter)
     
     this.junctionOutputR[0] = this.L[0] * this.glottalReflectionCoefficient + glottalExcitation
     this.junctionOutputL[this.N] = this.R[this.N-1] * this.labialReflectionCoefficient 
@@ -219,14 +220,14 @@ class TractProcessor extends AudioWorkletProcessor {
     let amount = deltaTime * this.movementSpeed     
     let newLastObstruction = -1
     for (var m = 0; m < this.N; m++) {
-      const diameter = this.radius[m]
+      const diameter = this.diameter[m]
       var targetDiameter = this.targetDiameter[m]
       if (diameter <= 0) newLastObstruction = m
       var slowReturn 
       if (m<this.noseStart) slowReturn = 0.6
       else if (m >= this.tipStart) slowReturn = 1.0 
       else slowReturn = 0.6+0.4*(m-this.noseStart)/(this.tipStart-this.noseStart)
-      this.radius[m] = moveTowards(diameter, targetDiameter, slowReturn*amount, 2*amount)
+      this.diameter[m] = moveTowards(diameter, targetDiameter, slowReturn*amount, 2*amount)
     }
     if (this.lastObstruction>-1 && newLastObstruction == -1 && this.noseA[0]<0.05) {
       this.addTransient(this.lastObstruction)
@@ -271,8 +272,8 @@ class TractProcessor extends AudioWorkletProcessor {
     var tip = this.tipStart
     var lip = this.lipStart
 
-    var d = this.oralRadius * 0.66
-    var fixedDiameter = d + (diameter-d) / (this.oralRadius * 0.2)
+    var d = this.maxDiameter * 0.66
+    var fixedDiameter = d + (diameter-d) / (this.maxDiameter * 0.2)
 
     // update rest & target diameter
     for (var i=this.bladeStart; i<this.lipStart; i++)
@@ -285,12 +286,12 @@ class TractProcessor extends AudioWorkletProcessor {
     }
   }
 
-  // THIS FOR SOME READSON PERMANENTLY REDUCES VOLUME
+  // THIS FOR SOME REASON PERMANENTLY REDUCES VOLUME
   updateConstrictions(ind, dia) {
     var tip = this.tipStart
 
     var index = ind * this.N
-    var diameter = dia * this.oralRadius
+    var diameter = dia * this.oralDiameter
     this.velumTarget = diameter < 0 ? this.velumOpen : this.velumTarget
     diameter -= 0.3; // min diameter required to produce sound
     if (diameter<0) diameter = 0;         
@@ -324,7 +325,7 @@ class TractProcessor extends AudioWorkletProcessor {
     const output = OUT[0][0]
     // tongue
     const tongueIndex = PARAMS.tongueIndex[0] * (this.tipStart-this.bladeStart) + this.bladeStart
-    const tongueDiameter = PARAMS.tongueDiameter[0] * this.oralRadius
+    const tongueDiameter = PARAMS.tongueDiameter[0] * this.oralDiameter
     const tipIndex = PARAMS.tipIndex[0]
     const tipDiameter = PARAMS.tipDiameter[0]
     // const lipIndex = PARAMS.tongueIndex[0]
@@ -347,9 +348,12 @@ class TractProcessor extends AudioWorkletProcessor {
 
     // block end
     this.updateTongue(tongueIndex, tongueDiameter)
-    this.updateConstrictions(tipIndex, tipDiameter)
+    // this.updateConstrictions(tipIndex, tipDiameter)
     this.reshapeTract(128/sampleRate) // 128 / sampleRate
     this.calculateReflectionCoefficients()
+
+    // post tract data
+    this.port.postMessage(this.diameter)
 
     return true
   }

@@ -6,7 +6,7 @@ let voice: Voice;
 
 Start().then(() => {
   voice = new Voice(Fach.Baritone)
-  console.log(voice);
+  // console.log(voice);
 })
 
 // index
@@ -21,43 +21,55 @@ const diameterInput = document.getElementById('diameter')
 diameterInput.onchange = (e: Event) => {
   const value = (<HTMLInputElement>e.target).value
   voice.setDiameter(parseFloat(value));
+  console.log(value);
+  
 }
 
 // Tract UI
 const tractUI = document.getElementById('tractUI') as HTMLCanvasElement
-// tractUI.
-
-// const quartet = new Quartet([
-//   Fach.Mezzo,
-//   Fach.Contralto,
-//   Fach.Tenor,
-//   Fach.Bass
-// ])
-
-const letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+const ctx = tractUI.getContext('2d')
+const dpr = window.devicePixelRatio
+tractUI.width = 800 * dpr
+tractUI.height = 400 * dpr
+tractUI.style.width = 800 + 'px';
+tractUI.style.height = 300 + 'px';
 
 onpointerdown = () => {
   voice.start()
-  // const root = letters[Math.round(Math.random()*(letters.length-1))] + '3'
-  // console.log( root);
-  
-  // const chord = Chord.getChord("maj7", root).notes;
-  // quartet.voices[0].setFrequency(Note.freq(Note.fromMidi(Note.midi(chord[3]))))
-  // quartet.voices[1].setFrequency(Note.freq(Note.fromMidi(Note.midi(chord[1]))))
-  // quartet.voices[2].setFrequency(Note.freq(Note.fromMidi(Note.midi(chord[2]))))
-  // quartet.voices[3].setFrequency(Note.freq(Note.fromMidi(Note.midi(chord[0])-12)))
 
-  // quartet.voices.forEach(v => v.start())
+  // redraw tract
+  ctx.clearRect(0, 0, tractUI.width, tractUI.height)
+  const diameter: Float64Array = voice.getTractData()
+  const dx = tractUI.width / diameter.length
+  const scale = 100
+  const center = tractUI.height/2
+  ctx.lineWidth = 4
+
+  // upper wall
+  ctx.beginPath()
+  ctx.moveTo(0, center)
+  for (let i = 0; i < diameter.length; i++) {
+    const x = i * dx
+    const y = center + (diameter[i] * scale) / 2
+    ctx.lineTo(x, y)
+    ctx.fillRect(x-5, y-5, 10, 10)
+  }
+  ctx.stroke()
+
+  // lower wall
+  ctx.beginPath()
+  ctx.moveTo(0, center)
+  for (let i = 0; i < diameter.length; i++)
+    ctx.lineTo(i * dx, center - (diameter[i] * scale) / 2)
+  ctx.stroke()
 }
 
 onpointerleave = () => {
   voice.stop()
-  // quartet.voices.forEach(v => v.stop())
 }
 
 onpointerup = () => {
   voice.stop()
-  // quartet.voices.forEach(v => v.stop())
 }
 
 onmousemove = e => {

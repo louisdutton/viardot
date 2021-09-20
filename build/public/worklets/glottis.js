@@ -96,16 +96,21 @@ class Glottis extends AudioWorkletProcessor {
     super()
   
     this.prevFreq = 440
+    this.prevTenseness = 0;
     this.d = 0
+
+    // noise
     let simplex2D = makeNoise2D(Math.random)
     this.simplex = (t) => simplex2D(t*1.2, t*0.7)
+
+    this.waveform = this.transformedLF(0)
   }
 
   /**
-   * Creates an glottalWave model glottal function based on tenseness variable
+   * Creates an waveform model glottal function based on tenseness variable
    * @author 
    * @param {tenseness} tenseness dependent variable controlling interpolation between pressed and breathy glottal action
-   * @returns The function for the normalized glottalWave waveform 
+   * @returns The function for the normalized waveform waveform 
    */
   transformedLF(tenseness) {
     // convert tenseness to Rd variable
@@ -163,8 +168,9 @@ class Glottis extends AudioWorkletProcessor {
     
     // Pre block
     const tenseness = PARAMS.tenseness[0]
-    const glottalWave = this.transformedLF(tenseness)
-   
+    if (tenseness !== this.prevTenseness)
+      this.waveform = this.transformedLF(tenseness)
+
     // In block
     for (let n = 0; n < 128; n++) {
       const vibratoRate = PARAMS.vibratoRate[0]
@@ -175,7 +181,7 @@ class Glottis extends AudioWorkletProcessor {
       this.d += frame * (this.prevFreq - f0)
       this.prevFreq = f0
       const t = (frame * f0 + this.d) % 1
-      output[n] = glottalWave(t) * intensity * loudness
+      output[n] = this.waveform(t) * intensity * loudness
     }
 
     return true

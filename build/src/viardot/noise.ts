@@ -42,8 +42,7 @@ export default class NoiseNode {
 
     const gain = new GainNode(ctx)
     aspirationFilter.connect(modulator.worklet)
-    // gain.gain.value = 0
-    modulator.worklet.connect(gain) // TODO: FIX THIS SHIT 
+    modulator.worklet.connect(gain)
       
     // store
     this.aspiration = gain

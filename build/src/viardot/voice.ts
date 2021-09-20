@@ -94,9 +94,10 @@ export class Voice {
     // this.setFrequency(0)
   }
 
-  // setNasal(value: number) {
-  //   this.tract.port.postMessage(value)
-  // }
+  getTractData = (): Float64Array => {
+    // this.tract.worklet.port.postMessage(null)
+    return this.tract.diameter
+  }
 
   setFrequency(value: number) {
     // const freq = this.range.bottom + value * (this.range.top - this.range.bottom)
