@@ -9,20 +9,25 @@ Start().then(() => {
   // console.log(voice);
 })
 
-// index
+// tongue index
 const indexInput = document.getElementById('index')
 indexInput.onchange = (e: Event) => {
   const value = (<HTMLInputElement>e.target).value
   voice.setIndex(parseFloat(value));
 }
 
-// diameter
+// tongue diameter
 const diameterInput = document.getElementById('diameter')
 diameterInput.onchange = (e: Event) => {
   const value = (<HTMLInputElement>e.target).value
   voice.setDiameter(parseFloat(value));
-  console.log(value);
-  
+}
+
+// lip target 
+const lipInput = document.getElementById('lip')
+lipInput.onchange = (e: Event) => {
+  const value = (<HTMLInputElement>e.target).value
+  voice.setLipTarget(parseFloat(value));
 }
 
 // Tract UI

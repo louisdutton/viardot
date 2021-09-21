@@ -33,7 +33,7 @@ export default class NoiseNode {
     const modulator = new NoiseModulatorNode(ctx)
     
     // filters
-    const aspirationFilter = this.createFilter(ctx, 800, .5, 'bandpass')
+    const aspirationFilter = this.createFilter(ctx, 1000, .5, 'bandpass')
     const fricativeFilter = this.createFilter(ctx, 1000, 0.5)
 
     // connect source to filters

@@ -20,10 +20,10 @@ export const Start = async (): Promise<void[]> => {
 
   // global reverb
   $reverb = Freeverb(ctx)
-  $reverb.roomSize = 0.7
+  $reverb.roomSize = 0.5
   $reverb.dampening = 3000
   $reverb.wet.value = .2
-  $reverb.dry.value = 1
+  $reverb.dry.value = .8
   $reverb.connect($master)
 
   const workletPath = 'worklets/'
@@ -71,7 +71,6 @@ export class Voice {
     const glottalSource = ctx.createGain()
     const glottalExcitation = new GlottisNode(ctx)
     glottalSource.connect(tract.worklet, 0, 0)
-    // glottalSource.connect($master)
     glottalExcitation.vibratoRate.value = 5.5 + Math.random() * .5
     glottalExcitation.vibratoDepth.value = 6 // pitch extent
     glottalExcitation.worklet.connect(glottalSource)
@@ -130,6 +129,10 @@ export class Voice {
 
   setDiameter(diameter: number) {
     this.tract.tongueDiameter.value = diameter
+  }
+
+  setLipTarget(diameter: number) {
+    this.tract.lipDiameter.value = diameter
   }
     
   start() {

@@ -67,6 +67,7 @@ export class TractFilterNode {
   public tongueDiameter: IAudioParam
   public tipIndex: IAudioParam
   public tipDiameter: IAudioParam
+  public lipDiameter: IAudioParam
   public diameter: Float64Array
   public worklet!: AudioWorkletNode<AudioContext> 
 
@@ -80,6 +81,7 @@ export class TractFilterNode {
     this.tongueDiameter = this.worklet.parameters.get('tongueDiameter') as IAudioParam
     this.tipIndex = this.worklet.parameters.get('tipIndex') as IAudioParam
     this.tipDiameter = this.worklet.parameters.get('tipDiameter') as IAudioParam
+    this.lipDiameter = this.worklet.parameters.get('lipDiameter') as IAudioParam
     this.diameter = new Float64Array(proportions.oralLength)
     this.worklet.port.onmessage = (msg: MessageEvent<any>) => this.diameter = msg.data as Float64Array
   }
