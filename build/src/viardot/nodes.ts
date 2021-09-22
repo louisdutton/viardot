@@ -60,7 +60,7 @@ export class TractFilterNode {
       numberOfInputs: 2, 
       processorOptions: { proportions: proportions }
     })
-    
+
     this.tongueIndex = this.worklet.parameters.get('tongueIndex') as IAudioParam
     this.tongueDiameter = this.worklet.parameters.get('tongueDiameter') as IAudioParam
     this.tipIndex = this.worklet.parameters.get('tipIndex') as IAudioParam
@@ -97,7 +97,7 @@ const TRACT_PROPORTIONS = [
     maxDiameter: 3.5,
   },
   { // Baritone
-    oralLength: 58,
+    oralLength: 56,
     nasalLength: 28,
     maxDiameter: 4,
   },

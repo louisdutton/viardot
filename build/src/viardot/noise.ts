@@ -10,7 +10,7 @@ function gaussian() {
   var u = 0, v = 0;
   while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
   while(v === 0) v = Math.random();
-  return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
 export default class NoiseNode {
@@ -26,8 +26,8 @@ export default class NoiseNode {
     source.start(0)
     
     // filters
-    const aspirationFilter = this.createFilter(ctx, 500, .5, 'lowpass')
-    const fricativeFilter = this.createFilter(ctx, 1000, 0.5)
+    const aspirationFilter = this.createFilter(ctx, 1000, .7, 'lowpass')
+    const fricativeFilter = this.createFilter(ctx, 1000, 0.1)
 
     // connect source to filters
     source.connect(aspirationFilter)

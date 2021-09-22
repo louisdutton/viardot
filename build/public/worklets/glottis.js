@@ -151,10 +151,8 @@ class Glottis extends AudioWorkletProcessor {
       : E0 * Math.exp(alpha*t) * Math.sin(omega*t)
   }
 
-  vibrato(rate, depth) {
+  vibrato(rate, depth, simplexA, simplexB) {
     const t = currentTime
-    const simplexA = Math.simplex(t * 1.4)
-    const simplexB = Math.simplex(t * 2.7)
     let vibrato = depth * Math.sin(Math.PI2 * t * rate)
     vibrato += simplexA * depth/2 + simplexB * depth/3
     return vibrato
@@ -170,8 +168,8 @@ class Glottis extends AudioWorkletProcessor {
     const frequency = PARAMS.frequency[0]
 
     // Noise params
-    const floor = .5
-    const amplitude = .4
+    const floor = .15
+    const amplitude = .2
     
     // Pre block
     const tenseness = PARAMS.tenseness[0]
@@ -180,24 +178,29 @@ class Glottis extends AudioWorkletProcessor {
 
 
     const vibratoRate = PARAMS.vibratoRate[0]
-    const vibratoDepth = PARAMS.vibratoDepth[0]
+    // const vibratoDepth = PARAMS.vibratoDepth[0]
+    const vibratoDepth = 0.03 * frequency
     
     // In block
     for (let n = 0; n < 128; n++) {
+      // simplex noise
+      const s1 = Math.simplex(currentTime * 1.4)
+      const s2 = Math.simplex(currentTime * 4.2)
+
       // excitation
-      const vibrato = this.vibrato(vibratoRate, vibratoDepth)
+      const vibrato = this.vibrato(vibratoRate, vibratoDepth, s1, s2)
       const f0 = frequency + vibrato
       const frame = (currentFrame + n) / sampleRate
       this.d += frame * (this.prevFreq - f0)
       this.prevFreq = f0
       const t = (frame * f0 + this.d) % 1
-      const excitation = this.waveform(t) * intensity * loudness
+      const excitation = this.waveform(t)
 
       // aspiration
       const modulation = floor + amplitude * Math.hanning(t, f0)
-      const noiseResidual = input[n] * modulation * intensity
+      const noiseResidual = input[n] * (1+s2*.25) * modulation * Math.sqrt(tenseness)
 
-      output[n] = excitation + noiseResidual
+      output[n] = (excitation + noiseResidual) * intensity * loudness
     }
 
     return true

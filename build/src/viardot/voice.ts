@@ -20,9 +20,9 @@ export const Start = async (): Promise<void[]> => {
 
   // global reverb
   $reverb = Freeverb(ctx)
-  $reverb.roomSize = 0.7
-  $reverb.dampening = 3000
-  $reverb.wet.value = .2
+  $reverb.roomSize = 0.75
+  $reverb.dampening = 4000
+  $reverb.wet.value = .7
   $reverb.dry.value = .8
   $reverb.connect($master)
 
@@ -62,8 +62,7 @@ export class Voice {
     this.range = getVocalRange(fach)
 
     const tract = new TractFilterNode(ctx, this.fach)
-    tract.worklet.connect($reverb)
-    // setInterval(() => this.tract.port.postMessage(0), 100)
+    tract.worklet.connect($master)
     
     // Glottal source
     const glottis = new GlottisNode(ctx)
@@ -80,8 +79,7 @@ export class Voice {
     this.ctx = ctx
     this.tract = tract
     this.glottis = glottis
-    this.noise = noise
-    this.portamento = 0.1
+    this.portamento = 0.2
 
     this.setIntensity(1)
     this.stop()
@@ -103,7 +101,7 @@ export class Voice {
   setIntensity(value: number) {
     const tenseness = value * 0.7
     this.glottis.tenseness.value = tenseness
-    this.glottis.loudness.value = Math.pow(value, 0.25)
+    this.glottis.loudness.value = Math.pow(value, 0.5)
   }
 
   setPhoneme(key:string) {
