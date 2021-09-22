@@ -2,14 +2,14 @@ import NoiseNode from './noise'
 import { Fach } from './enums'
 import { PhonemeToTonguePosition } from './dictionaries'
 import { AudioContext, GainNode } from 'standardized-audio-context'
-import { TractFilterNode, GlottisNode, AspiratorNode } from './nodes'
+import { TractFilterNode, GlottisNode } from './nodes'
 import Freeverb from 'freeverb'
 
 let $audioContext: AudioContext;
 let $master: GainNode<AudioContext>
 let $reverb: any
 
-const workletModules = ['tract', 'noise-modulator', 'aspirator', 'glottis']
+const workletModules = ['tract', 'glottis']
 export const Start = async (): Promise<void[]> => {
   const ctx = $audioContext = new AudioContext()
 
@@ -20,7 +20,7 @@ export const Start = async (): Promise<void[]> => {
 
   // global reverb
   $reverb = Freeverb(ctx)
-  $reverb.roomSize = 0.5
+  $reverb.roomSize = 0.7
   $reverb.dampening = 3000
   $reverb.wet.value = .2
   $reverb.dry.value = .8
@@ -43,9 +43,7 @@ export const Start = async (): Promise<void[]> => {
 export class Voice {   
   private readonly ctx: AudioContext
   private tract: TractFilterNode
-  private glottalSource: GainNode<AudioContext>
-  private glottalExcitation: GlottisNode
-  private aspiration: GainNode<AudioContext>
+  private glottis: GlottisNode
   private noise: NoiseNode
   public readonly fach: Fach
   public readonly range: IVocalRange
@@ -68,23 +66,20 @@ export class Voice {
     // setInterval(() => this.tract.port.postMessage(0), 100)
     
     // Glottal source
-    const glottalSource = ctx.createGain()
-    const glottalExcitation = new GlottisNode(ctx)
-    glottalSource.connect(tract.worklet, 0, 0)
-    glottalExcitation.vibratoRate.value = 5.5 + Math.random() * .5
-    glottalExcitation.vibratoDepth.value = 6 // pitch extent
-    glottalExcitation.worklet.connect(glottalSource)
+    const glottis = new GlottisNode(ctx)
+    glottis.vibratoRate.value = 5.5 + Math.random() * .5
+    glottis.vibratoDepth.value = 6 // pitch extent (amplitude)
+    glottis.worklet.connect(tract.worklet, 0, 0)
 
     // Noise
     const noise = new NoiseNode(ctx, 2)
     noise.fricative.connect(tract.worklet, 0, 1)
-    noise.aspiration.connect(glottalSource)
+    noise.aspiration.connect(glottis.worklet)
 
     // Store
     this.ctx = ctx
     this.tract = tract
-    this.glottalSource = glottalSource
-    this.glottalExcitation = glottalExcitation
+    this.glottis = glottis
     this.noise = noise
     this.portamento = 0.1
 
@@ -101,16 +96,14 @@ export class Voice {
   setFrequency(value: number) {
     // const freq = this.range.bottom + value * (this.range.top - this.range.bottom)
     const freq = value
-    this.glottalExcitation.frequency.exponentialRampToValueAtTime(freq, this.ctx.currentTime + this.portamento)
-    this.noise.modulator.frequency.value = freq
+    this.glottis.frequency.exponentialRampToValueAtTime(freq, this.ctx.currentTime + this.portamento)
     // this.setIntensity(1-(freq / (this.range.top - this.range.bottom)))
   }
 
   setIntensity(value: number) {
     const tenseness = value * 0.7
-    this.glottalExcitation.tenseness.value = tenseness
-    this.glottalExcitation.loudness.value = Math.pow(value, 0.25)
-    this.noise.modulator.tenseness.value = tenseness
+    this.glottis.tenseness.value = tenseness
+    this.glottis.loudness.value = Math.pow(value, 0.25)
   }
 
   setPhoneme(key:string) {
@@ -137,12 +130,10 @@ export class Voice {
     
   start() {
     this.ctx.resume() 
-    this.glottalExcitation.start(this.ctx.currentTime)
-    this.noise.modulator.start(this.ctx.currentTime)
+    this.glottis.start(this.ctx.currentTime)
   }
   stop() {
-    this.glottalExcitation.stop(this.ctx.currentTime)
-    this.noise.modulator.stop(this.ctx.currentTime)
+    this.glottis.stop(this.ctx.currentTime)
   }
 
   recieve = (phones: any) => {console.log(phones)}

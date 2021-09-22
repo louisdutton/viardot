@@ -5,20 +5,23 @@ const moveTowards = (a, b, target) => (a<b)
   : Math.max(a-target, b)
 
 // Circular area from diameter
-const calculateArea = (d) => d*d / 4 * Math.PI
+const calculateArea = (d) => d * d / 4 * Math.PI
 
 // Kelly-Lochbaum junction (acoustic scattering function)
 const kellyLochbaum = (A1, A2) => (A1-A2) / (A1+A2) 
+
+// exponential easing function
+const ease = x => x === 0 ? 0 : Math.pow(2, 10 * x - 10);
 
 const C = 343 // speed of sound in air (m/s)
 
 class TractProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
-      { name: 'tongueIndex', defaultValue: 0.85, automationRate: 'k-rate'},
-      { name: 'tongueDiameter', defaultValue: 0.4, automationRate: 'k-rate'},
+      { name: 'tongueIndex', defaultValue: .2, automationRate: 'k-rate'},
+      { name: 'tongueDiameter', defaultValue: .2, automationRate: 'k-rate'},
       { name: 'lipDiameter', defaultValue: 1, automationRate: 'k-rate'},
-      { name: 'tipIndex', defaultValue: 0.7, automationRate: 'k-rate'},
+      { name: 'tipIndex', defaultValue: .7, automationRate: 'k-rate'},
       { name: 'tipDiameter', defaultValue: 1, automationRate: 'k-rate'},
     ]
   }
@@ -37,7 +40,6 @@ class TractProcessor extends AudioWorkletProcessor {
     this.KL = this.KR = this.KNose = 0
     this.calculateReflectionCoefficients()
     this.calculateNoseReflections()
-
 
     this.noseDiameter[0] = this.velumTarget
   }
@@ -61,7 +63,7 @@ class TractProcessor extends AudioWorkletProcessor {
     const glottalRatio = 1/6 // (1/6)^2
     const pharyngealRatio = .667
     this.maxDiameter = maxDiameter
-    let d = this.oralDiameter = maxDiameter
+    const d = this.oralDiameter = maxDiameter
     this.glottalDiameter = d * glottalRatio
     this.pharyngealDiameter = d * pharyngealRatio
     this.diameter = new Float64Array(N)
@@ -72,21 +74,24 @@ class TractProcessor extends AudioWorkletProcessor {
     this.glottisEnd = N/6.
     this.pharynxEnd = N/3.
 
+    const glottalDifference = this.pharyngealDiameter - this.glottalDiameter
+
     // Calculate diameter
     for (let m = 0; m < N; m++)
     {
         let diameter = 0
-        if (m < this.glottisEnd) diameter = this.glottalDiameter
+        if (m < this.glottisEnd) diameter = this.glottalDiameter + ease(m/this.glottisEnd) * glottalDifference
         else if (m < this.pharynxEnd) diameter = this.pharyngealDiameter
         else diameter = this.oralDiameter
         this.diameter[m] = this.restDiameter[m] = this.targetDiameter[m] = diameter
     }
 
+
     // Reflection (can probably make a bunch of these constants)
     this.K = new Float64Array(N+1) // Reflection coefficients
     this.softK = .6
     this.hardK = .85
-    this.glottalReflectionCoefficient = .7
+    this.glottalReflectionCoefficient = .75
     this.labialReflectionCoefficient = -.8
     this.lastObstruction = -1
     this.decay = .999999 // the coefficient of decay in the transfer function

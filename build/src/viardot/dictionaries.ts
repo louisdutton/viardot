@@ -3,16 +3,16 @@
  */
 export const PhonemeToTonguePosition: { [key: string]: number[] } = {
   // vowels
-  'aa': [0.84, 0.73], // part
-  'ah': [0.84, 0.55], // pet
-  'ae': [35.93, 2.6], // pat ???????
-  'uh': [33.8, 2], // put
-  'ao': [0.79, 0.76], // pot
-  'ax': [30.7, 2.1], // dial
+  'aa': [.2, .2], // part
+  'ah': [.5, .333], // pet
+  'ae': [.25, .25], // pat ???????
+  'uh': [.75, .75], // put
+  'ao': [1, .8], // pot
+  'ax': [.95, .95], // dial
   'oh': [5.7, 2], // daughter
-  'uw': [2.8, 2.1], // poot
+  'uw': [.95, .95], // poot
   'ih': [24.8, 2.6], // pit
-  'iy': [0.72, 0.22], // peat
+  'iy': [.75, .2], // peat
 
   // fricatives
   'sh': [33.98, 0.5], // shell

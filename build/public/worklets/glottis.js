@@ -1,4 +1,5 @@
 "use strict"
+
 /*
  * Based on example code by Stefan Gustavson (stegu@itn.liu.se).
  * Optimisations by Peter Eastman (peastman@drizzle.stanford.edu).
@@ -80,14 +81,20 @@ function makeNoise2D(random) {
     }
 }
 
+// Additional math functions
+Math.simplex2D = makeNoise2D(Math.random)
+Math.simplex = t => Math.simplex2D(t*1.2, t*0.7)
+Math.PI2 = Math.PI * 2
+Math.hanning = (t, frequency) => (1 - Math.cos(Math.PI2 * t * frequency)) / 2
+
 class Glottis extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
       { name: 'tenseness', defaultValue: 0.6, automationRate: 'k-rate'},
       { name: 'intensity', defaultValue: 0.5, automationRate: 'k-rate'},
       { name: 'frequency', defaultValue: 440, automationRate: 'a-rate'},
-      { name: 'vibratoDepth', defaultValue: 8.0, automationRate: 'a-rate'},
-      { name: 'vibratoRate', defaultValue: 6.0, automationRate: 'a-rate'},
+      { name: 'vibratoDepth', defaultValue: 8.0, automationRate: 'k-rate'},
+      { name: 'vibratoRate', defaultValue: 6.0, automationRate: 'k-rate'},
       { name: 'loudness', defaultValue: 1.0, automationRate: 'k-rate'},
     ]
   }
@@ -98,11 +105,6 @@ class Glottis extends AudioWorkletProcessor {
     this.prevFreq = 440
     this.prevTenseness = 0;
     this.d = 0
-
-    // noise
-    let simplex2D = makeNoise2D(Math.random)
-    this.simplex = (t) => simplex2D(t*1.2, t*0.7)
-
     this.waveform = this.transformedLF(0)
   }
 
@@ -151,37 +153,51 @@ class Glottis extends AudioWorkletProcessor {
 
   vibrato(rate, depth) {
     const t = currentTime
-    const simplexA = this.simplex(t * 1.4)
-    const simplexB = this.simplex(t * 2.7)
-    let vibrato = depth * Math.sin(2*Math.PI * t * rate)
+    const simplexA = Math.simplex(t * 1.4)
+    const simplexB = Math.simplex(t * 2.7)
+    let vibrato = depth * Math.sin(Math.PI2 * t * rate)
     vibrato += simplexA * depth/2 + simplexB * depth/3
     return vibrato
   }
 
   process(IN, OUT, PARAMS) {
+    const input = IN[0][0]
     const output = OUT[0][0]
 
-    // Parameters
+    // General params
     const intensity = PARAMS.intensity[0]
     const loudness = PARAMS.loudness[0]
-    const frequency = PARAMS.frequency
+    const frequency = PARAMS.frequency[0]
+
+    // Noise params
+    const floor = .5
+    const amplitude = .4
     
     // Pre block
     const tenseness = PARAMS.tenseness[0]
     if (tenseness !== this.prevTenseness)
       this.waveform = this.transformedLF(tenseness)
 
+
+    const vibratoRate = PARAMS.vibratoRate[0]
+    const vibratoDepth = PARAMS.vibratoDepth[0]
+    
     // In block
     for (let n = 0; n < 128; n++) {
-      const vibratoRate = PARAMS.vibratoRate[0]
-      const vibratoDepth = PARAMS.vibratoDepth[0]
+      // excitation
       const vibrato = this.vibrato(vibratoRate, vibratoDepth)
-      const f0 = frequency[0] + vibrato
+      const f0 = frequency + vibrato
       const frame = (currentFrame + n) / sampleRate
       this.d += frame * (this.prevFreq - f0)
       this.prevFreq = f0
       const t = (frame * f0 + this.d) % 1
-      output[n] = this.waveform(t) * intensity * loudness
+      const excitation = this.waveform(t) * intensity * loudness
+
+      // aspiration
+      const modulation = floor + amplitude * Math.hanning(t, f0)
+      const noiseResidual = input[n] * modulation * intensity
+
+      output[n] = excitation + noiseResidual
     }
 
     return true

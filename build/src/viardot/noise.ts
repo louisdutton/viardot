@@ -2,11 +2,8 @@ import {
   AudioContext, 
   AudioBufferSourceNode, 
   BiquadFilterNode, 
-  GainNode,
-  OscillatorNode,
   TBiquadFilterType, 
 } from 'standardized-audio-context'
-import { NoiseModulatorNode } from './nodes'
 
 // normal-distrubted noise (mean: 0, sd: 1)
 function gaussian() {
@@ -17,10 +14,9 @@ function gaussian() {
 }
 
 export default class NoiseNode {
-  public readonly aspiration!: GainNode<AudioContext>
-  public readonly fricative!: BiquadFilterNode<AudioContext>
-  public readonly source!: AudioBufferSourceNode<AudioContext>
-  public readonly modulator!: NoiseModulatorNode
+  public readonly aspiration: BiquadFilterNode<AudioContext>
+  public readonly fricative: BiquadFilterNode<AudioContext>
+  public readonly source: AudioBufferSourceNode<AudioContext>
 
   constructor(ctx: AudioContext, duration: number) {
     // source
@@ -28,26 +24,18 @@ export default class NoiseNode {
     source.buffer = this.gaussianBuffer(duration, ctx)
     source.loop = true
     source.start(0)
-
-    // modulator
-    const modulator = new NoiseModulatorNode(ctx)
     
     // filters
-    const aspirationFilter = this.createFilter(ctx, 1000, .5, 'bandpass')
+    const aspirationFilter = this.createFilter(ctx, 500, .5, 'lowpass')
     const fricativeFilter = this.createFilter(ctx, 1000, 0.5)
 
     // connect source to filters
     source.connect(aspirationFilter)
     source.connect(fricativeFilter)
-
-    const gain = new GainNode(ctx)
-    aspirationFilter.connect(modulator.worklet)
-    modulator.worklet.connect(gain)
       
     // store
-    this.aspiration = gain
     this.source = source
-    this.modulator = modulator
+    this.aspiration = aspirationFilter
     this.fricative = fricativeFilter
   }
 

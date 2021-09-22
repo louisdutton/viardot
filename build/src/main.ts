@@ -92,7 +92,14 @@ const changeFach = (e: Event) => {
 const fachSelect = document.getElementById('fach')
 fachSelect.addEventListener('change', changeFach, false)
 
+const phonemeSelect = document.getElementById('phoneme')
+phonemeSelect.onchange = (e: Event) => {
+  const phoneme = (<HTMLInputElement>e.target).value
+  voice.setPhoneme(phoneme)
+}
 
 const clamp = (value: number, min: number, max: number): number => {
   return Math.max(min, Math.min(value, max))
 }
+
+
