@@ -20,9 +20,9 @@ export const Start = async (): Promise<void[]> => {
 
   // global reverb
   $reverb = Freeverb(ctx)
-  $reverb.roomSize = 0.75
-  $reverb.dampening = 4000
-  $reverb.wet.value = .7
+  $reverb.roomSize = 0.9
+  $reverb.dampening = 7000
+  $reverb.wet.value = .2
   $reverb.dry.value = .8
   $reverb.connect($master)
 
@@ -62,7 +62,7 @@ export class Voice {
     this.range = getVocalRange(fach)
 
     const tract = new TractFilterNode(ctx, this.fach)
-    tract.worklet.connect($master)
+    tract.worklet.connect($reverb)
     
     // Glottal source
     const glottis = new GlottisNode(ctx)

@@ -1,4 +1,5 @@
 "use strict"
+
 /*
  * Based on example code by Stefan Gustavson (stegu@itn.liu.se).
  * Optimisations by Peter Eastman (peastman@drizzle.stanford.edu).
@@ -80,14 +81,20 @@ function makeNoise2D(random) {
     }
 }
 
+// Additional math functions
+Math.simplex2D = makeNoise2D(Math.random)
+Math.simplex = t => Math.simplex2D(t*1.2, t*0.7)
+Math.PI2 = Math.PI * 2
+Math.hanning = (t, frequency) => (1 - Math.cos(Math.PI2 * t * frequency)) / 2
+
 class Glottis extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
       { name: 'tenseness', defaultValue: 0.6, automationRate: 'k-rate'},
       { name: 'intensity', defaultValue: 0.5, automationRate: 'k-rate'},
       { name: 'frequency', defaultValue: 440, automationRate: 'a-rate'},
-      { name: 'vibratoDepth', defaultValue: 8.0, automationRate: 'a-rate'},
-      { name: 'vibratoRate', defaultValue: 6.0, automationRate: 'a-rate'},
+      { name: 'vibratoDepth', defaultValue: 8.0, automationRate: 'k-rate'},
+      { name: 'vibratoRate', defaultValue: 6.0, automationRate: 'k-rate'},
       { name: 'loudness', defaultValue: 1.0, automationRate: 'k-rate'},
     ]
   }
@@ -96,29 +103,27 @@ class Glottis extends AudioWorkletProcessor {
     super()
   
     this.prevFreq = 440
+    this.prevTenseness = 0;
     this.d = 0
-    let simplex2D = makeNoise2D(Math.random)
-    this.simplex = (t) => simplex2D(t*1.2, t*0.7)
+    this.waveform = this.transformedLF(0)
   }
 
   /**
-   * Creates an waveFunction model glottal function based on tenseness variable
+   * Creates an waveform model glottal function based on tenseness variable
    * @author 
    * @param {tenseness} tenseness dependent variable controlling interpolation between pressed and breathy glottal action
-   * @returns The function for the normalized waveFunction waveform 
+   * @returns The function for the normalized waveform waveform 
    */
-  createWaveFunction(tenseness) {
+  transformedLF(tenseness) {
     // convert tenseness to Rd variable
-    let Rd = 3*(1-tenseness)
-    if (Rd<0.5) Rd = 0.5
-    if (Rd>2.7) Rd = 2.7
+    let Rd = .5 + 2.2 * (1-tenseness) // must be in range: [.5, 2.7]
 
     // normalized to time = 1, Ee = 1
-    const Ra = -0.01 + 0.048*Rd
-    const Rk = 0.224 + 0.118*Rd
-    const Rg = (Rk/4)*(0.5+1.2*Rk)/(0.11*Rd-Ra*(0.5+1.2*Rk))
+    const Ra = -.01 + .048*Rd
+    const Rk = .224 + .118*Rd
+    const Rg = (Rk/4) * (.5+1.2*Rk) / (.11*Rd-Ra*(.5+1.2*Rk))
     
-    // Time
+    // Timing parameters
     const Ta = Ra
     const Tp = 1 / (2*Rg) // instant of maximum glottal flow
     const Te = Tp + Tp*Rk //
@@ -141,44 +146,61 @@ class Glottis extends AudioWorkletProcessor {
     const E0 = -1 / (s*Math.exp(alpha*Te))
 
     // normalized waveform function
-    return function (t) {
-      if (t>Te) return (-Math.exp(-epsilon * (t-Te)) + shift)/Delta
-      return E0 * Math.exp(alpha*t) * Math.sin(omega*t)
-    }
+    return t => (t>Te)
+      ? (-Math.exp(-epsilon * (t-Te)) + shift)/Delta
+      : E0 * Math.exp(alpha*t) * Math.sin(omega*t)
   }
 
-  vibrato(rate, depth) {
+  vibrato(rate, depth, simplexA, simplexB) {
     const t = currentTime
-    const simplexA = this.simplex(t * 1.4)
-    const simplexB = this.simplex(t * 2.7)
-    let vibrato = depth * Math.sin(2*Math.PI * t * rate)
-    vibrato += simplexA * depth/2 + simplexB * depth/4
+    let vibrato = depth * Math.sin(Math.PI2 * t * rate)
+    vibrato += simplexA * depth/2 + simplexB * depth/3
     return vibrato
   }
 
   process(IN, OUT, PARAMS) {
+    const input = IN[0][0]
     const output = OUT[0][0]
 
-    // Parameters
+    // General params
     const intensity = PARAMS.intensity[0]
     const loudness = PARAMS.loudness[0]
-    const frequency = PARAMS.frequency
+    const frequency = PARAMS.frequency[0]
+
+    // Noise params
+    const floor = .15
+    const amplitude = .2
     
     // Pre block
     const tenseness = PARAMS.tenseness[0]
-    const waveFunction = this.createWaveFunction(tenseness)
-   
+    if (tenseness !== this.prevTenseness)
+      this.waveform = this.transformedLF(tenseness)
+
+
+    const vibratoRate = PARAMS.vibratoRate[0]
+    // const vibratoDepth = PARAMS.vibratoDepth[0]
+    const vibratoDepth = 0.03 * frequency
+    
     // In block
     for (let n = 0; n < 128; n++) {
-      const vibratoRate = PARAMS.vibratoRate[0]
-      const vibratoDepth = PARAMS.vibratoDepth[0]
-      const vibrato = this.vibrato(vibratoRate, vibratoDepth)
-      const f0 = frequency[0] + vibrato
+      // simplex noise
+      const s1 = Math.simplex(currentTime * 1.4)
+      const s2 = Math.simplex(currentTime * 4.2)
+
+      // excitation
+      const vibrato = this.vibrato(vibratoRate, vibratoDepth, s1, s2)
+      const f0 = frequency + vibrato
       const frame = (currentFrame + n) / sampleRate
       this.d += frame * (this.prevFreq - f0)
       this.prevFreq = f0
       const t = (frame * f0 + this.d) % 1
-      output[n] = waveFunction(t) * intensity * loudness
+      const excitation = this.waveform(t)
+
+      // aspiration
+      const modulation = floor + amplitude * Math.hanning(t, f0)
+      const noiseResidual = input[n] * (1+s2*.25) * modulation * Math.sqrt(tenseness)
+
+      output[n] = (excitation + noiseResidual) * intensity * loudness
     }
 
     return true
