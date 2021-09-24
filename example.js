@@ -1,8 +1,8 @@
 import './style.css'
-import { Voice, Fach, Start, Quartet } from './viardot'
+import { Voice, Fach, Start, Quartet } from './src'
 // import { Chord, Note } from '@tonaljs/tonal'
 
-let voice: Voice;
+let voice;
 
 Start().then(() => {
   voice = new Voice(Fach.Baritone)
@@ -11,27 +11,18 @@ Start().then(() => {
 
 // tongue index
 const indexInput = document.getElementById('index')
-indexInput.onchange = (e: Event) => {
-  const value = (<HTMLInputElement>e.target).value
-  voice.setIndex(parseFloat(value));
-}
+indexInput.onchange = e => voice.setIndex(parseFloat(e.target.value));
 
 // tongue diameter
 const diameterInput = document.getElementById('diameter')
-diameterInput.onchange = (e: Event) => {
-  const value = (<HTMLInputElement>e.target).value
-  voice.setDiameter(parseFloat(value));
-}
+diameterInput.onchange = e => voice.setDiameter(parseFloat(e.target.value));
 
 // lip target 
 const lipInput = document.getElementById('lip')
-lipInput.onchange = (e: Event) => {
-  const value = (<HTMLInputElement>e.target).value
-  voice.setLipTarget(parseFloat(value));
-}
+lipInput.onchange = (e) => voice.setLipTarget(parseFloat(e.target.value));
 
 // Tract UI
-const tractUI = document.getElementById('tractUI') as HTMLCanvasElement
+const tractUI = document.getElementById('tractUI')
 const ctx = tractUI.getContext('2d')
 const dpr = window.devicePixelRatio
 tractUI.width = 800 * dpr
@@ -44,7 +35,7 @@ onpointerdown = () => {
 
   // redraw tract
   ctx.clearRect(0, 0, tractUI.width, tractUI.height)
-  const diameter: Float64Array = voice.getTractData()
+  const diameter = voice.getTractData()
   const dx = tractUI.width / diameter.length
   const scale = 100
   const center = tractUI.height/2
@@ -84,21 +75,15 @@ onmousemove = e => {
   voice.setIntensity(x)
 }
 
-const changeFach = (e: Event) => {
-  const fach = (<HTMLInputElement>e.target).value
-  voice = new Voice(Fach[fach])
-}
+const changeFach = e => voice = new Voice(Fach[e.target.value])
 
 const fachSelect = document.getElementById('fach')
 fachSelect.addEventListener('change', changeFach, false)
 
 const phonemeSelect = document.getElementById('phoneme')
-phonemeSelect.onchange = (e: Event) => {
-  const phoneme = (<HTMLInputElement>e.target).value
-  voice.setPhoneme(phoneme)
-}
+phonemeSelect.onchange = e => voice.setPhoneme(e.target.value)
 
-const clamp = (value: number, min: number, max: number): number => {
+const clamp = (value, min, max) => {
   return Math.max(min, Math.min(value, max))
 }
 

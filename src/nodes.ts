@@ -2,7 +2,7 @@ import { AudioWorkletNode, AudioContext, IAudioParam } from "standardized-audio-
 import { Fach } from './enums'
 
 export class GlottisNode {
-  public worklet!: AudioWorkletNode<AudioContext> 
+  public worklet: AudioWorkletNode<AudioContext> 
 
   public readonly tenseness: IAudioParam
   public readonly intensity: IAudioParam
@@ -13,7 +13,7 @@ export class GlottisNode {
   // private active: boolean
 
   constructor(ctx: AudioContext) {
-    this.worklet = new AudioWorkletNode<AudioContext>(ctx, 'glottis', {
+    this.worklet = new AudioWorkletNode!<AudioContext>(ctx, 'glottis', {
       channelCount: 1,
       numberOfInputs: 1,
       numberOfOutputs: 1
@@ -56,7 +56,7 @@ export class TractFilterNode {
 
   constructor(ctx: AudioContext, Fach: Fach) {
     const proportions = this.calculateProportions(Fach)
-    this.worklet = new AudioWorkletNode<AudioContext>(ctx, 'tract', { 
+    this.worklet = new AudioWorkletNode!<AudioContext>(ctx, 'tract', { 
       numberOfInputs: 2, 
       processorOptions: { proportions: proportions }
     })

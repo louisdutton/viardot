@@ -44,7 +44,7 @@ export class Voice {
   private readonly ctx: AudioContext
   private tract: TractFilterNode
   private glottis: GlottisNode
-  private noise: NoiseNode
+  // private noise: NoiseNode
   public readonly fach: Fach
   public readonly range: IVocalRange
   public portamento: number
@@ -55,25 +55,25 @@ export class Voice {
    * @param  {Function} onComplete  Completion callback
    */
   constructor(fach: Fach) {
-    if (!$audioContext) return null
+    // if (!$audioContext) return
     const ctx = $audioContext
 
     this.fach = fach
     this.range = getVocalRange(fach)
 
     const tract = new TractFilterNode(ctx, this.fach)
-    tract.worklet.connect($reverb)
+    tract.worklet?.connect($reverb)
     
     // Glottal source
     const glottis = new GlottisNode(ctx)
     glottis.vibratoRate.value = 5.5 + Math.random() * .5
     glottis.vibratoDepth.value = 6 // pitch extent (amplitude)
-    glottis.worklet.connect(tract.worklet, 0, 0)
+    glottis.worklet?.connect(tract.worklet!, 0, 0)
 
     // Noise
     const noise = new NoiseNode(ctx, 2)
-    noise.fricative.connect(tract.worklet, 0, 1)
-    noise.aspiration.connect(glottis.worklet)
+    noise.fricative.connect(tract.worklet!, 0, 1)
+    noise.aspiration.connect(glottis.worklet!)
 
     // Store
     this.ctx = ctx
