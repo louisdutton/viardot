@@ -13,7 +13,7 @@
     "lib": ["ES6", "DOM"],
     "baseUrl": "./"
   },
-  "include": [
-    "src"
+  "exclude": [
+    "build"
   ]
 }

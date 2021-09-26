@@ -3,11 +3,11 @@ import { Fach } from './enums'
 import { PhonemeToTonguePosition } from './dictionaries'
 import { AudioContext, GainNode } from 'standardized-audio-context'
 import { TractFilterNode, GlottisNode } from './nodes'
-import Freeverb from 'freeverb'
+// import Freeverb from 'freeverb'
 
 let $audioContext: AudioContext;
 let $master: GainNode<AudioContext>
-let $reverb: any
+// let $reverb: any
 
 const workletModules = ['tract', 'glottis']
 export const Start = async (): Promise<void[]> => {
@@ -19,12 +19,12 @@ export const Start = async (): Promise<void[]> => {
   $master.connect(ctx.destination)
 
   // global reverb
-  $reverb = Freeverb(ctx)
-  $reverb.roomSize = 0.9
-  $reverb.dampening = 7000
-  $reverb.wet.value = .2
-  $reverb.dry.value = .8
-  $reverb.connect($master)
+  // $reverb = Freeverb(ctx)
+  // $reverb.roomSize = 0.9
+  // $reverb.dampening = 7000
+  // $reverb.wet.value = .2
+  // $reverb.dry.value = .8
+  // $reverb.connect($master)
 
   const workletPath = 'worklets/'
   console.log('[viardot] Initializing...')
@@ -62,7 +62,7 @@ export class Voice {
     this.range = getVocalRange(fach)
 
     const tract = new TractFilterNode(ctx, this.fach)
-    tract.worklet?.connect($reverb)
+    tract.worklet?.connect($master)
     
     // Glottal source
     const glottis = new GlottisNode(ctx)
