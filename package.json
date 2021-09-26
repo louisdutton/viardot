@@ -1,6 +1,6 @@
 {
   "name": "viardot",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Vocal engine",
   "main": "src/viardot.js",
   "type": "module",
