@@ -4,9 +4,6 @@
   "description": "Vocal engine",
   "main": "src/index.js",
   "type": "module",
-  "scripts": {
-    "build": "npx tsc"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/louisdutton/viardot.git"
@@ -26,10 +23,8 @@
   "homepage": "https://github.com/louisdutton/viardot#readme",
   "dependencies": {
     "freeverb": "^1.1.2",
+    "np": "^7.5.0",
     "rita": "^2.4.200",
     "standardized-audio-context": "^25.3.6"
-  },
-  "devDependencies": {
-    "typescript": "^4.4.2"
   }
 }
