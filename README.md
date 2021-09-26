@@ -20,4 +20,5 @@ voice.stop();
 
 ## To-Do
 
-- optimise worklet processors
+- Convert audio-processing code to WebAssembly
+- General improvements to accuracy and quality of voice
