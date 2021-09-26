@@ -1,0 +1,82 @@
+declare function makeNoise2D(random: any): (x: any, y: any) => number;
+declare function makeNoise2D(random: any): (x: any, y: any) => number;
+declare const G2: number;
+declare const Grad: number[][];
+declare function calculateArea(d: any): number;
+declare function kellyLochbaum(A1: any, A2: any): number;
+declare function ease(x: any): number;
+declare const C: 343;
+declare class TractProcessor {
+    static get parameterDescriptors(): {
+        name: string;
+        defaultValue: number;
+        automationRate: string;
+    }[];
+    constructor({ processorOptions: { proportions } }: {
+        processorOptions: {
+            proportions: any;
+        };
+    });
+    KL: number;
+    KR: number;
+    KNose: number;
+    initOralCavity({ oralLength: N, maxDiameter }: {
+        oralLength: any;
+        maxDiameter: any;
+    }): void;
+    N: any;
+    bladeStart: number | undefined;
+    tipStart: number | undefined;
+    lipStart: number | undefined;
+    R: Float64Array | undefined;
+    L: Float64Array | undefined;
+    junctionOutputR: Float64Array | undefined;
+    junctionOutputL: Float64Array | undefined;
+    maxDiameter: any;
+    oralDiameter: any;
+    glottalDiameter: number | undefined;
+    pharyngealDiameter: number | undefined;
+    diameter: Float64Array | undefined;
+    restDiameter: Float64Array | undefined;
+    targetDiameter: Float64Array | undefined;
+    A: Float64Array | undefined;
+    glottisEnd: number | undefined;
+    pharynxEnd: number | undefined;
+    K: Float64Array | undefined;
+    softK: number | undefined;
+    hardK: number | undefined;
+    glottalReflectionCoefficient: number | undefined;
+    labialReflectionCoefficient: number | undefined;
+    lastObstruction: number | undefined;
+    decay: number | undefined;
+    movementSpeed: number | undefined;
+    transients: any[] | undefined;
+    labialOutput: number | undefined;
+    initNasalCavity({ nasalLength: N }: {
+        nasalLength: any;
+    }): void;
+    noseOutput: number | undefined;
+    velumOpen: number | undefined;
+    velumTarget: any;
+    noseLength: any;
+    noseStart: number | undefined;
+    noseR: Float64Array | undefined;
+    noseL: Float64Array | undefined;
+    noseJunctionOutputR: Float64Array | undefined;
+    noseJunctionOutputL: Float64Array | undefined;
+    noseK: Float64Array | undefined;
+    noseDiameter: Float64Array | undefined;
+    noseA: Float64Array | undefined;
+    noseMaxAmplitude: Float64Array | undefined;
+    calculateReflectionCoefficients(): void;
+    calculateNoseReflections(): void;
+    step(glottalExcitation: any, noise: any, index: any, diameter: any): void;
+    addFricativeNoise(noise: any, position: any, diameter: any): void;
+    reshapeTract(deltaTime: any): void;
+    addTransient(position: any): void;
+    processTransients(): void;
+    updateTongue(index: any, diameter: any): void;
+    updateLip(value: any): void;
+    updateConstrictions(ind: any, dia: any): void;
+    process(IN: any, OUT: any, PARAMS: any): boolean;
+}

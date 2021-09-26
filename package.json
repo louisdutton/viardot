@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "build": "npx tsc"
+    "compile": "npx tsc",
+    "copy": "cp README.md build/",
+    "build": "npm run compile && npm run copy"
   },
   "repository": {
     "type": "git",
