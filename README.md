@@ -29,3 +29,8 @@ function Init() {
 
 - Convert audio-processing code to WebAssembly
 - General improvements to accuracy and quality of voice
+
+## References
+- Tone.js (AudioContext & AudioWorklet architecture)
+- Pink Trombone
+- "Toward a high-quality singing synthesizer with vocal texture control", Hui-Ling Lu

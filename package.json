@@ -2,8 +2,8 @@
   "name": "viardot",
   "version": "1.0.3",
   "description": "Vocal engine",
-  "main": "build/src/index.js",
-  "types": "build/src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "npx tsc"
