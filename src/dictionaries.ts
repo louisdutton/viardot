@@ -1,39 +1,37 @@
-/**
- * Phoneme -> tongue position dictionary
- */
-export const PhonemeToTonguePosition: { [key: string]: number[] } = {
+/** Phoneme -> tongue position dictionary */
+export const Phonemes = {
   // vowels
-  'aa': [.2, .2], // part
-  'ah': [.5, .333], // pet
-  'ae': [.25, .25], // pat ???????
-  'uh': [.75, .75], // put
-  'ao': [1, .8], // pot
-  'ax': [.95, .95], // dial
-  'oh': [5.7, 2], // daughter
-  'uw': [.95, .95], // poot
-  'ih': [24.8, 2.6], // pit
-  'iy': [.75, .2], // peat
+  aa: [.2, .2], // part
+  ah: [.5, .333], // pet
+  ae: [.25, .25], // pat ???????
+  uh: [.75, .75], // put
+  ao: [1, .8], // pot
+  ax: [.95, .95], // dial
+  oh: [5.7, 2], // daughter
+  uw: [.95, .95], // poot
+  ih: [24.8, 2.6], // pit
+  iy: [.75, .2], // peat
 
   // fricatives
-  'sh': [33.98, 0.5], // shell
-  'zh': [34.7, 0.65], // pleasure
-  's': [37.8, 0.5], // soon
-  'z': [38, 0.75], // zoo
-  'f': [41.0, 0.6], // fair
-  'v': [41.0, 0.6], // very
+  sh: [33.98, 0.5], // shell
+  zh: [34.7, 0.65], // pleasure
+  s: [37.8, 0.5], // soon
+  z: [38, 0.75], // zoo
+  f: [41.0, 0.6], // fair
+  v: [41.0, 0.6], // very
 
   // stops
-  'g': [20.0, 0], // go
-  'k': [25.0, 0], // king
-  'd': [36.0, 0], // den
-  't': [37.0, 0], // ten
-  'b': [41.0, 0], // bad
-  'p': [0.99, 0], // pad
+  g: [20.0, 0], // go
+  k: [25.0, 0], // king
+  d: [36.0, 0], // den
+  t: [37.0, 0], // ten
+  b: [41.0, 0], // bad
+  p: [0.99, 0], // pad
 
   // nasals
-  'ng': [20.0, -1], // thing
-  'n': [36.0, -1], // not
-  'm': [0.8, -1], // man
+  ng: [20.0, -1], // thing
+  n: [36.0, -1], // not
+  m: [0.8, -1], // man
 }
 
 /**

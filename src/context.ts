@@ -1,15 +1,26 @@
+import Freeverb from './freeverb'
+
 export default class Context {
   private raw: AudioContext
   private worklet: AudioWorklet
   public master: GainNode
   public sampleRate: number
+  private reverb: AudioNode
 
   constructor() {
     this.raw = new AudioContext()
     this.worklet = this.raw.audioWorklet
+
+    this.reverb = Freeverb(this.raw)
+    this.reverb.connect(this.raw.destination)
+    this.reverb.roomSize = .8
+    this.reverb.dampening = 2500
+    this.reverb.wet.value = .2
+    this.reverb.dry.value = .8
+
     this.master = this.raw.createGain()
     this.master.gain.value = .05
-    this.master.connect(this.raw.destination)
+    this.master.connect(this.reverb)
     this.sampleRate = this.raw.sampleRate
   }
 

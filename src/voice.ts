@@ -3,9 +3,10 @@ import Context from './context'
 import NoiseNode from './nodes/noiseNode'
 import GlottalSourceNode from './nodes/glottalSourceNode'
 import TractFilterNode from './nodes/tractFilterNode'
-import { PhonemeToTonguePosition } from './dictionaries'
+import { Phonemes } from './dictionaries'
 
-/** Monophonic vocal synthesizer.
+/**
+* Monophonic vocal synthesizer.
 * @param {Fach} fach Voice type
 */
 export class Voice {
@@ -13,11 +14,10 @@ export class Voice {
   private readonly glottis: GlottalSourceNode
   public readonly fach: Fach
   public readonly range: VocalRange
-  public portamento: number
   
   constructor(fach: Fach) {
     // Noise Source (split used for both aspiration and fricative noise)
-    const noise = new NoiseNode(2)
+    const noise = new NoiseNode(5)
 
     // Create worklet nodes
     const glottalSource = new GlottalSourceNode(noise.aspiration)
@@ -25,21 +25,21 @@ export class Voice {
 
     this.tract = tractFilter
     this.glottis = glottalSource
-    this.portamento = .1 + Math.random() * .15
     this.fach = fach
     this.range = RANGE[fach]
   }
 
-  // getTractData = (): Float64Array => this.tract.diameter
-
-  setFrequency(value: number) {
-    this.glottis.frequency.exponentialRampToValueAtTime(value, ctx.now() + this.portamento)
-  }
+  setFrequency = (value: number) => this.glottis.setFrequency(value)
 
   setIntensity(value: number) {
-    const v = Math.max(value * 0.7, 0)
+    const v = Math.max(value * .25, 0)
     this.glottis.tenseness.value = v
-    this.glottis.loudness.value = Math.pow(v, 0.5)
+    this.glottis.loudness.value = Math.pow(v, .5)
+  }
+
+  setPhoneme(phoneme: number[]) {
+    this.tract.tongueIndex.value = phoneme[0]
+    this.tract.tongueDiameter.value = phoneme[1]
   }
 
   setTongueIndex(index: number) {
