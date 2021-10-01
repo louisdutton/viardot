@@ -40,8 +40,8 @@ export default class GlottalSourceNode extends WorkletNode {
     this.vibratoRate = worklet.parameters.get('vibratoRate') as AudioParam
     this.vibratoDepth = worklet.parameters.get('vibratoDepth') as AudioParam
 
-    this.vibratoRate.value = 5 + Math.random() * 1
-    this.vibratoDepth.value = 5 + Math.random() * 2// pitch extent (amplitude)
+    this.vibratoRate.value = 4 + Math.random() * 2
+    this.vibratoDepth.value = 4 + Math.random() * 3// pitch extent (amplitude)
 
     this.aspiration.connect(this.worklet)
   }
@@ -54,6 +54,12 @@ export default class GlottalSourceNode extends WorkletNode {
   setIntensity(value: number, time: number) {
     this.intensity.cancelScheduledValues(0)
     this.intensity.exponentialRampToValueAtTime(value, ctx.now() + time)
+  }
+
+  setTenseness(value: number) {
+    const v = Math.max(value * .5, 0)
+    this.tenseness.value = v
+    this.loudness.value = Math.pow(v, .7)
   }
 
   start = (): void => this.setIntensity(1, this.humanize(this.adsr.attack, .1))

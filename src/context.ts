@@ -13,10 +13,10 @@ export default class Context {
 
     this.reverb = Freeverb(this.raw)
     this.reverb.connect(this.raw.destination)
-    this.reverb.roomSize = .8
-    this.reverb.dampening = 2500
-    this.reverb.wet.value = .2
-    this.reverb.dry.value = .8
+    this.reverb.roomSize = .7
+    this.reverb.dampening = 2000
+    this.reverb.wet.value = .3
+    this.reverb.dry.value = .7
 
     this.master = this.raw.createGain()
     this.master.gain.value = .05

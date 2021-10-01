@@ -29,17 +29,15 @@ export class Voice {
     this.range = RANGE[fach]
   }
 
-  setFrequency = (value: number) => this.glottis.setFrequency(value)
-
-  setIntensity(value: number) {
-    const v = Math.max(value * .25, 0)
-    this.glottis.tenseness.value = v
-    this.glottis.loudness.value = Math.pow(v, .5)
+  setFrequency(value: number) {
+    this.glottis.setFrequency(value)
+    this.glottis.setTenseness(1-invLerp(this.range.bottom, this.range.top, value))
   }
 
   setPhoneme(phoneme: number[]) {
     this.tract.tongueIndex.value = phoneme[0]
     this.tract.tongueDiameter.value = phoneme[1]
+    this.tract.lipDiameter.value = phoneme[2]
   }
 
   setTongueIndex(index: number) {
@@ -87,3 +85,5 @@ export enum Fach {
   Baritone,
   Bass,
 }
+
+const invLerp = (a: number, b: number, v: number) => (v-a) / (b-a)

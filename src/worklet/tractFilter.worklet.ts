@@ -8,7 +8,7 @@ export const processor = /* javascript */`
       return [
         { name: 'tongueIndex', defaultValue: .2, automationRate: 'k-rate'},
         { name: 'tongueDiameter', defaultValue: .2, automationRate: 'k-rate'},
-        { name: 'lipDiameter', defaultValue: 1, automationRate: 'k-rate'},
+        { name: 'lipDiameter', defaultValue: .5, automationRate: 'k-rate'},
         { name: 'tipIndex', defaultValue: .7, automationRate: 'k-rate'},
         { name: 'tipDiameter', defaultValue: 1, automationRate: 'k-rate'},
       ]
@@ -34,8 +34,9 @@ export const processor = /* javascript */`
     kellyLochbaum = (A1, A2) => (A1-A2) / (A1+A2) 
     ease = x => x === 0 ? 0 : Math.pow(2, 10 * x - 10)
 
-    initOralCavity({oralLength:N, maxDiameter}) {
+    initOralCavity({oralLength, maxDiameter}) {
       // sections
+      const N = oralLength + (Math.random() * 2 - 1) << 0
       this.N = N
 
       // Tongue
@@ -79,13 +80,13 @@ export const processor = /* javascript */`
 
       // Reflection (can probably make a bunch of these constants)
       this.K = new Float64Array(N+1) // Reflection coefficients
-      this.softK = .75
+      this.softK = .8
       this.hardK = .9
       this.glottalReflectionCoefficient = .7
-      this.labialReflectionCoefficient = -.9
+      this.labialReflectionCoefficient = -.85
       this.lastObstruction = -1
       this.decay = .9999 // the coefficient of decay in the transfer function
-      this.movementSpeed = 15 // cm per second
+      this.movementSpeed = 4 + Math.random() * 2 // cm per second
       this.transients = [] // stop consonants
       this.labialOutput = 0 // outout at the labia (lips)
     }
@@ -344,6 +345,8 @@ export const processor = /* javascript */`
         // run step at twice the sample rate
         this.step(source, noise, tipIndex, tipDiameter)
         this.step(source, noise, tipIndex, tipDiameter)
+        // this.step(source, noise, tipIndex, tipDiameter)
+        // this.step(source, noise, tipIndex, tipDiameter)
 
         output[n] = this.labialOutput + this.noseOutput
       }

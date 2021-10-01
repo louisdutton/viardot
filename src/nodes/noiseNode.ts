@@ -24,8 +24,8 @@ export default class NoiseNode {
     source.start(0)
     
     // filters
-    const aspiration = ctx.createBiquadFilter(1000, .7, 'lowpass')
-    const fricative = ctx.createBiquadFilter(1000, 0.1)
+    const aspiration = ctx.createBiquadFilter(1000, 1, 'lowpass')
+    const fricative = ctx.createBiquadFilter(1000, 1)
 
     // connect source to filters
     source.connect(aspiration)
@@ -42,7 +42,7 @@ export default class NoiseNode {
     const buffer = ctx.createBuffer(1, bufferSize)
     const channel = buffer.getChannelData(0)
     for (let n = 0; n < channel.length; n++) 
-      channel[n] = gaussian() * 0.1
+      channel[n] = gaussian() * 0.05
     return buffer
   }
 }

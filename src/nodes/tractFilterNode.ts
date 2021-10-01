@@ -45,10 +45,10 @@ interface TractProportions {
 }
 
 const TRACT_PROPORTIONS: TractProportions[] = [
-  { oralLength: 36, nasalLength: 30, maxDiameter: 4 }, // Soprano
-  { oralLength: 40, nasalLength: 30, maxDiameter: 4 }, // Mezzo
-  { oralLength: 44, nasalLength: 30, maxDiameter: 4 }, // Contralto
-  { oralLength: 48, nasalLength: 30, maxDiameter: 4 }, // Tenor
-  { oralLength: 52, nasalLength: 30, maxDiameter: 4 }, // Baritone
-  { oralLength: 56, nasalLength: 30, maxDiameter: 4 }, // Bass
+  { oralLength: 44, nasalLength: 20, maxDiameter: 4 }, // Soprano
+  { oralLength: 48, nasalLength: 26, maxDiameter: 4 }, // Mezzo
+  { oralLength: 52, nasalLength: 26, maxDiameter: 4 }, // Contralto
+  { oralLength: 54, nasalLength: 30, maxDiameter: 4 }, // Tenor
+  { oralLength: 58, nasalLength: 30, maxDiameter: 4 }, // Baritone
+  { oralLength: 60, nasalLength: 30, maxDiameter: 5 }, // Bass
 ]
