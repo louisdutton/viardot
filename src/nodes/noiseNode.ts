@@ -1,13 +1,7 @@
 import * as Global from '../global'
 import Context from '../context'
+import { Random } from '../utils'
 
-// normal-distrubted noise (mean: 0, sd: 1)
-function gaussian() {
-  var u = 0, v = 0;
-  while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
-  while(v === 0) v = Math.random();
-  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-}
 
 export default class NoiseNode {
   public readonly aspiration: BiquadFilterNode
@@ -42,7 +36,7 @@ export default class NoiseNode {
     const buffer = ctx.createBuffer(1, bufferSize)
     const channel = buffer.getChannelData(0)
     for (let n = 0; n < channel.length; n++) 
-      channel[n] = gaussian() * 0.05
+      channel[n] = Random.gaussian() * .08
     return buffer
   }
 }

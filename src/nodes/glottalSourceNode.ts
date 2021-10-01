@@ -2,6 +2,7 @@ import Context from "../context"
 import { context as ctx } from "../global"
 import { name } from '../worklet/glottalSource.worklet'
 import WorkletNode from "./workletNode"
+import { Random, clamp } from "../utils"
 
 export default class GlottalSourceNode extends WorkletNode {
   // Audio Parameters
@@ -23,7 +24,7 @@ export default class GlottalSourceNode extends WorkletNode {
     });
 
     this.aspiration = aspiration
-    this.portamento = .25 + Math.random() * .5
+    this.portamento = Random.range(.1, .2)
     this.adsr = {
       attack: .5,
       decay: .1,
@@ -40,8 +41,8 @@ export default class GlottalSourceNode extends WorkletNode {
     this.vibratoRate = worklet.parameters.get('vibratoRate') as AudioParam
     this.vibratoDepth = worklet.parameters.get('vibratoDepth') as AudioParam
 
-    this.vibratoRate.value = 4 + Math.random() * 2
-    this.vibratoDepth.value = 4 + Math.random() * 3// pitch extent (amplitude)
+    this.vibratoRate.value = Random.range(4.5, 5.5)
+    this.vibratoDepth.value = Random.range(5, 7) // pitch extent (amplitude)
 
     this.aspiration.connect(this.worklet)
   }
@@ -57,15 +58,15 @@ export default class GlottalSourceNode extends WorkletNode {
   }
 
   setTenseness(value: number) {
-    const v = Math.max(value * .5, 0)
+    const v = clamp(value * .75, 0, 1)
     this.tenseness.value = v
-    this.loudness.value = Math.pow(v, .7)
+    this.loudness.value = Math.pow(v, .2)
   }
 
   start = (): void => this.setIntensity(1, this.humanize(this.adsr.attack, .1))
   stop = (): void => this.setIntensity(.0001, this.humanize(this.adsr.release, .5))
 
-  humanize = (value: number, ratio: number): number => value + (Math.random()-1) * 2 * value*ratio
+  humanize = (value: number, ratio: number): number => value + (Random.value()-1) * 2 * value*ratio
 }
 
 interface ADSR {

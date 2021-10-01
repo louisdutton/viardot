@@ -4,6 +4,7 @@ import NoiseNode from './nodes/noiseNode'
 import GlottalSourceNode from './nodes/glottalSourceNode'
 import TractFilterNode from './nodes/tractFilterNode'
 import { Phonemes } from './dictionaries'
+import { clamp } from './utils'
 
 /**
 * Monophonic vocal synthesizer.
@@ -31,7 +32,7 @@ export class Voice {
 
   setFrequency(value: number) {
     this.glottis.setFrequency(value)
-    this.glottis.setTenseness(1-invLerp(this.range.bottom, this.range.top, value))
+    // this.glottis.setTenseness(clamp(1-invLerp(this.range.bottom, this.range.top, value), 0, 1))
   }
 
   setPhoneme(phoneme: number[]) {

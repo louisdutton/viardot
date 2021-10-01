@@ -13,10 +13,8 @@ export default class Context {
 
     this.reverb = Freeverb(this.raw)
     this.reverb.connect(this.raw.destination)
-    this.reverb.roomSize = .7
-    this.reverb.dampening = 2000
-    this.reverb.wet.value = .3
-    this.reverb.dry.value = .7
+    this.setReverb() // default settings
+   
 
     this.master = this.raw.createGain()
     this.master.gain.value = .05
@@ -27,6 +25,13 @@ export default class Context {
   resume = () => this.raw.resume()
   suspend = () => this.raw.suspend()
   now = () => this.raw.currentTime
+
+  setReverb(roomSize = .5, dampening = 2500, wet = .3, dry = .7) {
+    this.reverb.roomSize = roomSize
+    this.reverb.dampening = dampening
+    this.reverb.wet.value = wet
+    this.reverb.dry.value = dry
+  }
 
   addModule = (url: string, name: string) => this.worklet.addModule(url + '/' + name + '.js')
 

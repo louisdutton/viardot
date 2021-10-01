@@ -8,8 +8,11 @@ export const context = new Context()
 export const worklet = new Worklet()
 
 /** Initalizes Viardot. Must be called before anything else. */
-export const start = () => context.resume()
+export const start = context.resume
 
 /** Returns the current time within the audio context */
-export const now = context.now()
+export const now = context.now
+
+/** Sets the global reverb settings. */
+export const setReverb = context.setReverb
 
