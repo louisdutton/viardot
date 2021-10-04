@@ -2,9 +2,14 @@
   "name": "viardot",
   "version": "1.0.3",
   "description": "Vocal engine",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "type": "module",
+  "files": [
+    "README.md",
+    "LICENSE.md",
+    "dist"
+  ],
   "scripts": {
     "build": "npx tsc"
   },
@@ -13,11 +18,14 @@
     "url": "git+https://github.com/louisdutton/viardot.git"
   },
   "keywords": [
-    "AudioWorklet",
+    "Web Audio",
     "Web Audio API",
-    "physical modelling",
-    "music",
-    "audio"
+    "Physical Modelling",
+    "Synthesis",
+    "Vocal Synthesis",
+    "Instrument",
+    "DSP",
+    "Signal Processing"
   ],
   "author": "Louis Dutton <clouisdutton@gmail.com> (https://louisdutton.com/)",
   "license": "MIT",
@@ -27,7 +35,7 @@
   "homepage": "https://github.com/louisdutton/viardot#readme",
   "dependencies": {
     "rita": "^2.4.200",
-    "standardized-audio-context": "^25.3.6"
+    "tone": "^14.7.77"
   },
   "devDependencies": {
     "typescript": "^4.4.2"

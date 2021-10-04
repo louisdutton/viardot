@@ -1,6 +1,11 @@
 var combFilterTunings = [1557 / 44100, 1617 / 44100, 1491 / 44100, 1422 / 44100, 1277 / 44100, 1356 / 44100, 1188 / 44100, 1116 / 44100]
 var allpassFilterFrequencies = [225, 556, 441, 341]
 
+interface CombFilterNode extends BiquadFilterNode {
+  resonance: AudioParam
+  dampening: AudioParam
+}
+
 export default function Freeverb (audioContext: any) {
   var node = audioContext.createGain()
   node.channelCountMode = 'explicit'
@@ -23,7 +28,7 @@ export default function Freeverb (audioContext: any) {
   highpass.connect(output)
   dry.connect(output)
 
-  var combFilters: BiquadFilterType[] = []
+  var combFilters: CombFilterNode[] = []
   var allpassFiltersL: BiquadFilterNode[] = []
   var allpassFiltersR: BiquadFilterNode[] = []
   var roomSize = 0.8

@@ -29,7 +29,7 @@ button {
 
 .phoneme {
   font-size: 160px;
-  -webkit-text-stroke: 2px white;
+  -webkit-text-stroke: 3px white;
   color: transparent;
   width: 160px;
   height: 160px;

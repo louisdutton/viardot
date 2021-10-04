@@ -30,19 +30,19 @@ export const processor = /* javascript */`
       this.noseDiameter[0] = this.velumTarget
     }
 
-    calculateArea = (d) => d * d / 4 * Math.PI
+    calculateArea = (d) => d * d / 4 * PI
     kellyLochbaum = (A1, A2) => (A1-A2) / (A1+A2) 
-    ease = x => x === 0 ? 0 : Math.pow(2, 10 * x - 10)
+    ease = x => x === 0 ? 0 : pow(2, 10 * x - 10)
 
     initOralCavity({oralLength, maxDiameter}) {
       // sections
-      const N = oralLength + (Math.random() * 2 - 1) << 0
+      const N = oralLength + (random() * 2 - 1) << 0
       this.N = N
 
       // Tongue
-      this.bladeStart = Math.round(N * 0.25)
-      this.tipStart = Math.round(N * 0.727)
-      this.lipStart = Math.round(N-2)
+      this.bladeStart = round(N * 0.25)
+      this.tipStart = round(N * 0.727)
+      this.lipStart = round(N-2)
 
       // Travelling components
       this.R = new Float64Array(N) // right-moving component
@@ -86,7 +86,7 @@ export const processor = /* javascript */`
       this.labialReflectionCoefficient = -.85
       this.lastObstruction = -1
       this.decay = .9999 // the coefficient of decay in the transfer function
-      this.movementSpeed = 4 + Math.random() * 2 // cm per second
+      this.movementSpeed = 4 + random() * 2 // cm per second
       this.transients = [] // stop consonants
       this.labialOutput = 0 // outout at the labia (lips)
     }
@@ -110,7 +110,7 @@ export const processor = /* javascript */`
       {
           const d = 2 * (i/N)
           const diameter = (d<1) ? 0.4 + (1.6 * d) : 0.2 + 1.2 * (2-d)
-          this.noseDiameter[i] = Math.min(diameter, 1.2) * this.noseLength / 28 // fix magic numbers
+          this.noseDiameter[i] = min(diameter, 1.2) * this.noseLength / 28 // fix magic numbers
       }
     }
 
@@ -194,11 +194,11 @@ export const processor = /* javascript */`
     // Turbulence noise
       
     addFricativeNoise(noise, position, diameter) {   
-      const m = Math.floor(position) // section
+      const m = floor(position) // section
       const delta = position - m
       // noise amplitude modulation now occurs in source node !!!
-      const thinness = Math.clamp(8*(0.7-diameter),0,1)
-      const openness = Math.clamp(30*(diameter-0.3), 0, 1)
+      const thinness = clamp(8*(0.7-diameter),0,1)
+      const openness = clamp(30*(diameter-0.3), 0, 1)
 
       // divided by two for L-R split
       const noise0 = noise*(1-delta)*thinness*openness / 2
@@ -222,7 +222,7 @@ export const processor = /* javascript */`
         if (m<this.noseStart) slowReturn = 0.6
         else if (m >= this.tipStart) slowReturn = 1.0 
         else slowReturn = 0.6+0.4*(m-this.noseStart)/(this.tipStart-this.noseStart)
-        this.diameter[m] = Math.moveTowards(diameter, targetDiameter, slowReturn*amount, 2*amount)
+        this.diameter[m] = moveTowards(diameter, targetDiameter, slowReturn*amount, 2*amount)
       }
       if (this.lastObstruction>-1 && newLastObstruction == -1 && this.noseA[0]<0.05) {
         this.addTransient(this.lastObstruction)
@@ -230,7 +230,7 @@ export const processor = /* javascript */`
       this.lastObstruction = newLastObstruction
       
       amount = deltaTime * this.movementSpeed 
-      this.noseDiameter[0] = Math.moveTowards(this.noseDiameter[0], this.velumTarget, amount*0.25, amount*0.1)
+      this.noseDiameter[0] = moveTowards(this.noseDiameter[0], this.velumTarget, amount*0.25, amount*0.1)
       this.noseA[0] = this.noseDiameter[0]*this.noseDiameter[0]        
     }
 
@@ -247,7 +247,7 @@ export const processor = /* javascript */`
     processTransients() {
       for (let t = 0; t < this.transients.length; t++) {
         let trans = this.transients[t]
-        let amplitude = trans.strength * Math.pow(2, -trans.exponent * trans.timeAlive)
+        let amplitude = trans.strength * pow(2, -trans.exponent * trans.timeAlive)
         this.R[trans.position] += amplitude/2
         this.L[trans.position] += amplitude/2
         trans.timeAlive += 1.0/(sampleRate*2)
@@ -273,12 +273,12 @@ export const processor = /* javascript */`
       // update rest & target diameter
       for (let i=this.bladeStart; i<this.lipStart; i++)
       {
-        let t = 1.1 * Math.PI * (index-i) / (tip-blade)
-        let curve = (this.maxDiameter/2-tongueDiameter) * Math.cos(t)
+        let t = 1.1 * PI * (index-i) / (tip-blade)
+        let curve = (this.maxDiameter/2-tongueDiameter) * cos(t)
         if (i == blade-2 || i == lip-1) curve *= 0.8
         if (i == blade || i == lip-2) curve *= 0.94  
-        const newDiameter =  (this.maxDiameter/2 - curve) * (1+Math.simplex(i)*0.15)       
-        this.targetDiameter[i] = this.restDiameter[i] = Math.clamp(newDiameter, 0.3, this.maxDiameter)
+        const newDiameter =  (this.maxDiameter/2 - curve) * (1+simplex(i)*0.15)       
+        this.targetDiameter[i] = this.restDiameter[i] = clamp(newDiameter, 0.3, this.maxDiameter)
       }
     }
 
@@ -305,16 +305,16 @@ export const processor = /* javascript */`
       else width = 10-2*(index-25)/(tip-25);
       if (index >= 2 && index < this.N && diameter < this.maxDiameter)
       {
-        let intIndex = Math.round(index);
-        for (let i=-Math.ceil(width)-1; i<width+1; i++) 
+        let intIndex = round(index);
+        for (let i=-ceil(width)-1; i<width+1; i++) 
         {   
           if (intIndex+i<0 || intIndex+i>=this.N) continue;
           let relpos = (intIndex+i) - index;
-          relpos = Math.abs(relpos)-0.2;
+          relpos = abs(relpos)-0.2;
           let shrink;
           if (relpos <= 0) shrink = 0;
           else if (relpos > width) shrink = 1;
-          else shrink = 0.2*(1-Math.cos(Math.PI * relpos / width));
+          else shrink = 0.2*(1-cos(PI * relpos / width));
           if (diameter < this.targetDiameter[intIndex+i])
           {
             this.targetDiameter[intIndex+i] = diameter + (this.targetDiameter[intIndex+i]-diameter)*shrink;

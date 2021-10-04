@@ -5,20 +5,37 @@ export default class Context {
   private worklet: AudioWorklet
   public master: GainNode
   public sampleRate: number
-  private reverb: AudioNode
+  private reverb: Reverb
+  public analyser: AnalyserNode
+  public bufferLength: number
+  public dataArray: Uint8Array
 
   constructor() {
     this.raw = new AudioContext()
     this.worklet = this.raw.audioWorklet
 
-    this.reverb = Freeverb(this.raw)
+    this.reverb = Freeverb(this.raw) as Reverb
     this.reverb.connect(this.raw.destination)
     this.setReverb() // default settings
-   
+
+    this.analyser = this.raw.createAnalyser();
+    this.analyser.fftSize = 2048;
+    
+    this.bufferLength = this.analyser.frequencyBinCount;
+    this.dataArray = new Uint8Array(this.bufferLength);
+    this.analyser.getByteTimeDomainData(this.dataArray);
+
+    const filter = this.raw.createBiquadFilter()
+    filter.Q.value = 5
+    filter.frequency.value = 2000
+    filter.type = 'lowpass'
+    filter.connect(this.reverb)
+    filter.connect(this.analyser)
 
     this.master = this.raw.createGain()
-    this.master.gain.value = .05
-    this.master.connect(this.reverb)
+    this.master.gain.value = .075
+    this.master.connect(filter)
+    // this.master.connect(this.analyser)
     this.sampleRate = this.raw.sampleRate
   }
 
@@ -80,4 +97,11 @@ export default class Context {
 		this.modules.forEach((promise) => promises.push(promise));
 		await Promise.all(promises);
 	}
+}
+
+interface Reverb extends AudioNode {
+  roomSize: number
+  dampening: number
+  wet: AudioParam
+  dry: AudioParam
 }

@@ -4,10 +4,11 @@ import NoiseNode from './nodes/noiseNode'
 import GlottalSourceNode from './nodes/glottalSourceNode'
 import TractFilterNode from './nodes/tractFilterNode'
 import { Phonemes } from './dictionaries'
-import { clamp } from './utils'
+import { clamp, invLerp } from './utils'
+import Ease from './ease'
 
 /**
-* Monophonic vocal synthesizer.
+* Monophonic vocal synth.
 * @param {Fach} fach Voice type
 */
 export class Voice {
@@ -31,8 +32,9 @@ export class Voice {
   }
 
   setFrequency(value: number) {
+    const tenseness = clamp(1-invLerp(this.range.bottom, this.range.top, value), 0, 1)
     this.glottis.setFrequency(value)
-    // this.glottis.setTenseness(clamp(1-invLerp(this.range.bottom, this.range.top, value), 0, 1))
+    this.glottis.setTenseness(Ease.outCirc(tenseness))
   }
 
   setPhoneme(phoneme: number[]) {
@@ -86,5 +88,3 @@ export enum Fach {
   Baritone,
   Bass,
 }
-
-const invLerp = (a: number, b: number, v: number) => (v-a) / (b-a)

@@ -31,7 +31,11 @@ export class ADSR {
   }
 }
 
-/** Returns a number whose value is limited to the given range.*/
-export function clamp (value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-};
+/** Returns a number whose value is limited within range [a-b].*/
+export const clamp = (value: number, a: number, b: number) => Math.min(Math.max(value, a), b)
+
+/** Returns the linear interpolation of point t between numbers a and b.*/
+export const lerp = (a: number, b: number, t: number) => a * (1-t) + b * t
+
+/** Returns the linear interpolant of v between numbers a and b.*/
+export const invLerp = (a: number, b: number, v: number) => (v-a) / (b-a)

@@ -1,6 +1,24 @@
 import { worklet } from '../global'
 
-// simplex noise attribution:
+const math = /* javascript */`  const PI = Math.PI
+  const PI2 = PI * 2
+  const random = Math.random
+  const exp = Math.exp
+  const sqrt = Math.sqrt
+  const pow = Math.pow
+  const log = Math.log
+  const round = n => n + (n < 0 ? -0.5 : 0.5) >> 0
+  const ceil = n => n + (n < 0 ? 0 : 1) >> 0
+  const floor = n => n + (n < 0 ? -1 : 0) >> 0
+  const sin = Math.sin
+  const cos = Math.cos
+  const max = (a, b) => (a > b) ? a : b;
+  const min = (a, b) => (a < b) ? a : b;
+  const clamp = (value, a, b) => max(a, min(value, b))
+  const hanning = (t, frequency) => (1 - cos(PI2 * t * frequency)) / 2
+  const moveTowards = (a, b, target) => (a<b) ? min(a+target, b) : max(a-target, b)
+`
+
 /*
 * Based on example code by Stefan Gustavson (stegu@itn.liu.se).
 * Optimisations by Peter Eastman (peastman@drizzle.stanford.edu).
@@ -11,7 +29,7 @@ import { worklet } from '../global'
 * attribution is appreciated.
 */
 
-const utils = /* javascript */ `
+const noise = /* javascript */ `
   "use strict"
 
   const G2 = (3.0 - Math.sqrt(3.0)) / 6.0
@@ -29,7 +47,7 @@ const utils = /* javascript */ `
     [0, 1],
     [0, -1],
   ]
-  function makeNoise2D(random) {
+  const makeNoise2D = (random) => {
     if (random === void 0) { random = Math.random }
     const p = new Uint8Array(256)
     for (let i = 0 ;i < 256; i++)
@@ -85,15 +103,10 @@ const utils = /* javascript */ `
     }
   }
 
-  // Additional math utils
-  Math.simplex2D = makeNoise2D(Math.random)
-  Math.simplex = t => Math.simplex2D(t*1.2, t*.7)
-  Math.PI2 = Math.PI * 2
-  Math.clamp = (value, a, b) => Math.max(a, Math.min(value, b))
-  Math.hanning = (t, frequency) => (1 - Math.cos(Math.PI2 * t * frequency)) / 2
-  Math.moveTowards = (a, b, target) => (a<b)
-    ? Math.min(a+target, b)
-    : Math.max(a-target, b)
+  const simplex2D = makeNoise2D(random)
+  const simplex = t => simplex2D(t*1.2, t*.7)
 `
 
-worklet.add(utils)
+// Add code to worklet thread
+worklet.add(math)
+worklet.add(noise)

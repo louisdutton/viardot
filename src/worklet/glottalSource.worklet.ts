@@ -45,7 +45,7 @@ export const processor = /* javascript */`
       const Te = Tp + Tp*Rk //
       
       const epsilon = 1/Ta
-      const shift = Math.exp(-epsilon * (1-Te))
+      const shift = exp(-epsilon * (1-Te))
       const Delta = 1 - shift //divide by this to scale RHS
           
       const RHSIntegral = ((1/epsilon)*(shift - 1) + (1-Te)*shift) / Delta
@@ -53,23 +53,23 @@ export const processor = /* javascript */`
       const totalLowerIntegral = -(Te-Tp)/2 + RHSIntegral
       const totalUpperIntegral = -totalLowerIntegral
       
-      const omega = Math.PI/Tp
-      const s = Math.sin(omega*Te)
+      const omega = PI/Tp
+      const s = sin(omega*Te)
       
-      const y = -Math.PI*s*totalUpperIntegral / (Tp*2)
-      const z = Math.log(y)
+      const y = -PI*s*totalUpperIntegral / (Tp*2)
+      const z = log(y)
       const alpha = z/(Tp/2 - Te)
-      const E0 = -1 / (s*Math.exp(alpha*Te))
+      const E0 = -1 / (s*exp(alpha*Te))
 
       // normalized waveform function
       return t => (t>Te)
-        ? (-Math.exp(-epsilon * (t-Te)) + shift)/Delta
-        : E0 * Math.exp(alpha*t) * Math.sin(omega*t)
+        ? (-exp(-epsilon * (t-Te)) + shift)/Delta
+        : E0 * exp(alpha*t) * sin(omega*t)
     }
 
     vibrato(rate, depth, simplexA, simplexB) {
       const t = currentTime
-      let vibrato = depth * Math.sin(Math.PI2 * t * rate)
+      let vibrato = depth * sin(PI2 * t * rate)
       vibrato += simplexA * depth/2 + simplexB * depth/3
       return vibrato
     }
@@ -100,8 +100,8 @@ export const processor = /* javascript */`
       // In block
       for (let n = 0; n < 128; n++) {
         // simplex noise
-        const s1 = Math.simplex(currentTime * 1.4)
-        const s2 = Math.simplex(currentTime * 4.2)
+        const s1 = simplex(currentTime * 1.4)
+        const s2 = simplex(currentTime * 4.2)
 
         // excitation
         const vibrato = this.vibrato(vibratoRate, vibratoDepth, s1, s2)
@@ -113,8 +113,8 @@ export const processor = /* javascript */`
         const excitation = this.waveform(t)
 
         // aspiration
-        const modulation = floor + amplitude * Math.hanning(t, f0)
-        const noiseResidual = input[n] * (1+s2*.25) * modulation * Math.sqrt(tenseness)
+        const modulation = floor + amplitude * hanning(t, f0)
+        const noiseResidual = input[n] * (1+s2*.25) * modulation * sqrt(tenseness)
 
         output[n] = (excitation + noiseResidual) * intensity * loudness
       }
