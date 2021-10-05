@@ -11,7 +11,7 @@ export const processor = /* javascript */`
         { name: 'frequency', defaultValue: 440, automationRate: 'a-rate'},
         { name: 'vibratoDepth', defaultValue: 8.0, automationRate: 'k-rate'},
         { name: 'vibratoRate', defaultValue: 6.0, automationRate: 'k-rate'},
-        { name: 'loudness', defaultValue: 1.0, automationRate: 'k-rate'},
+        { name: 'loudness', defaultValue: 0.5, automationRate: 'k-rate'},
       ]
     }
     

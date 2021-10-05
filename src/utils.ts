@@ -31,6 +31,8 @@ export class ADSR {
   }
 }
 
+export const humanize = (value: number, ratio: number): number => value + (Random.value()-1) * 2 * value*ratio
+
 /** Returns a number whose value is limited within range [a-b].*/
 export const clamp = (value: number, a: number, b: number) => Math.min(Math.max(value, a), b)
 

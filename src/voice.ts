@@ -6,6 +6,7 @@ import TractFilterNode from './nodes/tractFilterNode'
 import { Phonemes } from './dictionaries'
 import { clamp, invLerp } from './utils'
 import Ease from './ease'
+import { context } from '.'
 
 /**
 * Monophonic vocal synth.
@@ -16,25 +17,52 @@ export class Voice {
   private readonly glottis: GlottalSourceNode
   public readonly fach: Fach
   public readonly range: VocalRange
+  public readonly analyser: AnalyserNode
+  public readonly bufferLength: number
+  public dataArray: Uint8Array
+  public enabled = true
   
   constructor(fach: Fach) {
+    // Analysis
+    const analyser = ctx.createAnalyser()
+    analyser.fftSize = 1024
+    analyser.maxDecibels = 5
+
+    const filter = ctx.createBiquadFilter(2500, 12, 'lowpass')
+    const formant = ctx.createBiquadFilter(500, 1, 'lowshelf')
+    filter.connect(formant)
+    // filter.connect(ctx.master)
+    // filter.connect(analyser)
+    formant.connect(ctx.master)
+    formant.connect(analyser)
+
     // Noise Source (split used for both aspiration and fricative noise)
     const noise = new NoiseNode(5)
 
     // Create worklet nodes
     const glottalSource = new GlottalSourceNode(noise.aspiration)
-    const tractFilter = new TractFilterNode(fach, glottalSource, noise.fricative)
+    const tractFilter = new TractFilterNode(fach, glottalSource, noise.fricative, filter)
 
     this.tract = tractFilter
     this.glottis = glottalSource
     this.fach = fach
     this.range = RANGE[fach]
+    this.analyser = analyser
+    
+    this.bufferLength = analyser.frequencyBinCount
+    this.dataArray = new Uint8Array(this.bufferLength)
+    analyser.getByteTimeDomainData(this.dataArray)
   }
 
   setFrequency(value: number) {
     const tenseness = clamp(1-invLerp(this.range.bottom, this.range.top, value), 0, 1)
     this.glottis.setFrequency(value)
-    this.glottis.setTenseness(Ease.outCirc(tenseness))
+    if (this.fach < 3) this.glottis.setTenseness(1/value)
+  }
+
+  setLoudness(value: number) {
+    const v = clamp(value, 0, 1) * .6
+    this.glottis.setLoudness(v)
   }
 
   setPhoneme(phoneme: number[]) {

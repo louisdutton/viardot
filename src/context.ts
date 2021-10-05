@@ -6,9 +6,6 @@ export default class Context {
   public master: GainNode
   public sampleRate: number
   private reverb: Reverb
-  public analyser: AnalyserNode
-  public bufferLength: number
-  public dataArray: Uint8Array
 
   constructor() {
     this.raw = new AudioContext()
@@ -18,24 +15,9 @@ export default class Context {
     this.reverb.connect(this.raw.destination)
     this.setReverb() // default settings
 
-    this.analyser = this.raw.createAnalyser();
-    this.analyser.fftSize = 2048;
-    
-    this.bufferLength = this.analyser.frequencyBinCount;
-    this.dataArray = new Uint8Array(this.bufferLength);
-    this.analyser.getByteTimeDomainData(this.dataArray);
-
-    const filter = this.raw.createBiquadFilter()
-    filter.Q.value = 5
-    filter.frequency.value = 2000
-    filter.type = 'lowpass'
-    filter.connect(this.reverb)
-    filter.connect(this.analyser)
-
     this.master = this.raw.createGain()
     this.master.gain.value = .075
-    this.master.connect(filter)
-    // this.master.connect(this.analyser)
+    this.master.connect(this.reverb)
     this.sampleRate = this.raw.sampleRate
   }
 
@@ -58,6 +40,14 @@ export default class Context {
 
   createBuffer(numberOfChannels: number, length: number): AudioBuffer {
     return this.raw.createBuffer(numberOfChannels, length, this.sampleRate)
+  }
+
+  createAnalyser() {
+    return this.raw.createAnalyser()
+  }
+
+  createGain() {
+    return this.raw.createGain()
   }
 
   createBiquadFilter(frequency: number, q=0.6, type: BiquadFilterType='bandpass'): BiquadFilterNode {

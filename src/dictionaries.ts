@@ -1,16 +1,16 @@
 /** Phoneme -> tongue position dictionary */
 export const Phonemes = {
   // vowels
-  aa: [.2, .2, .9], // part
-  ah: [.5, .333, 1], // pet
+  aa: [.2, .2, 1], // part
+  ah: [.5, .4, 1], // pet
   ae: [.25, .25], // pat ???????
   uh: [.75, .75], // put
-  ao: [.2, .1, .6], // pot
+  ao: [.85, .8, .9], // pot
   ax: [.95, .95], // dial
   oh: [5.7, 2], // daughter
   uw: [1, .9, .2], // poot
   ih: [24.8, 2.6], // pit
-  iy: [.75, .2, .85], // peat
+  iy: [.8, .2, .85], // peat
 
   // fricatives
   sh: [33.98, 0.5], // shell

@@ -13,8 +13,9 @@ export default class TractFilterNode extends WorkletNode {
   public lipDiameter!: AudioParam
   private source: GlottalSourceNode
   private noise: AudioNode
+  private filter: BiquadFilterNode
 
-  constructor(Fach: Fach, source: GlottalSourceNode, noise: AudioNode) {
+  constructor(Fach: Fach, source: GlottalSourceNode, noise: AudioNode, filter: BiquadFilterNode) {
     super(ctx, name, {
       numberOfInputs: 2, 
       processorOptions: { proportions: TRACT_PROPORTIONS[Fach] }
@@ -22,6 +23,7 @@ export default class TractFilterNode extends WorkletNode {
 
     this.source = source
     this.noise = noise
+    this.filter = filter
   }
 
   protected onready(node: any): void {
@@ -34,7 +36,7 @@ export default class TractFilterNode extends WorkletNode {
 
     this.source.worklet.connect(this.worklet, 0, 0)
     this.noise.connect(this.worklet, 0, 1)
-    this.worklet.connect(ctx.master)
+    this.worklet.connect(this.filter)
   }
 }
 
