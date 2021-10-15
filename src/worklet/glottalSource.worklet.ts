@@ -62,7 +62,7 @@ export const processor = /* javascript */`
       const E0 = -1 / (s*exp(alpha*Te))
 
       // normalized waveform function
-      return t => (t>Te)
+      return t => (t > Te)
         ? (-exp(-epsilon * (t-Te)) + shift)/Delta
         : E0 * exp(alpha*t) * sin(omega*t)
     }

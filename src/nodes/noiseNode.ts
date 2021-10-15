@@ -36,7 +36,7 @@ export default class NoiseNode {
     const buffer = ctx.createBuffer(1, bufferSize)
     const channel = buffer.getChannelData(0)
     for (let n = 0; n < channel.length; n++) 
-      channel[n] = Random.gaussian() * .1
+      channel[n] = Random.gaussian() * .08
     return buffer
   }
 }

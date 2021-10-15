@@ -45,7 +45,7 @@ export default class GlottalSourceNode extends WorkletNode {
     this.vibratoDepth.value = Random.range(5.75, 6.25) // pitch extent (amplitude)
 
     this.aspiration.connect(this.worklet)
-    this.tenseness.value = .8
+    this.tenseness.value = 1
   }
 
   setFrequency(value: number) {

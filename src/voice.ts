@@ -28,13 +28,13 @@ export class Voice {
     analyser.fftSize = 1024
     analyser.maxDecibels = 5
 
-    const filter = ctx.createBiquadFilter(2500, 12, 'lowpass')
-    const formant = ctx.createBiquadFilter(500, 1, 'lowshelf')
-    filter.connect(formant)
-    // filter.connect(ctx.master)
-    // filter.connect(analyser)
-    formant.connect(ctx.master)
-    formant.connect(analyser)
+    const filter = ctx.createBiquadFilter(2500, 0.5, 'lowpass')
+    // const formant = ctx.createBiquadFilter(500, 1, 'lowshelf')
+    // filter.connect(formant)
+    filter.connect(ctx.master)
+    filter.connect(analyser)
+    // formant.connect(ctx.master)
+    // formant.connect(analyser)
 
     // Noise Source (split used for both aspiration and fricative noise)
     const noise = new NoiseNode(5)
@@ -55,13 +55,20 @@ export class Voice {
   }
 
   setFrequency(value: number) {
-    const tenseness = clamp(1-invLerp(this.range.bottom, this.range.top, value), 0, 1)
     this.glottis.setFrequency(value)
-    if (this.fach < 3) this.glottis.setTenseness(1/value)
+
+    // tenseness 
+    const interpolant = clamp(1-invLerp(this.range.bottom, this.range.top, value), 0, 1)
+
+    // female or male vocal mechanism
+    const t = (this.fach < 3)
+      ? interpolant > .8 ? .8 + Ease.outExpo(interpolant) * .2 : interpolant 
+      : 1-interpolant
+    this.glottis.setTenseness(t)
   }
 
   setLoudness(value: number) {
-    const v = clamp(value, 0, 1) * .6
+    const v = clamp(value, 0, 1) * (1/this.fach)
     this.glottis.setLoudness(v)
   }
 
