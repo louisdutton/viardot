@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import Visualization from './Visualization'
 import { Note, Chord, ChordDictionary } from '@tonaljs/tonal'
-import * as VRD from '../../src/index' // testing dir
+import * as VRD from 'viardot' // testing dir
 
 function App() {
 	useEffect(() => {
@@ -131,7 +131,7 @@ function clamp (value: number, a: number, b: number) {
 }
 
 // data
-const colors = ['#ee33ee', '#0099ff', '#00ffaa', '#ff9100']
+const colors = ['#6249bd', '#0099ff', '#00ffaa', '#ff9100']
 const letters = ['a', 'e', 'i', 'o', 'u']
 
 const voices = [

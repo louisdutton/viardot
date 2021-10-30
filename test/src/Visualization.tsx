@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react'
-import * as VRD from '../../src/index' // testing dir
+import * as VRD from 'viardot' // testing dir
 
 type Props = {
   voices: VRD.Voice[]
@@ -8,13 +8,6 @@ type Props = {
 
 export default function Visualization({ voices, colors }: Props) {
 	const canvasRef = useRef<HTMLCanvasElement>(null)
-	// const vowels = [
-	// 	useRef<HTMLSpanElement>(null),
-	// 	useRef<HTMLSpanElement>(null),
-	// 	useRef<HTMLSpanElement>(null),
-	// 	useRef<HTMLSpanElement>(null),
-	// 	useRef<HTMLSpanElement>(null)
-	// ]
 
   useEffect(() => draw())
 
