@@ -2,7 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "target": "ES6",                                     
-    "module": "ES2015",                                        
+    "module": "ES2020",                                        
     "strict": true,
     "outDir": "dist",
     "declaration": true,
