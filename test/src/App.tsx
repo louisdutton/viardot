@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import Visualization from "./Visualization"
 import { Note, Chord, ChordDictionary } from "@tonaljs/tonal"
-import * as VRD from "viardot" // testing dir
+import * as VRD from "../../" // testing dir
 
 function App() {
   useEffect(() => {
