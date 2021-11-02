@@ -4,7 +4,7 @@
   "description": "Vocal engine",
   "type": "module",
   "module": "dist/index.js",
-  "types": "dist/types/index.d.ts",
+  "types": "types/index.d.ts",
   "files": [
     "README.md",
     "LICENSE.md",
