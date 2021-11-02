@@ -1,5 +1,5 @@
-import { Fach } from '.'
-import { Voice } from '.'
+import { Fach } from "."
+import { Voice } from "."
 
 type Fachs = [Fach, Fach, Fach, Fach]
 /**
@@ -9,6 +9,6 @@ export class Quartet {
   voices: Voice[]
 
   constructor(fachs: Fachs) {
-    this.voices = fachs.map(f => new Voice(f))
+    this.voices = fachs.map((f) => new Voice(f))
   }
 }

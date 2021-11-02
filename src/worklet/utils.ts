@@ -1,6 +1,6 @@
-import { worklet } from '../global'
+import { worklet } from "../global"
 
-const math = /* javascript */`  const PI = Math.PI
+const math = /* javascript */ `  const PI = Math.PI
   const PI2 = PI * 2
   const random = Math.random
   const exp = Math.exp
@@ -20,14 +20,14 @@ const math = /* javascript */`  const PI = Math.PI
 `
 
 /*
-* Based on example code by Stefan Gustavson (stegu@itn.liu.se).
-* Optimisations by Peter Eastman (peastman@drizzle.stanford.edu).
-* Better rank ordering method by Stefan Gustavson in 2012.
-*
-* This code was placed in the public domain by its original author,
-* Stefan Gustavson. You may use it as you see fit, but
-* attribution is appreciated.
-*/
+ * Based on example code by Stefan Gustavson (stegu@itn.liu.se).
+ * Optimisations by Peter Eastman (peastman@drizzle.stanford.edu).
+ * Better rank ordering method by Stefan Gustavson in 2012.
+ *
+ * This code was placed in the public domain by its original author,
+ * Stefan Gustavson. You may use it as you see fit, but
+ * attribution is appreciated.
+ */
 
 const noise = /* javascript */ `
   "use strict"

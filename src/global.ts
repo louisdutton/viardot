@@ -1,5 +1,5 @@
-import Context from './context'
-import Worklet from './worklet'
+import Context from "./context"
+import Worklet from "./worklet"
 
 /** Viardot's global context. */
 export const context = new Context()
@@ -15,4 +15,3 @@ export const now = context.now
 
 /** Sets the global reverb settings. */
 export const setReverb = context.setReverb
-

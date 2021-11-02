@@ -1,12 +1,12 @@
 // import Context from '../context'
-import { Fach } from '../voice'
+import { Fach } from "../voice"
 import { context as ctx } from "../global"
-import WorkletNode from './workletNode'
-import { name } from '../worklet/tractFilter.worklet'
-import GlottalSourceNode from './glottalSourceNode'
+import WorkletNode from "./workletNode"
+import { name } from "../worklet/tractFilter.worklet"
+import GlottalSourceNode from "./glottalSourceNode"
 
 export default class TractFilterNode extends WorkletNode {
-  public tongueIndex!: AudioParam 
+  public tongueIndex!: AudioParam
   public tongueDiameter!: AudioParam
   public tipIndex!: AudioParam
   public tipDiameter!: AudioParam
@@ -17,9 +17,9 @@ export default class TractFilterNode extends WorkletNode {
 
   constructor(Fach: Fach, source: GlottalSourceNode, noise: AudioNode, filter: BiquadFilterNode) {
     super(ctx, name, {
-      numberOfInputs: 2, 
-      processorOptions: { proportions: TRACT_PROPORTIONS[Fach] }
-    });
+      numberOfInputs: 2,
+      processorOptions: { proportions: TRACT_PROPORTIONS[Fach] },
+    })
 
     this.source = source
     this.noise = noise
@@ -27,11 +27,11 @@ export default class TractFilterNode extends WorkletNode {
   }
 
   protected onready(node: any): void {
-    this.tongueIndex = node.parameters.get('tongueIndex') as AudioParam
-    this.tongueDiameter = node.parameters.get('tongueDiameter') as AudioParam
-    this.tipIndex = node.parameters.get('tipIndex') as AudioParam
-    this.tipDiameter = node.parameters.get('tipDiameter') as AudioParam
-    this.lipDiameter = node.parameters.get('lipDiameter') as AudioParam
+    this.tongueIndex = node.parameters.get("tongueIndex") as AudioParam
+    this.tongueDiameter = node.parameters.get("tongueDiameter") as AudioParam
+    this.tipIndex = node.parameters.get("tipIndex") as AudioParam
+    this.tipDiameter = node.parameters.get("tipDiameter") as AudioParam
+    this.lipDiameter = node.parameters.get("lipDiameter") as AudioParam
     // node.port.onmessage = (msg: MessageEvent<any>) => this.diameter = msg.data as Float64Array
 
     this.source.worklet.connect(this.worklet, 0, 0)

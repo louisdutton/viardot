@@ -1,16 +1,16 @@
 /** Phoneme -> tongue position dictionary */
 export const Phonemes = {
   // vowels
-  aa: [.2, .2, 1], // part
-  ah: [.5, .4, 1], // pet
-  ae: [.25, .25], // pat ???????
-  uh: [.75, .75], // put
-  ao: [.85, .8, .9], // pot
-  ax: [.95, .95], // dial
+  aa: [0.2, 0.2, 1], // part
+  ah: [0.5, 0.4, 1], // pet
+  ae: [0.25, 0.25], // pat ???????
+  uh: [0.75, 0.75], // put
+  ao: [0.85, 0.8, 0.9], // pot
+  ax: [0.95, 0.95], // dial
   oh: [5.7, 2], // daughter
-  uw: [1, .9, .2], // poot
+  uw: [1, 0.9, 0.2], // poot
   ih: [24.8, 2.6], // pit
-  iy: [.8, .2, .85], // peat
+  iy: [0.8, 0.2, 0.85], // peat
 
   // fricatives
   sh: [33.98, 0.5], // shell
@@ -38,51 +38,51 @@ export const Phonemes = {
  * Arpabet -> IPA phoneme dictionary
  */
 export const ArpaToIPA: { [key: string]: string } = {
-  'aa':	'ɑ',
-  'ae':	'æ',
-  'ah':	'ʌ',
-  'ao':	'ɔ',
-  'aw':	'aʊ',
-  'ax':	'ə',
-  'ay':	'aɪ',
-  'eh':	'ɛ',
-  'er':	'ɝ',
-  'ey':	'eɪ',
-  'ih':	'ɪ',
-  'ix':	'ɨ',
-  'iy':	'i',
-  'ow':	'oʊ',
-  'oy':	'ɔɪ',
-  'uh':	'ʊ',
-  'uw':	'u',
-  'b': 'b',
-  'ch':	'tʃ',
-  'd':	'd',
-  'dh':	'ð',
-  'dx':	'ɾ',
-  'el':	'l̩',
-  'em':	'm̩',
-  'en':	'n̩',
-  'f': 'f',
-  'g': 'ɡ',
-  'hh':	'h',
-  'jh': 'dʒ',
-  'k':	'k',
-  'l':	'l',
-  'm':	'm',
-  'n':	'n',
-  'ng':	'ŋ',
-  'p':	'p',
-  'q':	'ʔ',
-  'r':	'ɹ',
-  's':	's',
-  'sh':	'ʃ',
-  't':	't',
-  'th':	'θ',
-  'v':	'v',
-  'w':	'w',
-  'wh':	'ʍ',
-  'y':	'j',
-  'z':	'z',
-  'zh':	'ʒ',
+  aa: "ɑ",
+  ae: "æ",
+  ah: "ʌ",
+  ao: "ɔ",
+  aw: "aʊ",
+  ax: "ə",
+  ay: "aɪ",
+  eh: "ɛ",
+  er: "ɝ",
+  ey: "eɪ",
+  ih: "ɪ",
+  ix: "ɨ",
+  iy: "i",
+  ow: "oʊ",
+  oy: "ɔɪ",
+  uh: "ʊ",
+  uw: "u",
+  b: "b",
+  ch: "tʃ",
+  d: "d",
+  dh: "ð",
+  dx: "ɾ",
+  el: "l̩",
+  em: "m̩",
+  en: "n̩",
+  f: "f",
+  g: "ɡ",
+  hh: "h",
+  jh: "dʒ",
+  k: "k",
+  l: "l",
+  m: "m",
+  n: "n",
+  ng: "ŋ",
+  p: "p",
+  q: "ʔ",
+  r: "ɹ",
+  s: "s",
+  sh: "ʃ",
+  t: "t",
+  th: "θ",
+  v: "v",
+  w: "w",
+  wh: "ʍ",
+  y: "j",
+  z: "z",
+  zh: "ʒ",
 }

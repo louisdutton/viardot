@@ -1,8 +1,8 @@
-import './utils'
+import "./utils"
 import { worklet } from "../global"
 
-export const name = 'tractFilter'
-export const processor = /* javascript */`
+export const name = "tractFilter"
+export const processor = /* javascript */ `
   class TractFilterProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
       return [

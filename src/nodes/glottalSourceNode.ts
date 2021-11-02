@@ -1,6 +1,6 @@
 import Context from "../context"
 import { context as ctx } from "../global"
-import { name } from '../worklet/glottalSource.worklet'
+import { name } from "../worklet/glottalSource.worklet"
 import WorkletNode from "./workletNode"
 import { Random, clamp, humanize } from "../utils"
 
@@ -20,26 +20,26 @@ export default class GlottalSourceNode extends WorkletNode {
     super(ctx, name, {
       channelCount: 1,
       numberOfInputs: 1,
-      numberOfOutputs: 1
-    });
+      numberOfOutputs: 1,
+    })
 
     this.aspiration = aspiration
-    this.portamento = Random.range(.2, .3)
+    this.portamento = Random.range(0.2, 0.3)
     this.adsr = {
-      attack: .5,
-      decay: .1,
+      attack: 0.5,
+      decay: 0.1,
       sustain: 1,
-      release: .25,
+      release: 0.25,
     }
   }
 
   onready = (worklet: any) => {
-    this.tenseness = worklet.parameters.get('tenseness') as AudioParam
-    this.intensity = worklet.parameters.get('intensity') as AudioParam
-    this.frequency = worklet.parameters.get('frequency') as AudioParam
-    this.loudness = worklet.parameters.get('loudness') as AudioParam
-    this.vibratoRate = worklet.parameters.get('vibratoRate') as AudioParam
-    this.vibratoDepth = worklet.parameters.get('vibratoDepth') as AudioParam
+    this.tenseness = worklet.parameters.get("tenseness") as AudioParam
+    this.intensity = worklet.parameters.get("intensity") as AudioParam
+    this.frequency = worklet.parameters.get("frequency") as AudioParam
+    this.loudness = worklet.parameters.get("loudness") as AudioParam
+    this.vibratoRate = worklet.parameters.get("vibratoRate") as AudioParam
+    this.vibratoDepth = worklet.parameters.get("vibratoDepth") as AudioParam
 
     this.vibratoRate.value = Random.range(4.5, 5.5)
     this.vibratoDepth.value = Random.range(5.75, 6.25) // pitch extent (amplitude)
@@ -67,8 +67,8 @@ export default class GlottalSourceNode extends WorkletNode {
     this.loudness.value = value
   }
 
-  start = (): void => this.setIntensity(1, humanize(this.adsr.attack, .1))
-  stop = (): void => this.setIntensity(.0001, humanize(this.adsr.release, .5))
+  start = (): void => this.setIntensity(1, humanize(this.adsr.attack, 0.1))
+  stop = (): void => this.setIntensity(0.0001, humanize(this.adsr.release, 0.5))
 }
 
 interface ADSR {
