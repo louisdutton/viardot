@@ -11,7 +11,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "npx tsc"
+    "build": "npx tsc",
+    "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix"
   },
   "repository": {
     "type": "git",
@@ -38,6 +39,30 @@
     "tone": "^14.7.77"
   },
   "devDependencies": {
-    "typescript": "^4.4.2"
+    "@typescript-eslint/eslint-plugin": "^5.3.0",
+    "@typescript-eslint/parser": "^5.3.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^7.0.4",
+    "lint-staged": "^11.2.6",
+    "prettier": "^2.4.1",
+    "typescript": "^4.4.4"
+  },
+  "husky": {
+    "hooks": {
+        "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+        "eslint --fix"
+    ]
+  },
+  "prettier": {
+    "semi": false,
+    "trailingComma": "es5",
+    "singleQuote": false,
+    "printWidth": 120,
+    "tabWidth": 2
   }
 }
