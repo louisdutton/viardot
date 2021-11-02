@@ -10,7 +10,7 @@
     "@tonaljs/tonal": "^4.6.5",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
-    "viardot": "file:../viardot-1.0.3.tgz"
+    "viardot": "file:../viardot-1.0.5.tgz"
   },
   "devDependencies": {
     "@types/react": "^17.0.0",
