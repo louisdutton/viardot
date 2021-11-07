@@ -26,6 +26,6 @@ function Init() {
 ```
 
 ## Reference
-- [Tone.js](https://https://github.com/Tonejs/Tone.js)
+- [Tone.js](https://github.com/Tonejs/Tone.js)
 - [Pink Trombone](https://dood.al/pinktrombone/) - Neil Thapen
 - "Toward a high-quality singing synthesizer with vocal texture control" - Hui-Ling Lu
