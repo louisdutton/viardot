@@ -8,8 +8,7 @@ export default class Worklet {
 
   /** Register a processor in the AudioWorkletGlobalScope with the given name */
   registerProcessor(name: string, classDesc: string) {
-    const processor = /* javascript */ `registerProcessor("${name}", ${classDesc})`
-    this.context.add(processor)
+    this.context.add(/* javascript */ `registerProcessor("${name}", ${classDesc})`)
   }
 
   /** Get all of the modules which have been registered to the global AudioWorklet scope */
@@ -17,8 +16,4 @@ export default class Worklet {
     const blob = new Blob([Array.from(this.context).join("\n")], { type: "text/javascript" })
     return URL.createObjectURL(blob)
   }
-
-  // constructor() {
-  //   // console.log(this.getScope());
-  // }
 }
