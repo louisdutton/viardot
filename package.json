@@ -1,7 +1,7 @@
 {
   "name": "belcanto",
   "version": "0.1.0",
-  "description": "Vocal engine",
+  "description": "A vocal synthesis library that uses physical-modelling to enable realistic, real-time synthesis.",
   "type": "module",
   "module": "dist/index.js",
   "types": "types/index.d.ts",
