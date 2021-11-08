@@ -1,6 +1,6 @@
 {
-  "name": "viardot",
-  "version": "1.0.8",
+  "name": "belcanto",
+  "version": "0.1.0",
   "description": "Vocal engine",
   "type": "module",
   "module": "dist/index.js",
@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/louisdutton/viardot.git"
+    "url": "git+https://github.com/louisdutton/belcanto.git"
   },
   "keywords": [
     "Web Audio",
@@ -33,9 +33,9 @@
   "author": "Louis Dutton <clouisdutton@gmail.com> (https://louisdutton.com/)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/louisdutton/viardot/issues"
+    "url": "https://github.com/louisdutton/belcanto/issues"
   },
-  "homepage": "https://github.com/louisdutton/viardot#readme",
+  "homepage": "https://github.com/louisdutton/belcanto#readme",
   "dependencies": {
     "rita": "^2.4.200",
     "tone": "^14.7.77"
