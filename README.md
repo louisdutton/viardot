@@ -13,12 +13,10 @@ npm i belcanto
 ```js
 import * as Bel from 'belcanto'
 
-// Initialize voice
-function Init() {
-    const voice = new Bel.Voice('soprano')
-    window.addEventListener('mousedown', handleMouseDown, false)
-    window.addEventListener('mouseup', handleMouseUp, false)
-}
+// Create voice and controls
+const voice = new Bel.Voice('soprano')
+window.addEventListener('mousedown', handleMouseDown, false)
+window.addEventListener('mouseup', handleMouseUp, false)
 
 // Event handlers
 function handleMouseDown(e) {
@@ -29,7 +27,6 @@ function handleMouseDown(e) {
 function handleMouseUp(e) {
     voice.stop()
 }
-
 ```
 
 ## Reference
