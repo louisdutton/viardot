@@ -11,16 +11,23 @@ npm i belcanto
 ## Usage
 
 ```js
-import * as BEL from 'belcanto'
+import * as Bel from 'belcanto'
 
-// Initialize global AudioContext for voices
-Viardot.start().then(() => Init())
-
-// Initialize voices
+// Initialize voice
 function Init() {
-    const voice = new Viardot.Voice('soprano')
-    window.addEventListener('mousedown', e => voice.start(), false)
-    window.addEventListener('mouseup', e => voice.stop(), false)
+    const voice = new Bel.Voice('soprano')
+    window.addEventListener('mousedown', handleMouseDown, false)
+    window.addEventListener('mouseup', handleMouseUp, false)
+}
+
+// Event handlers
+function handleMouseDown(e) {
+    Bel.start() // Initialise AudioContent on user interaction
+    voice.start()
+}
+
+function handleMouseUp(e) {
+    voice.stop()
 }
 
 ```
