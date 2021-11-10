@@ -14,11 +14,11 @@ npm i belcanto
 import * as Bel from 'belcanto'
 
 // Event handlers
-const handleMouseDown = (e) => {
+const handleMouseDown = () => {
     Bel.start() // Initialise AudioContent on user interaction
     voice.start()
 }
-const handleMouseUp = voice.stop
+const handleMouseUp = () => voice.stop
 
 // Create voice and controls
 const voice = new Bel.Voice('soprano')
