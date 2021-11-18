@@ -2,7 +2,7 @@
 
 Bel Canto is a vocal synthesis library that uses optimised physical-modelling techniques to enable realistic, real-time synthesis.
 
-## Installation
+## Install
 
 ```bash
 npm i belcanto
@@ -11,17 +11,20 @@ npm i belcanto
 ## Usage
 
 ```js
-import * as BEL from 'belcanto'
+import * as Bel from 'belcanto'
 
-// Initialize global AudioContext for voices
-Viardot.start().then(() => Init())
-
-// Initialize voices
-function Init() {
-    const voice = new Viardot.Voice('soprano')
-    window.addEventListener('mousedown', e => voice.start(), false)
-    window.addEventListener('mouseup', e => voice.stop(), false)
+// Event handlers
+const handleMouseDown = () => {
+    Bel.start() // Initialise AudioContent on user interaction
+    voice.start()
 }
+const handleMouseUp = () => voice.stop
+
+// Create voice and controls
+const voice = new Bel.Voice('soprano')
+window.addEventListener('mousedown', handleMouseDown, false)
+window.addEventListener('mouseup', handleMouseUp, false)
+
 
 ```
 
