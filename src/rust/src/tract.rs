@@ -1,30 +1,29 @@
 // TODO Get the glottal and tract processor running in pure Rust. Then work on the WASM.
+mod cavity;
 
-struct Cavity {
-  k: [f32; BUCCAL_LENGTH],
-  left: [f32; BUCCAL_LENGTH],
-  right: [f32; BUCCAL_LENGTH],
-  junction_left: [f32; BUCCAL_LENGTH],
-  junction_right: [f32; BUCCAL_LENGTH],
-}
+use cavity::*;
 
 fn main() {
   println!("hello");
 }
 
 /// Returns the circular cross-sectional area for a given diameter.
-fn circleArea(diameter: f32) -> f32 {
-  diameter * diameter / 4 * std::f32::consts::PI;
+fn circle_area(diameter: f32) -> f32 {
+  return diameter * diameter / 4.0 * std::f32::consts::PI;
 }
 
 /// Returns the coefficient of reflection between two cross-sectional areas.
-fn kellyLochbaum(A1: f32, A2: f32) -> f32 {
-  (A1 - A2) / (A1 + A2);
+fn kelly_lochbaum(a: f32, b: f32) -> f32 {
+  return (a - b) / (a + b);
 }
 
 /// Returns an eased value in range [0-1].
 fn ease(x: f32) -> f32 {
-  if x == 0 {0} else {f32::powf(2, 10 * x - 10)};
+  if x == 0.0 {
+    return 0.0;
+  } else {
+    return f32::powf(2.0, 10.0 * x - 10.0);
+  };
 }
 
 /// Coefficient of reflection at the glottis.
@@ -37,16 +36,10 @@ const K_LABIAL: f32 = -0.85;
 const K_NASAL: f32 = -0.9;
 
 /// Left-moving coefficient of reflection at the nasopharyngeal junction.
-const K_VELUM_LEFT: f32 = 0;
+const K_VELUM_LEFT: f32 = 0.0;
 
 /// Right-moving coefficient of reflection at the nasopharyngeal junction.
-const K_VELUM_RIGHT: f32 = 0;
-
-/// Number of segments in the buccal cavity.
-const BUCCAL_LENGTH: usize = 44;
-
-/// Number of segments in the nasal cavity.
-const NASAL_LENGTH: usize = 28;
+const K_VELUM_RIGHT: f32 = 0.0;
 
 /// The index of the buccal segment that connects the pharyngeal and nasal cavities.
 const VELUM_INDEX: u8 = 17;
@@ -54,22 +47,21 @@ const VELUM_INDEX: u8 = 17;
 /// The coefficient of sound absorption.
 const ATTENUATION: f32 = 0.9999;
 
-static mut buccal: Cavity = Cavity {
-  k: [0; BUCCAL_LENGTH],
-  left: [0; BUCCAL_LENGTH],
-  right: [0; BUCCAL_LENGTH],
-  junction_left: [0; BUCCAL_LENGTH],
-  junction_right: [0; BUCCAL_LENGTH],
+static mut buccal: OralCavity = OralCavity {
+  k: [0.0; ORAL_LENGTH],
+  left: [0.0; ORAL_LENGTH],
+  right: [0.0; ORAL_LENGTH],
+  junction_left: [0.0; ORAL_LENGTH],
+  junction_right: [0.0; ORAL_LENGTH],
 };
 
-static mut nasal: Cavity = Cavity {
-  k: [0; NASAL_LENGTH],
-  left: [0; NASAL_LENGTH],
-  right: [0; NASAL_LENGTH],
-  junction_left: [0; NASAL_LENGTH],
-  junction_right: [0; NASAL_LENGTH],
+static mut nasal: NasalCavity = NasalCavity {
+  k: [0.0; NASAL_LENGTH],
+  left: [0.0; NASAL_LENGTH],
+  right: [0.0; NASAL_LENGTH],
+  junction_left: [0.0; NASAL_LENGTH],
+  junction_right: [0.0; NASAL_LENGTH],
 };
-
 
 // Simulates the propogation of sound within the vocal tract (must run at twice the sample rate).
 // fn step(excitation: f32, noise: f32) {
@@ -77,10 +69,10 @@ static mut nasal: Cavity = Cavity {
 
 //   // Glottal excitation enters left and labial reflection enters right
 //   junctionR[0] = L[0] * glottalK + excitation;
-//   junctionL[BUCCAL_LENGTH] = R[BUCCAL_LENGTH - 1] * labialK;
+//   junctionL[ORAL_LENGTH] = R[ORAL_LENGTH - 1] * labialK;
 
 //   // reflection {w} at each junction
-//   for (int m = 1; m < BUCCAL_LENGTH; m++)
+//   for (int m = 1; m < ORAL_LENGTH; m++)
 //   {
 //     float w = K[m] * (R[m - 1] + L[m]); // reflection
 //     junctionR[m] = R[m - 1] - w;
@@ -93,8 +85,8 @@ static mut nasal: Cavity = Cavity {
 //   junctionR[v] = velumKR * L[v] + (1 + velumKR) * (R[v - 1] + nasalL[0]);
 //   nasalJunctionR[0] = nasalK * nasalL[0] + (1 + nasalK) * (L[v] + R[v - 1]);
 
-//    // Transfer attenuated energy to 
-//   for (int m = 0; m < BUCCAL_LENGTH; m++) {
+//    // Transfer attenuated energy to
+//   for (int m = 0; m < ORAL_LENGTH; m++) {
 //       R[m] = junctionR[m] * attenuation;
 //       L[m] = junctionL[m+1] * attenuation;
 //   }

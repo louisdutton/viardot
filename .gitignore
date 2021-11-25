@@ -4,3 +4,4 @@ dist
 types
 dist-ssr
 *.local
+src/rust/target
