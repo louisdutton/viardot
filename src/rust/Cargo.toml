@@ -6,9 +6,10 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-wasm-bindgen = "0.2.63"
-noise = "0.7.0"
-console_error_panic_hook = { version = "0.1.1", optional = true }
+wasm-bindgen = "0.2.78"
+simdnoise = "3.1.6"
+console_error_panic_hook = { version = "0.1.7", optional = true }
+rand = "0.6.5"
 
 [dependencies.web-sys]
 version = "0.3.55"

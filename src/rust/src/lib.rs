@@ -13,6 +13,7 @@ pub struct Voice {
 }
 
 #[wasm_bindgen]
+
 impl Voice {
   pub fn new(sample_rate: usize, block_size: usize) -> Voice {
     // Create vocal tract
@@ -22,15 +23,13 @@ impl Voice {
     Voice { glottis, tract }
   }
 
-  fn process(&mut self, block: [f32; 128]) -> [f32; 128] {
+  fn process(&mut self) -> [f32; 128] {
     // create output buffer
-    let mut out = [0.0; 128];
+    let mut out = self.glottis.process();
     let noise = [0.0; 128]; // TODO actually generate noise
-
-    // Generate glottal source wave
-    out = self.glottis.generate();
+    
     // Filter source via the vocal stract
-    // out = self.tract.process(out, noise);
+    // out = self.tract.process(&out, &noise);
 
     return out;
   }

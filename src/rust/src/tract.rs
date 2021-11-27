@@ -2,7 +2,6 @@
 mod cavity;
 
 use cavity::{NasalCavity, OralCavity, NASAL_LENGTH, ORAL_LENGTH};
-use web_sys::{AudioContext, OscillatorType};
 // use noise::{NoiseFn, OpenSimplex};
 
 /// Returns the circular cross-sectional area for a given diameter.
@@ -47,7 +46,7 @@ const ATTENUATION: f32 = 0.9999;
 
 // TODO: find an alternative to static mut for handling cavity mutation
 /// Simulates the propogation of sound within the vocal tract (must run at twice the sample rate).
-fn step(excitation: f32, noise: f32, oral: &OralCavity, nasal: &NasalCavity) {
+fn step(excitation: f32, noise: f32, oral: &mut OralCavity, nasal: &mut NasalCavity) {
   // TODO process turnbulance noise
   // let noise_output = noise
 
@@ -102,14 +101,14 @@ pub struct Tract {
 impl Tract {
   pub fn new() -> Tract {
     // Create cavities
-    let mut nasal: NasalCavity = NasalCavity {
+    let nasal: NasalCavity = NasalCavity {
       k: [0.0; NASAL_LENGTH],
       left: [0.0; NASAL_LENGTH],
       right: [0.0; NASAL_LENGTH],
       j_left: [0.0; NASAL_LENGTH + 1],
       j_right: [0.0; NASAL_LENGTH + 1],
     };
-    let mut oral: OralCavity = OralCavity {
+    let oral: OralCavity = OralCavity {
       k: [0.0; ORAL_LENGTH],
       left: [0.0; ORAL_LENGTH],
       right: [0.0; ORAL_LENGTH],
@@ -120,10 +119,10 @@ impl Tract {
     Tract { oral, nasal }
   }
 
-  pub fn process(&self, excitation: &[f32], noise: &[f32]) -> [f32; 128] {
+  pub fn process(&mut self, excitation: &[f32], noise: &[f32]) -> [f32; 128] {
     let mut output = [0.0; 128];
-    let oral = &self.oral;
-    let nasal = &self.nasal;
+    let oral = &mut self.oral;
+    let nasal = &mut self.nasal;
     for n in 0..128 {
       // run step twice per samples
       step(excitation[n], noise[n], oral, nasal);
