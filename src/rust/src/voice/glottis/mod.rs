@@ -1,9 +1,8 @@
-use std::f32::consts::PI;
-use simdnoise::NoiseBuilder;
-use rand::Rng;
-use rand::distributions::StandardNormal;
+use crate::utils;
 
-const PI2: f32 = PI * 2.0;
+use utils::consts::{PI, PI2};
+use utils::hanning_modulation;
+use utils::noise;
 
 struct Vibrato {
   frequency: f32,
@@ -28,50 +27,44 @@ impl Glottis {
     Glottis {
       frequency: 444.0, // A4
       vibrato,
-      intensity: 0.0,
+      intensity: 0.5,
       tenseness: 0.0,
-      loudness: 0.0,
+      loudness: 0.5,
     }
   }
 
   pub fn process(&self) -> [f32; 128] {
-    let output = [0.0; 128];
+    let mut output = [0.0; 128];
     let wave_function = create_lf_wave_function(&0.0);
-    // placeholder values
-    let intensity = 0.5;
-    let loudness = 0.5;
-    let tenseness = 0.0;
 
     // debug values
     let time = 0.0;
-    let current_frame: usize = 0;
     let sample_rate = 44100.0;
+    let simplex1 = noise::simplex(1.4);
+    let simplex2 = noise::simplex(4.2);
+    let aspiration = noise::gaussian_buffer(128);
 
     for n in 0..128 {
       // simplex noise
       let s1 = simplex1[n];
       let s2 = simplex2[n];
-       
       // vibrato
       let mut vibrato = (self.vibrato.frequency * PI2 * time).sin() * self.vibrato.amplitude;
-      vibrato += (s1 * self.vibrato.amplitude/2.0) + (s2 * self.vibrato.amplitude/3.0);
-      
+      vibrato += (s1 * self.vibrato.amplitude / 2.0) + (s2 * self.vibrato.amplitude / 3.0);
+
       // excitation
       let f0 = self.frequency + vibrato;
-      let frame = (current_frame + n) / sample_rate;
-      let delta_frequency = frame * (self.frequency - f0); // was prev_freq
-      let prevFreq = f0;
-      let t = (frame * f0 + this.d) % 1;
+      let t = n as f32 / sample_rate as f32;
       let excitation = wave_function(t);
 
-      // aspiration
-      let modulation = floor + amplitude * hanning(t, f0);
-      let noise_residual = input[n] * (1+s2*.25) * modulation * tenseness.sqrt();
+      // aspiration (gaussian buffer = aspiration)
+      let modulation = hanning_modulation(t, f0, 0.15, 0.2);
+      let noise_residual = aspiration[n] * (1.0 + s2 * 0.25) * modulation * self.tenseness.sqrt();
 
-      output[n] = (excitation + noise_residual) * intensity * loudness;
+      output[n] = (excitation + noise_residual) * self.intensity * self.loudness;
     }
 
-    return output;
+    output
   }
 }
 
@@ -102,31 +95,16 @@ fn create_lf_wave_function<'a>(tenseness: &'a f32) -> Box<dyn Fn(f32) -> f32 + '
   let sine = f32::sin(omega * te);
 
   let y = -PI * sine * total_upper_integral / (tp * 2.0);
-  let z = y.log10();
+  let z = y.ln();
   let alpha = z / (tp / 2.0 - te);
   let e0 = -1.0 / (sine * (alpha * te).exp());
 
   // return glottal waveform function
-  return Box::new(move |t: f32| {
+  Box::new(move |t: f32| {
     if t > te {
       -((-epsilon * (t - te).exp()) + shift) / delta
     } else {
       e0 * (alpha * t).exp() * (omega * t).sin()
     }
-  });
-}
-
-// Noise parameters
-const floor: f32 = 0.15;
-const amplitude: f32 = 0.2;
-
-// Noise buffers
-const simplex1: Vec<f32> = NoiseBuilder::fbm_1d(128).with_freq(1.4).generate_scaled(-1.0, 1.0);
-const simplex2: Vec<f32> = NoiseBuilder::fbm_1d(128).with_freq(4.2).generate_scaled(-1.0, 1.0);
-
-const gaussian: Vec<f32> = generate_gaussian_buffer(128);
-
-fn generate_gaussian_buffer(size: usize) -> Vec<f32> {
-  let mut rng = rand::thread_rng();
-  vec![0.0, size]
+  })
 }
