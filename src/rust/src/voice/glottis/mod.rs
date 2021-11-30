@@ -94,7 +94,7 @@ fn create_lf_wave_function<'a>(tenseness: &'a f32) -> Box<dyn Fn(f32) -> f32 + '
   let total_upper_integral = -total_lower_integral;
 
   let omega = PI / tp;
-  let sine = f32::sin(omega * te);
+  let sine = (omega * te).sin();
 
   let y = -PI * sine * total_upper_integral / (tp * 2.0);
   let z = y.ln();
