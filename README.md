@@ -24,11 +24,10 @@ const handleMouseUp = () => voice.stop
 const voice = new Bel.Voice('soprano')
 window.addEventListener('mousedown', handleMouseDown, false)
 window.addEventListener('mouseup', handleMouseUp, false)
-
-
 ```
 
 ## Reference
 - [Tone.js](https://github.com/Tonejs/Tone.js)
+- ["synthrs"](https://github.com/gyng/synthrs/)
 - [Pink Trombone](https://dood.al/pinktrombone/) - Neil Thapen
 - ["Toward a high-quality singing synthesizer with vocal texture control"](https://ccrma.stanford.edu/~vickylu/thesis/) - Hui-Ling Lu
