@@ -1,4 +1,5 @@
 // TODO Get the glottal and tract processor running in pure Rust. Then work on the WASM.
+#![allow(dead_code)]
 mod cavity;
 
 use cavity::{NasalCavity, OralCavity, NASAL_LENGTH, ORAL_LENGTH};

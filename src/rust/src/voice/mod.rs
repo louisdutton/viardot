@@ -1,4 +1,6 @@
-/// The vocal synthesis module.
+//! The vocal synthesis module.
+
+#![allow(dead_code)]
 mod glottis;
 mod tract;
 

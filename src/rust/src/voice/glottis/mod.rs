@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::utils;
 
 use utils::consts::{PI, PI2};
@@ -35,6 +36,7 @@ impl Glottis {
 
   pub fn process(&self) -> [f32; 128] {
     let mut output = [0.0; 128];
+    // TODO: cache this so it doesnt need to be recalculated for the same tenseness value.
     let wave_function = create_lf_wave_function(&0.0);
 
     // debug values
