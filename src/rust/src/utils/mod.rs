@@ -1,6 +1,7 @@
 pub mod consts;
 pub mod noise;
 use crate::utils::consts::{PI, PI2};
+use rand;
 
 pub fn sine_wave(frequency: f32) -> impl Fn(f32) -> f32 {
   move |t| (t * frequency * 2.0 * PI).sin()

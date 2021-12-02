@@ -4,8 +4,8 @@
 mod glottis;
 mod tract;
 
-use glottis::Glottis;
-use tract::Tract;
+use self::glottis::Glottis;
+use self::tract::Tract;
 
 pub struct Voice {
   glottis: Glottis,
@@ -21,10 +21,10 @@ impl Voice {
     Voice { glottis, tract }
   }
 
-  fn process(&mut self) -> [f32; 128] {
+  pub fn process(&mut self) -> [f32; 128] {
     // create output buffer
-    let mut out = self.glottis.process();
-    let noise = [0.0; 128]; // TODO actually generate noise
+    let out = self.glottis.process();
+    // let noise = [0.0; 128]; // TODO actually generate noise
     // Filter source via the vocal stract
     // out = self.tract.process(&out, &noise);
 

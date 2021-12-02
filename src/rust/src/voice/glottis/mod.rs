@@ -44,7 +44,8 @@ impl Glottis {
     let sample_rate = 44100.0;
     let simplex1 = noise::simplex(1.4);
     let simplex2 = noise::simplex(4.2);
-    let aspiration = noise::gaussian_buffer(128);
+    // let aspiration = noise::gaussian_buffer(128);
+    let aspiration = [0.0; 128];
 
     for n in 0..128 {
       // simplex noise

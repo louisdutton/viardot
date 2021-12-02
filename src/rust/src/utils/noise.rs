@@ -1,10 +1,6 @@
 use crate::utils::gaussian;
 use simdnoise::NoiseBuilder;
 
-// Noise parameters
-const floor: f32 = 0.15;
-const amplitude: f32 = 0.2;
-
 // Noise buffers
 pub fn simplex(frequency: f32) -> Vec<f32> {
   NoiseBuilder::fbm_1d(128)

@@ -2,7 +2,7 @@
 #![allow(dead_code)]
 mod cavity;
 
-use cavity::{NasalCavity, OralCavity, NASAL_LENGTH, ORAL_LENGTH};
+use self::cavity::{NasalCavity, OralCavity, NASAL_LENGTH, ORAL_LENGTH};
 // use noise::{NoiseFn, OpenSimplex};
 
 /// Returns the circular cross-sectional area for a given diameter.

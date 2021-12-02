@@ -1,5 +1,5 @@
 pub mod utils;
-mod voice;
-
-use voice::Voice;
-use wasm_bindgen::prelude::*;
+pub mod voice;
+pub mod synthesizer;
+pub mod serialization;
+// use wasm_bindgen::prelude::*;
