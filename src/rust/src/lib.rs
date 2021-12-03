@@ -1,5 +1,9 @@
 pub mod utils;
 pub mod voice;
-pub mod synthesizer;
+pub mod synthesis;
 pub mod serialization;
+pub mod theory;
+pub mod waveform;
+pub mod filter;
+pub mod errors;
 // use wasm_bindgen::prelude::*;

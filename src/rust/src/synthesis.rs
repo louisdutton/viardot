@@ -25,8 +25,8 @@ use num::Float;
 
 use crate::errors::SynthrsError;
 use crate::filter;
-use crate::midi;
-use crate::music;
+use crate::serialization::midi;
+use crate::theory::note;
 
 /// Quantizes a `f64` sample into `T`.
 /// Convert from [-1.0f64, 1.0] to take up full quantization range of type `T`.
@@ -321,7 +321,7 @@ where
             for &(note, velocity, start_tick, _ticks_elasped, _ticks_left) in
                 &notes_on_for_ticks[tick]
             {
-                let frequency = music::note_midi(440.0, note as usize);
+                let frequency = note::midi_to_freq(note as usize);
                 // TODO: split loudness into a util module
                 let loudness = (6.908 * (f64::from(velocity) / 255.0)).exp() / 1000.0;
 
@@ -373,7 +373,7 @@ mod tests {
     use std::i8;
 
     use super::*;
-    use crate::wave::sine_wave;
+    use crate::waveform::sine_wave;
 
     #[test]
     fn test_peak_normalize() {

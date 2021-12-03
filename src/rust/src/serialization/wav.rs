@@ -320,9 +320,9 @@ mod tests {
 
     #[test]
     fn test_write_read_wav() {
-        use crate::synthesizer::{make_samples, quantize_samples};
-        use crate::wave::sine_wave;
-        use crate::writer::write_wav;
+        use crate::synthesis::{make_samples, quantize_samples};
+        use crate::waveform::sine_wave;
+        use crate::serialization::wav::write_wav;
         use std::io::{Cursor, Seek, SeekFrom};
 
         let output_buffer: Vec<u8> = Vec::new();
