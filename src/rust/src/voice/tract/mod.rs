@@ -2,7 +2,7 @@
 #![allow(dead_code)]
 mod cavity;
 
-use self::cavity::{NasalCavity, OralCavity, NASAL_LENGTH, ORAL_LENGTH};
+use self::cavity::Cavity;
 // use noise::{NoiseFn, OpenSimplex};
 
 /// Returns the circular cross-sectional area for a given diameter.
@@ -23,6 +23,12 @@ fn ease(x: f32) -> f32 {
     return f32::powf(2.0, 10.0 * x - 10.0);
   };
 }
+
+/// Number of sections in the oral cavity.
+pub const ORAL_LENGTH: usize = 44;
+
+/// Number of sections in the oral cavity.
+pub const NASAL_LENGTH: usize = 28;
 
 /// Coefficient of reflection at the glottis.
 const K_GLOTTAL: f32 = 0.7;
@@ -47,7 +53,7 @@ const ATTENUATION: f32 = 0.9999;
 
 // TODO: find an alternative to static mut for handling cavity mutation
 /// Simulates the propogation of sound within the vocal tract (must run at twice the sample rate).
-fn step(excitation: f32, noise: f32, oral: &mut OralCavity, nasal: &mut NasalCavity) {
+fn step(excitation: f32, _noise: f32, oral: &mut Cavity, nasal: &mut Cavity) {
   // TODO process turnbulance noise
   // let noise_output = noise
 
@@ -95,29 +101,16 @@ fn step(excitation: f32, noise: f32, oral: &mut OralCavity, nasal: &mut NasalCav
 
 /// A 1-dimensional abstraction of a 2-dimensional wave-guide filter.
 pub struct Tract {
-  pub oral: OralCavity,
-  pub nasal: NasalCavity,
+  pub oral: Cavity,
+  pub nasal: Cavity,
 }
 
 impl Tract {
   pub fn new() -> Tract {
-    // Create cavities
-    let nasal: NasalCavity = NasalCavity {
-      k: [0.0; NASAL_LENGTH],
-      left: [0.0; NASAL_LENGTH],
-      right: [0.0; NASAL_LENGTH],
-      j_left: [0.0; NASAL_LENGTH + 1],
-      j_right: [0.0; NASAL_LENGTH + 1],
-    };
-    let oral: OralCavity = OralCavity {
-      k: [0.0; ORAL_LENGTH],
-      left: [0.0; ORAL_LENGTH],
-      right: [0.0; ORAL_LENGTH],
-      j_left: [0.0; ORAL_LENGTH + 1],
-      j_right: [0.0; ORAL_LENGTH + 1],
-    };
-
-    Tract { oral, nasal }
+    Tract {
+      oral: Cavity::new(ORAL_LENGTH),
+      nasal: Cavity::new(NASAL_LENGTH),
+    }
   }
 
   pub fn process(&mut self, excitation: &[f32], noise: &[f32]) -> [f32; 128] {

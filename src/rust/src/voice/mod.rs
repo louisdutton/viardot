@@ -14,11 +14,10 @@ pub struct Voice {
 
 impl Voice {
   pub fn new(sample_rate: usize, block_size: usize) -> Voice {
-    // Create vocal tract
-    let tract = Tract::new();
-    let glottis = Glottis::new();
-
-    Voice { glottis, tract }
+    Voice {
+      glottis: Glottis::new(),
+      tract: Tract::new(),
+    }
   }
 
   pub fn process(&mut self) -> [f32; 128] {
