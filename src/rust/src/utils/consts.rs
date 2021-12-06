@@ -1,2 +1,2 @@
-pub const PI: f32 = std::f32::consts::PI;
-pub const PI2: f32 = PI * 2.0;
+pub const PI: f64 = std::f64::consts::PI;
+pub const PI2: f64 = PI * 2.0;

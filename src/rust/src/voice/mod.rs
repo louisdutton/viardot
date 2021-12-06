@@ -19,7 +19,7 @@ impl Voice {
     }
   }
 
-  pub fn process(&mut self) -> [f32; 128] {
+  pub fn process(&mut self) -> [f64; 128] {
     // create output buffer
     let out = self.glottis.process();
     // let noise = [0.0; 128]; // TODO actually generate noise
