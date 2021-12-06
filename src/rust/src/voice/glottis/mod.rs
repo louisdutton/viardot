@@ -72,7 +72,7 @@ impl Glottis {
 }
 
 /// Creates an waveform model glottal function based on tenseness variable
-fn create_lf_wave_function<'a>(tenseness: &'a f32) -> Box<dyn Fn(f32) -> f32 + 'a> {
+pub fn create_lf_wave_function<'a>(tenseness: &'a f32) -> Box<dyn Fn(f32) -> f32 + 'a> {
   // convert tenseness to rd variable
   let rd = 0.5 + 2.2 * (1.0 - tenseness); // must be in range: [.5, 2.7]
 
@@ -103,7 +103,7 @@ fn create_lf_wave_function<'a>(tenseness: &'a f32) -> Box<dyn Fn(f32) -> f32 + '
   let e0 = -1.0 / (sine * (alpha * te).exp());
 
   // return glottal waveform function
-  Box::new(move |t: f32| {
+  Box::new(move |t| {
     if t > te {
       -((-epsilon * (t - te).exp()) + shift) / delta
     } else {

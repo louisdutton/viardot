@@ -1,8 +1,7 @@
 //! The vocal synthesis module.
 
-#![allow(dead_code)]
-mod glottis;
-mod tract;
+pub mod glottis;
+pub mod tract;
 
 use self::glottis::Glottis;
 use self::tract::Tract;
