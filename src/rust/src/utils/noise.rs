@@ -1,12 +1,11 @@
 use crate::utils::gaussian;
-use simdnoise::NoiseBuilder;
 
 // Noise buffers
-pub fn simplex(frequency: f32) -> Vec<f32> {
-  NoiseBuilder::fbm_1d(128)
-    .with_freq(frequency)
-    .generate_scaled(-1.0, 1.0)
-}
+// pub fn simplex(frequency: f32) -> Vec<f32> {
+//   NoiseBuilder::fbm_1d(128)
+//     .with_freq(frequency)
+//     .generate_scaled(-1.0, 1.0)
+// }
 
 pub fn gaussian_buffer(size: usize) -> Vec<f64> {
   let mut samples: Vec<f64> = Vec::with_capacity(size);

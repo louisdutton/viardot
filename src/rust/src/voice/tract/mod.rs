@@ -103,13 +103,17 @@ fn step(excitation: f32, _noise: f32, oral: &mut Cavity, nasal: &mut Cavity) {
 pub struct Tract {
   pub oral: Cavity,
   pub nasal: Cavity,
+  sample_rate: usize,
+  block_size: usize,
 }
 
 impl Tract {
-  pub fn new() -> Tract {
+  pub fn new(sample_rate: usize, block_size: usize) -> Tract {
     Tract {
       oral: Cavity::new(ORAL_LENGTH),
       nasal: Cavity::new(NASAL_LENGTH),
+      sample_rate,
+      block_size,
     }
   }
 
