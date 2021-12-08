@@ -1,4 +1,5 @@
-/** Phoneme -> tongue position dictionary */
+
+export type Phoneme = [number, number, number]
 export const Phonemes = {
   // vowels
   aa: [0.2, 0.2, 1], // part

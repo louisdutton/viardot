@@ -1,5 +1,5 @@
-import { worklet } from "../global";
-import Context from "../context";
+import { worklet } from "./global";
+import Context from "./context";
 
 export default abstract class WorkletNode {
   public worklet!: AudioWorkletNode;

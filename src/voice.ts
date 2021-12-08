@@ -1,107 +1,90 @@
+// import Context from "../context"
 import { context as ctx } from "./global";
-import Context from "./context";
-// import NoiseNode from "./nodes/noiseNode"
-import VoiceNode from "./voiceNode";
-import { Phonemes } from "./dictionaries";
-import { clamp, invLerp } from "./utils";
-import Ease from "./ease";
-import { context } from ".";
+import { name } from "./voice.worklet";
+import WorkletNode from "./workletNode";
+import { Random, ADSR } from "./utils";
+import { Phoneme } from "./phonemes";
 
-/**
- * Monophonic vocal synth.
- * @param {Fach} fach Voice type
- */
-export class Voice {
-  private readonly node: VoiceNode;
+const RANGE = {
+  soprano: [261.63, 1046.5] as Range,
+  mezzo: [196.0, 880.0] as Range,
+  contralto: [174.61, 698.46] as Range,
+  tenor: [130.81, 525.25] as Range,
+  baritone: [98.0, 392.0] as Range,
+  bass: [41.2, 329.63] as Range,
+};
+
+export type Fach = "soprano" | "mezzo" | "contralto" | "tenor" | "baritone" | "bass";
+type Range = [number, number];
+
+export class Voice extends WorkletNode {
+  // glottal control
+  public tenseness!: AudioParam;
+  public intensity!: AudioParam;
+  public frequency!: AudioParam;
+  public loudness!: AudioParam;
+  public vibratoRate!: AudioParam;
+  public vibratoDepth!: AudioParam;
+  // tongue control
+  public bladePosition!: AudioParam;
+  public bladeDiameter!: AudioParam;
+  public tipPosition!: AudioParam;
+  public tipDiameter!: AudioParam;
+  // lip control
+  public lipDiameter!: AudioParam;
+  // other
+  public adsr: ADSR;
+  public portamento: number;
   public readonly fach: Fach;
-  public readonly range: VocalRange;
-  // public readonly analyser: AnalyserNode
-  // public readonly bufferLength: number
-  // public dataArray: Uint8Array
-  public enabled = true;
+  public readonly range: Range;
 
   constructor(fach: Fach) {
-    this.node = new VoiceNode();
+    super(ctx, name, {
+      channelCount: 1,
+      numberOfInputs: 1,
+      numberOfOutputs: 1,
+    });
+
+    this.portamento = Random.range(0.2, 0.3);
+    this.adsr = new ADSR(0.5, 0.1, 1, 0.25);
     this.fach = fach;
     this.range = RANGE[fach];
-
-    // Analysis
-    // const analyser = ctx.createAnalyser()
-    // analyser.fftSize = 1024
-    // analyser.maxDecibels = 5
-    // this.analyser = analyser
-    // this.bufferLength = analyser.frequencyBinCount
-    // this.dataArray = new Uint8Array(this.bufferLength)
-    // analyser.getByteTimeDomainData(this.dataArray)
   }
 
-  setFrequency(value: number) {
-    this.node.setFrequency(value);
+  onready = (worklet: any) => {
+    this.tenseness = worklet.parameters.get("tenseness") as AudioParam;
+    this.intensity = worklet.parameters.get("intensity") as AudioParam;
+    this.frequency = worklet.parameters.get("frequency") as AudioParam;
+    this.loudness = worklet.parameters.get("loudness") as AudioParam;
+    this.vibratoRate = worklet.parameters.get("vibratoRate") as AudioParam;
+    this.vibratoDepth = worklet.parameters.get("vibratoDepth") as AudioParam;
+    this.bladePosition = worklet.parameters.get("bladePosition") as AudioParam;
+    this.bladeDiameter = worklet.parameters.get("bladeDiameter") as AudioParam;
+    this.tipPosition = worklet.parameters.get("tipPosition") as AudioParam;
+    this.tipDiameter = worklet.parameters.get("tipDiameter") as AudioParam;
 
-    // tenseness
-    const interpolant = clamp(1 - invLerp(this.range.bottom, this.range.top, value), 0, 1);
-
-    // female or male vocal mechanism
-    const t =
-      this.fach < 3 ? (interpolant > 0.8 ? 0.8 + Ease.outExpo(interpolant) * 0.2 : interpolant) : 1 - interpolant;
-    this.node.setTenseness(t);
-  }
-
-  setLoudness(value: number) {
-    const v = clamp(value, 0, 1) * (1 / this.fach);
-    this.node.setLoudness(v);
-  }
-
-  setPhoneme(phoneme: number[]) {
-    this.node.tongueIndex.value = phoneme[0];
-    this.node.tongueDiameter.value = phoneme[1];
-    this.node.lipDiameter.value = phoneme[2];
-  }
-
-  setTongueIndex(index: number) {
-    this.node.tongueIndex.value = index;
-  }
-
-  setTongueDiameter(diameter: number) {
-    this.node.tongueDiameter.value = diameter;
-  }
-
-  setLipDiameter(diameter: number) {
-    this.node.lipDiameter.value = diameter;
-  }
-
-  start = () => this.node.start();
-  stop = () => this.node.stop();
-
-  recieve = (phones: any) => {
-    console.log(phones);
+    // initialize values
+    this.tenseness.value = 0;
+    this.intensity.value = 0.5;
+    this.loudness.value = 0.5;
+    this.frequency.value = 220; // A3
+    this.vibratoRate.value = Random.range(4.5, 5.5);
+    this.vibratoDepth.value = Random.range(5.75, 6.25); // pitch extent (amplitude)
+    // Tongue
+    this.bladePosition.value = 0.2;
+    this.bladeDiameter.value = 0.5;
+    this.tipPosition.value = 0.0;
+    this.tipDiameter.value = 0.0;
+    // Lip
+    this.lipDiameter.value = 0.0;
   };
-}
 
-interface VocalRange {
-  bottom: number;
-  top: number;
-  passagio?: {
-    primo: number;
-    secondo: number;
-  };
-}
+  setPhoneme(phoneme: Phoneme) {
+    this.bladePosition.value = phoneme[0];
+    this.bladeDiameter.value = phoneme[1];
+    this.lipDiameter.value = phoneme[2];
+  }
 
-const RANGE: VocalRange[] = [
-  { bottom: 261.63, top: 1046.5 } as VocalRange,
-  { bottom: 196.0, top: 880.0 } as VocalRange,
-  { bottom: 174.61, top: 698.46 } as VocalRange,
-  { bottom: 130.81, top: 525.25 } as VocalRange,
-  { bottom: 98.0, top: 392.0 } as VocalRange,
-  { bottom: 41.2, top: 329.63 } as VocalRange,
-];
-
-/** Voice type. */
-export enum Fach {
-  Soprano,
-  Mezzo,
-  Contralto,
-  Tenor,
-  Baritone,
-  Bass,
+  start = () => (this.intensity.value = 1);
+  stop = () => (this.intensity.value = 0);
 }

@@ -20,14 +20,11 @@ export const processor = /* javascript */ `class VoiceProcessor extends AudioWor
 	}
 
 	onmessage(event) {
-		switch (event.type) {
-			case 'load-wasm': {
-				init(WebAssembly.compile(event.wasmBytes)).then(() => {
-					this.port.postMessage({ type: 'wasm-loaded' })
-					this.voice = Voice.new(sampleRate, 128)
-				})
-				break
-			}
+		if (event.type === 'load-wasm') {
+			init(WebAssembly.compile(event.wasmBytes)).then(() => {
+        this.port.postMessage({ type: 'wasm-loaded' })
+        this.voice = Voice.new(sampleRate, 128)
+      })
 		}
 	}
 
