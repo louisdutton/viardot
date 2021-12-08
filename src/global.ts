@@ -12,6 +12,3 @@ export const start = context.resume;
 
 /** Returns the current time within the audio context */
 export const now = context.now;
-
-/** Sets the global reverb settings. */
-export const setReverb = context.setReverb;

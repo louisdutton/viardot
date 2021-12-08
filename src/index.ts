@@ -1,3 +1,3 @@
-export { Voice, Fach } from "./voice";
-export { start, now, context, setReverb } from "./global";
+export { Voice } from "./voice";
+export { start, now, context } from "./global";
 export { Phonemes } from "./phonemes";

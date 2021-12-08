@@ -3,6 +3,7 @@ export default class Context {
   private worklet: AudioWorklet;
   public master: GainNode;
   public sampleRate: number;
+  public wasmBytes!: ArrayBuffer;
 
   constructor() {
     this.raw = new AudioContext();
@@ -12,6 +13,14 @@ export default class Context {
     this.master.gain.value = 0.075;
     this.master.connect(this.raw.destination);
     this.sampleRate = this.raw.sampleRate;
+
+    this.loadWasm().then((wasm) => (this.wasmBytes = wasm));
+  }
+
+  async loadWasm() {
+    const response = await window.fetch("/belcanto/src/rust/pkg/belcanto_bg.wasm");
+    const wasmBytes = await response.arrayBuffer();
+    return wasmBytes;
   }
 
   resume = () => this.raw.resume();
@@ -72,11 +81,4 @@ export default class Context {
     this.modules.forEach((promise) => promises.push(promise));
     await Promise.all(promises);
   }
-}
-
-interface Reverb extends AudioNode {
-  roomSize: number;
-  dampening: number;
-  wet: AudioParam;
-  dry: AudioParam;
 }

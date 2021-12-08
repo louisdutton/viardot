@@ -14,8 +14,13 @@ const RANGE = {
   bass: [41.2, 329.63] as Range,
 };
 
-export type Fach = "soprano" | "mezzo" | "contralto" | "tenor" | "baritone" | "bass";
+type Fach = "soprano" | "mezzo" | "contralto" | "tenor" | "baritone" | "bass";
 type Range = [number, number];
+type Options = {
+  oralLength: number;
+  nasalLength: number;
+  maxDiameter: number;
+};
 
 export class Voice extends WorkletNode {
   // glottal control
@@ -43,6 +48,7 @@ export class Voice extends WorkletNode {
       channelCount: 1,
       numberOfInputs: 1,
       numberOfOutputs: 1,
+      processorOptions: { oralLength: 44, nasalLength: 22, maxDiameter: 4 } as Options,
     });
 
     this.portamento = Random.range(0.2, 0.3);
@@ -62,6 +68,8 @@ export class Voice extends WorkletNode {
     this.bladeDiameter = worklet.parameters.get("bladeDiameter") as AudioParam;
     this.tipPosition = worklet.parameters.get("tipPosition") as AudioParam;
     this.tipDiameter = worklet.parameters.get("tipDiameter") as AudioParam;
+    this.lipDiameter = worklet.parameters.get("lipDiameter") as AudioParam;
+
 
     // initialize values
     this.tenseness.value = 0;
