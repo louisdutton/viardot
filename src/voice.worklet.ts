@@ -1,5 +1,5 @@
-import { worklet } from "../global"
-import { Voice } from "../rust/pkg/belcanto"
+import { worklet } from "./global"
+import { Voice } from "./rust/pkg/belcanto"
 
 export const name = "tractFilter"
 export const processor = /* javascript */ `class VoiceProcessor extends AudioWorkletProcessor {

@@ -1,36 +1,23 @@
-import Freeverb from "./freeverb"
 
 export default class Context {
   public raw: AudioContext
   private worklet: AudioWorklet
   public master: GainNode
   public sampleRate: number
-  private reverb: Reverb
 
   constructor() {
     this.raw = new AudioContext()
     this.worklet = this.raw.audioWorklet
 
-    this.reverb = Freeverb(this.raw) as Reverb
-    this.reverb.connect(this.raw.destination)
-    this.setReverb() // default settings
-
     this.master = this.raw.createGain()
     this.master.gain.value = 0.075
-    this.master.connect(this.reverb)
+    this.master.connect(this.raw.destination)
     this.sampleRate = this.raw.sampleRate
   }
 
   resume = () => this.raw.resume()
   suspend = () => this.raw.suspend()
   now = () => this.raw.currentTime
-
-  setReverb(roomSize = 0.5, dampening = 2500, wet = 0.3, dry = 0.7) {
-    this.reverb.roomSize = roomSize
-    this.reverb.dampening = dampening
-    this.reverb.wet.value = wet
-    this.reverb.dry.value = dry
-  }
 
   addModule = (url: string, name: string) => this.worklet.addModule(url + "/" + name + ".js")
 

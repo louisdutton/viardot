@@ -1,8 +1,8 @@
 // import Context from "../context"
-import { context as ctx } from "../global"
-import { name } from "../worklet/voice.worklet"
+import { context as ctx } from "./global"
+import { name } from "./voice.worklet"
 import WorkletNode from "./workletNode"
-import { Random, humanize, clamp } from "../utils"
+import { Random, humanize, clamp } from "./utils"
 
 interface ADSR {
   attack: number
