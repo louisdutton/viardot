@@ -1,7 +1,7 @@
 import { context as ctx } from "./global"
 import Context from "./context"
 // import NoiseNode from "./nodes/noiseNode"
-import VoiceNode from "./nodes/VoiceNode"
+import VoiceNode from "./voiceNode"
 import { Phonemes } from "./dictionaries"
 import { clamp, invLerp } from "./utils"
 import Ease from "./ease"
