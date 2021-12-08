@@ -1,8 +1,7 @@
 import { context as ctx } from "./global"
 import Context from "./context"
-import NoiseNode from "./nodes/noiseNode"
-import GlottalSourceNode from "./nodes/glottalSourceNode"
-import TractFilterNode from "./nodes/tractFilterNode"
+// import NoiseNode from "./nodes/noiseNode"
+import VoiceNode from "./nodes/VoiceNode"
 import { Phonemes } from "./dictionaries"
 import { clamp, invLerp } from "./utils"
 import Ease from "./ease"
@@ -13,49 +12,48 @@ import { context } from "."
  * @param {Fach} fach Voice type
  */
 export class Voice {
-  private readonly tract: TractFilterNode
-  private readonly glottis: GlottalSourceNode
+  private readonly node: VoiceNode
   public readonly fach: Fach
   public readonly range: VocalRange
-  public readonly analyser: AnalyserNode
-  public readonly bufferLength: number
-  public dataArray: Uint8Array
+  // public readonly analyser: AnalyserNode
+  // public readonly bufferLength: number
+  // public dataArray: Uint8Array
   public enabled = true
 
   constructor(fach: Fach) {
     // Analysis
-    const analyser = ctx.createAnalyser()
-    analyser.fftSize = 1024
-    analyser.maxDecibels = 5
+    // const analyser = ctx.createAnalyser()
+    // analyser.fftSize = 1024
+    // analyser.maxDecibels = 5
 
-    const filter = ctx.createBiquadFilter(2500, 0.5, "lowpass")
+    // const filter = ctx.createBiquadFilter(2500, 0.5, "lowpass")
     // const formant = ctx.createBiquadFilter(500, 1, 'lowshelf')
     // filter.connect(formant)
-    filter.connect(ctx.master)
-    filter.connect(analyser)
+    // filter.connect(ctx.master)
+    // filter.connect(analyser)
     // formant.connect(ctx.master)
     // formant.connect(analyser)
 
     // Noise Source (split used for both aspiration and fricative noise)
-    const noise = new NoiseNode(5)
+    // const noise = new NoiseNode(5)
 
     // Create worklet nodes
-    const glottalSource = new GlottalSourceNode(noise.aspiration)
-    const tractFilter = new TractFilterNode(fach, glottalSource, noise.fricative, filter)
+    const node = new VoiceNode()
+    // const glottalSource = new GlottalSourceNode(noise.aspiration)
+    // const tractFilter = new TractFilterNode(fach, glottalSource, noise.fricative, filter)
 
-    this.tract = tractFilter
-    this.glottis = glottalSource
+    this.node = node
     this.fach = fach
     this.range = RANGE[fach]
-    this.analyser = analyser
+    // this.analyser = analyser
 
-    this.bufferLength = analyser.frequencyBinCount
-    this.dataArray = new Uint8Array(this.bufferLength)
-    analyser.getByteTimeDomainData(this.dataArray)
+    // this.bufferLength = analyser.frequencyBinCount
+    // this.dataArray = new Uint8Array(this.bufferLength)
+    // analyser.getByteTimeDomainData(this.dataArray)
   }
 
   setFrequency(value: number) {
-    this.glottis.setFrequency(value)
+    this.node.setFrequency(value)
 
     // tenseness
     const interpolant = clamp(1 - invLerp(this.range.bottom, this.range.top, value), 0, 1)
@@ -63,34 +61,34 @@ export class Voice {
     // female or male vocal mechanism
     const t =
       this.fach < 3 ? (interpolant > 0.8 ? 0.8 + Ease.outExpo(interpolant) * 0.2 : interpolant) : 1 - interpolant
-    this.glottis.setTenseness(t)
+    this.node.setTenseness(t)
   }
 
   setLoudness(value: number) {
     const v = clamp(value, 0, 1) * (1 / this.fach)
-    this.glottis.setLoudness(v)
+    this.node.setLoudness(v)
   }
 
   setPhoneme(phoneme: number[]) {
-    this.tract.tongueIndex.value = phoneme[0]
-    this.tract.tongueDiameter.value = phoneme[1]
-    this.tract.lipDiameter.value = phoneme[2]
+    this.node.tongueIndex.value = phoneme[0]
+    this.node.tongueDiameter.value = phoneme[1]
+    this.node.lipDiameter.value = phoneme[2]
   }
 
   setTongueIndex(index: number) {
-    this.tract.tongueIndex.value = index
+    this.node.tongueIndex.value = index
   }
 
   setTongueDiameter(diameter: number) {
-    this.tract.tongueDiameter.value = diameter
+    this.node.tongueDiameter.value = diameter
   }
 
   setLipDiameter(diameter: number) {
-    this.tract.lipDiameter.value = diameter
+    this.node.lipDiameter.value = diameter
   }
 
-  start = () => this.glottis.start()
-  stop = () => this.glottis.stop()
+  start = () => this.node.start()
+  stop = () => this.node.stop()
 
   recieve = (phones: any) => {
     console.log(phones)

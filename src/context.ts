@@ -1,7 +1,7 @@
 import Freeverb from "./freeverb"
 
 export default class Context {
-  private raw: AudioContext
+  public raw: AudioContext
   private worklet: AudioWorklet
   public master: GainNode
   public sampleRate: number

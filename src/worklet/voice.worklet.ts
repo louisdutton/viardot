@@ -2,7 +2,7 @@ import { worklet } from "../global"
 import { Voice } from "../rust/pkg/belcanto"
 
 export const name = "tractFilter"
-export const processor = /* javascript */ `class TractFilterProcessor extends AudioWorkletProcessor {
+export const processor = /* javascript */ `class VoiceProcessor extends AudioWorkletProcessor {
 	static get parameterDescriptors() {
 		return [
 			{ name: 'bladePosition', defaultValue: 0.2, automationRate: 'k-rate' },
@@ -24,11 +24,8 @@ export const processor = /* javascript */ `class TractFilterProcessor extends Au
 			case 'load-wasm': {
 				init(WebAssembly.compile(event.wasmBytes)).then(() => {
 					this.port.postMessage({ type: 'wasm-loaded' })
-					this.detector = Voice.new(sampleRate, 128)
+					this.voice = Voice.new(sampleRate, 128)
 				})
-				break
-			}
-			case 'init': {
 				break
 			}
 		}
