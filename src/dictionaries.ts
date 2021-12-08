@@ -32,7 +32,7 @@ export const Phonemes = {
   ng: [20.0, -1], // thing
   n: [36.0, -1], // not
   m: [0.8, -1], // man
-}
+};
 
 /**
  * Arpabet -> IPA phoneme dictionary
@@ -85,4 +85,4 @@ export const ArpaToIPA: { [key: string]: string } = {
   y: "j",
   z: "z",
   zh: "ʒ",
-}
+};

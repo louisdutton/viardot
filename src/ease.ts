@@ -1,26 +1,26 @@
 // Original code from https://easings.net
 // Modifed by Louis Dutton.
 
-type EasingFunction = (progress: number) => number
+type EasingFunction = (progress: number) => number;
 
 interface EasingDictionary {
-  [easing: string]: EasingFunction
+  [easing: string]: EasingFunction;
 }
 
-const pow = Math.pow
-const sqrt = Math.sqrt
-const sin = Math.sin
-const cos = Math.cos
-const PI = Math.PI
-const c1 = 1.70158
-const c2 = c1 * 1.525
-const c3 = c1 + 1
-const c4 = (2 * PI) / 3
-const c5 = (2 * PI) / 4.5
+const pow = Math.pow;
+const sqrt = Math.sqrt;
+const sin = Math.sin;
+const cos = Math.cos;
+const PI = Math.PI;
+const c1 = 1.70158;
+const c2 = c1 * 1.525;
+const c3 = c1 + 1;
+const c4 = (2 * PI) / 3;
+const c5 = (2 * PI) / 4.5;
 
 const bounceout: EasingFunction = (x) => {
-  const n1 = 7.5625
-  const d1 = 2.75
+  const n1 = 7.5625;
+  const d1 = 2.75;
 
   return x < 1 / d1
     ? n1 * x * x
@@ -28,8 +28,8 @@ const bounceout: EasingFunction = (x) => {
     ? n1 * (x -= 1.5 / d1) * x + 0.75
     : x < 2.5 / d1
     ? n1 * (x -= 2.25 / d1) * x + 0.9375
-    : n1 * (x -= 2.625 / d1) * x + 0.984375
-}
+    : n1 * (x -= 2.625 / d1) * x + 0.984375;
+};
 
 const Ease: EasingDictionary = {
   linear: (x) => x,
@@ -73,6 +73,6 @@ const Ease: EasingDictionary = {
   inBounce: (x) => 1 - bounceout(1 - x),
   outBounce: bounceout,
   inOutBounce: (x) => (x < 0.5 ? (1 - bounceout(1 - 2 * x)) / 2 : (1 + bounceout(2 * x - 1)) / 2),
-}
+};
 
-export default Ease
+export default Ease;

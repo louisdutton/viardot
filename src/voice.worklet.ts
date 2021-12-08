@@ -1,7 +1,7 @@
-import { worklet } from "./global"
-import { Voice } from "./rust/pkg/belcanto"
+import { worklet } from "./global";
+import { Voice } from "./rust/pkg/belcanto";
 
-export const name = "tractFilter"
+export const name = "tractFilter";
 export const processor = /* javascript */ `class VoiceProcessor extends AudioWorkletProcessor {
 	static get parameterDescriptors() {
 		return [
@@ -59,6 +59,6 @@ export const processor = /* javascript */ `class VoiceProcessor extends AudioWor
 		return true
 	}
 }
-`
+`;
 
-worklet.registerProcessor(name, processor)
+worklet.registerProcessor(name, processor);
