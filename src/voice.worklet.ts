@@ -1,4 +1,5 @@
 import { worklet } from "./global";
+// FIXME: wasm bindings arent getting loaded into worklet scope
 import init, { Voice } from "./rust/pkg/belcanto";
 
 export const name = "tractFilter";
