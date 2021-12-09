@@ -4,6 +4,8 @@ export default class Context {
   public master: GainNode;
   public sampleRate: number;
   public wasmBytes!: ArrayBuffer;
+  /** Maps a module name to promise of the addModule method */
+  private moduleMap: Map<string, Promise<void>> = new Map();
 
   constructor() {
     this.raw = new AudioContext();
@@ -13,38 +15,17 @@ export default class Context {
     this.master.gain.value = 0.075;
     this.master.connect(this.raw.destination);
     this.sampleRate = this.raw.sampleRate;
-
-    this.loadWasm().then((wasm) => (this.wasmBytes = wasm));
-  }
-
-  async loadWasm() {
-    const response = await window.fetch("/belcanto/src/rust/pkg/belcanto_bg.wasm");
-    const wasmBytes = await response.arrayBuffer();
-    return wasmBytes;
   }
 
   resume = () => this.raw.resume();
   suspend = () => this.raw.suspend();
   now = () => this.raw.currentTime;
-
   addModule = (url: string, name: string) => this.worklet.addModule(url + "/" + name + ".js");
-
-  createBufferSource(): AudioBufferSourceNode {
-    return this.raw.createBufferSource();
-  }
-
-  createBuffer(numberOfChannels: number, length: number): AudioBuffer {
-    return this.raw.createBuffer(numberOfChannels, length, this.sampleRate);
-  }
-
-  createAnalyser() {
-    return this.raw.createAnalyser();
-  }
-
-  createGain() {
-    return this.raw.createGain();
-  }
-
+  createBufferSource = () => this.raw.createBufferSource();
+  createBuffer = (numberOfChannels: number, length: number) =>
+    this.raw.createBuffer(numberOfChannels, length, this.sampleRate);
+  createAnalyser = () => this.raw.createAnalyser();
+  createGain = () => this.raw.createGain();
   createBiquadFilter(frequency: number, q = 0.6, type: BiquadFilterType = "bandpass"): BiquadFilterNode {
     const filter = this.raw.createBiquadFilter();
     filter.type = type;
@@ -52,9 +33,6 @@ export default class Context {
     filter.Q.value = q;
     return filter;
   }
-
-  /** Maps a module name to promise of the addModule method */
-  private modules: Map<string, Promise<void>> = new Map();
 
   /**
    * Create an audio worklet node from a name and options. The module
@@ -70,15 +48,25 @@ export default class Context {
    * @param name The name of the module
    */
   async addAudioWorkletModule(url: string, name: string): Promise<void> {
-    if (!this.modules.has(name)) this.modules.set(name, this.raw.audioWorklet.addModule(url));
+    if (!this.moduleMap.has(name)) this.moduleMap.set(name, this.raw.audioWorklet.addModule(url));
+    await this.moduleMap.get(name);
+  }
 
-    await this.modules.get(name);
+  /**
+   * loads a WASM module
+   * @param url The url of the module
+   * @param name The name of the module
+   */
+  async loadWasmModule(url: string) {
+    const response = await window.fetch(url);
+    const wasmBytes = await response.arrayBuffer();
+    return wasmBytes;
   }
 
   /** Returns a promise which resolves when all of the worklets have been loaded. */
   protected async workletsAreReady(): Promise<void> {
     const promises: Promise<void>[] = [];
-    this.modules.forEach((promise) => promises.push(promise));
+    this.moduleMap.forEach((promise) => promises.push(promise));
     await Promise.all(promises);
   }
 }

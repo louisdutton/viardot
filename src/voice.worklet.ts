@@ -1,5 +1,5 @@
 import { worklet } from "./global";
-import { Voice } from "./rust/pkg/belcanto";
+import init, { Voice } from "./rust/pkg/belcanto";
 
 export const name = "tractFilter";
 export const processor = /* javascript */ `class VoiceProcessor extends AudioWorkletProcessor {
@@ -37,6 +37,7 @@ export const processor = /* javascript */ `class VoiceProcessor extends AudioWor
 	process(in_, out, params) {
 		const output = out[0][0];
 
+    if (!this.voice) return;
 		// params
 		const bladePosition = params.bladePosition[0];
 		const tongueDiameter = params.bladeDiameter[0];

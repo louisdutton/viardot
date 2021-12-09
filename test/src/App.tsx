@@ -8,7 +8,9 @@ function App() {
   const voice = new Voice("baritone");
   console.log(voice);
   
-  onmousedown = start;
+  onmousedown = () => {
+    start();
+  }
 
   return (
     <div className="App">

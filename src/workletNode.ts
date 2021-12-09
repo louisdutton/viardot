@@ -3,6 +3,7 @@ import Context from "./context";
 
 export default abstract class WorkletNode {
   public worklet!: AudioWorkletNode;
+  // protected wasm?: ArrayBuffer;
 
   /** Invoked when the module is loaded and the node is created */
   protected abstract onready(node: AudioWorkletNode): void;
@@ -12,10 +13,14 @@ export default abstract class WorkletNode {
     const url = worklet.getScope();
 
     // add worklet processor to AudioWorklet, create node then signal ready
-    ctx.addAudioWorkletModule(url, name).then(() => {
-      this.worklet = ctx.createAudioWorkletNode(name, options);
-      this.onready(this.worklet);
-    });
+    ctx
+      .addAudioWorkletModule(url, name)
+      .then(() => (this.worklet = ctx.createAudioWorkletNode(name, options)))
+      .then(() => ctx.loadWasmModule("/pkg/belcanto_bg.wasm"))
+      .then((wasmBytes) => {
+        this.onready(this.worklet);
+        this.worklet.port.postMessage({ type: "load-wasm", wasmBytes });
+      });
   }
 
   dispose(): this {
