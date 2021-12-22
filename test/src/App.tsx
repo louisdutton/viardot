@@ -7,10 +7,10 @@ function App() {
   const [count, setCount] = useState(0);
   const voice = new Voice("baritone");
   console.log(voice);
-  
+
   onmousedown = () => {
     start();
-  }
+  };
 
   return (
     <div className="App">
