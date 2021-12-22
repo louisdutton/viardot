@@ -1,5 +1,5 @@
 {
-  "name": "belcanto",
+  "name": "viardot",
   "version": "0.1.0",
   "description": "A vocal synthesis library that uses physical-modelling to enable realistic, real-time synthesis.",
   "type": "module",
