@@ -14,5 +14,5 @@
   },
   "include": [
     "src"
-  ]
+, "test/public/worklet/voice.js"  ]
 }
