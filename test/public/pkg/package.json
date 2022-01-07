@@ -1,0 +1,16 @@
+{
+  "name": "belcanto",
+  "collaborators": [
+    "Louis Dutton <clouisdutton@gmail.com>"
+  ],
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "belcanto_bg.wasm",
+    "belcanto.js",
+    "belcanto.d.ts"
+  ],
+  "module": "belcanto.js",
+  "types": "belcanto.d.ts",
+  "sideEffects": false
+}
