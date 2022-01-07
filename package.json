@@ -1,5 +1,5 @@
 {
-  "name": "belcanto",
+  "name": "viardot",
   "version": "0.1.0",
   "description": "A vocal synthesis library that uses physical-modelling to enable realistic, real-time synthesis.",
   "type": "module",
@@ -13,7 +13,11 @@
   ],
   "scripts": {
     "build": "tsc",
+<<<<<<< HEAD
     "build-rs": "wasm-pack build --target web rust --out-dir dist",
+=======
+    "build-rust": "",
+>>>>>>> 33444d6555eb26f2e04095492d3b92b13732ccc1
     "lint": "eslint src",
     "lint:fix": "eslint src --fix"
   },
