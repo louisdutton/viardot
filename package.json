@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "build-rust": "wasm-pack build rust --out-dir dist",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix"
   },

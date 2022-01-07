@@ -16,69 +16,69 @@ use std::f64::consts::PI;
 use crate::filter::envelope;
 
 pub fn sine_wave(frequency: f64) -> impl Fn(f64) -> f64 {
-    move |t| (t * frequency * 2.0 * PI).sin()
+  move |t| (t * frequency * 2.0 * PI).sin()
 }
 
 pub fn square_wave(frequency: f64) -> impl Fn(f64) -> f64 {
-    move |t| {
-        let sin_wave = sine_wave(frequency);
-        if sin_wave(t).is_sign_positive() {
-            1.0
-        } else {
-            -1.0
-        }
+  move |t| {
+    let sin_wave = sine_wave(frequency);
+    if sin_wave(t).is_sign_positive() {
+      1.0
+    } else {
+      -1.0
     }
+  }
 }
 
 pub fn sawtooth_wave(frequency: f64) -> impl Fn(f64) -> f64 {
-    move |t| {
-        let t_factor = t * frequency;
-        t_factor - t_factor.floor() - 0.5
-    }
+  move |t| {
+    let t_factor = t * frequency;
+    t_factor - t_factor.floor() - 0.5
+  }
 }
 
 pub fn triangle_wave(frequency: f64) -> impl Fn(f64) -> f64 {
-    move |t| {
-        let sawtooth_wave = sawtooth_wave(frequency);
-        (sawtooth_wave(t).abs() - 0.25) * 4.0
-    }
+  move |t| {
+    let sawtooth_wave = sawtooth_wave(frequency);
+    (sawtooth_wave(t).abs() - 0.25) * 4.0
+  }
 }
 
 pub fn tangent_wave(frequency: f64) -> impl Fn(f64) -> f64 {
-    move |t| {
-        (((t * frequency * PI) - 0.5).tan() / 4.0)
-            .max(-1.0)
-            .min(1.0)
-    }
+  move |t| {
+    (((t * frequency * PI) - 0.5).tan() / 4.0)
+      .max(-1.0)
+      .min(1.0)
+  }
 }
 
 pub fn bell(frequency: f64, attack: f64, decay: f64) -> impl Fn(f64) -> f64 {
-    move |t| {
-        // TODO: lazy-static this table
-        // Frequency, amplitude, decay
-        let harmonics_table: [(f64, f64, f64); 9] = [
-            (0.56, 1.5, 1.0),
-            (0.92, 0.5, 2.0),
-            (1.19, 0.25, 4.0),
-            (1.71, 0.125, 6.0),
-            (2.00, 0.062_5, 8.4),
-            (2.74, 0.031_25, 10.8),
-            (3.00, 0.015_625, 13.6),
-            (3.76, 0.007_812_5, 16.4),
-            (4.07, 0.003_906_25, 19.6),
-        ];
+  move |t| {
+    // TODO: lazy-static this table
+    // Frequency, amplitude, decay
+    let harmonics_table: [(f64, f64, f64); 9] = [
+      (0.56, 1.5, 1.0),
+      (0.92, 0.5, 2.0),
+      (1.19, 0.25, 4.0),
+      (1.71, 0.125, 6.0),
+      (2.00, 0.062_5, 8.4),
+      (2.74, 0.031_25, 10.8),
+      (3.00, 0.015_625, 13.6),
+      (3.76, 0.007_812_5, 16.4),
+      (4.07, 0.003_906_25, 19.6),
+    ];
 
-        harmonics_table.iter().fold(0.0, |acc, h| {
-            acc + sine_wave(frequency * h.0)(t) * h.1 * envelope(t, attack, decay * h.2)
-        }) / 2.0
-    }
+    harmonics_table.iter().fold(0.0, |acc, h| {
+      acc + sine_wave(frequency * h.0)(t) * h.1 * envelope(t, attack, decay * h.2)
+    }) / 2.0
+  }
 }
 
 pub fn organ(frequency: f64) -> impl Fn(f64) -> f64 {
-    move |t| {
-        let frequency_2 = (frequency / 2.0) * 3.0;
-        sine_wave(frequency)(t) + 0.2 * sine_wave(frequency_2)(t)
-    }
+  move |t| {
+    let frequency_2 = (frequency / 2.0) * 3.0;
+    sine_wave(frequency)(t) + 0.2 * sine_wave(frequency_2)(t)
+  }
 }
 
 /// Bastardised and butchered generic Karplus-Strong synthesis.
@@ -102,26 +102,27 @@ pub fn organ(frequency: f64) -> impl Fn(f64) -> f64 {
 ///     };
 /// ```
 pub fn karplus_strong<F: Fn(f64) -> f64>(
-    generator: F,
-    attack: f64,
-    decay: f64,
-    sharpness: f64,
-    sample_rate: f64,
+  generator: F,
+  attack: f64,
+  decay: f64,
+  sharpness: f64,
+  sample_rate: f64,
 ) -> impl Fn(f64) -> f64 {
-    move |t| {
-        let tick = 1.0 / sample_rate;
+  move |t| {
+    let tick = 1.0 / sample_rate;
 
-        // Instead of using delay_line_generator we manually unroll the loop here
-        (0..10usize).fold(0.0, |acc, i| {
-            acc + generator(t - tick * i as f64)
-                * envelope(tick * i as f64, attack, decay)
-                * sharpness.powf(i as f64)
-        })
-    }
+    // Instead of using delay_line_generator we manually unroll the loop here
+    (0..10usize).fold(0.0, |acc, i| {
+      acc
+        + generator(t - tick * i as f64)
+          * envelope(tick * i as f64, attack, decay)
+          * sharpness.powf(i as f64)
+    })
+  }
 }
 
 pub fn noise() -> impl Fn(f64) -> f64 {
-    |_t| rand::random::<f64>()
+  |_t| rand::random::<f64>()
 }
 
 /// Liljencrants-Fant glottal waveform model.
@@ -185,25 +186,25 @@ pub fn liljencrants_fant(tenseness: f64) -> impl Fn(f64) -> f64 {
 /// let sampler = wave::sampler(frequency, &piano_sample, sample_length, 110.0, 44_100)
 /// ```
 pub fn sampler(
-    frequency: f64,
-    samples: *const Vec<f64>,
-    sample_length: usize,
-    sample_frequency: f64,
-    sample_rate: usize,
+  frequency: f64,
+  samples: *const Vec<f64>,
+  sample_length: usize,
+  sample_frequency: f64,
+  sample_rate: usize,
 ) -> impl Fn(f64) -> f64 {
-    move |t| {
-        let multiplier = frequency / sample_frequency;
-        let original_index = sample_rate as f64 * t;
-        let adjusted_index = (multiplier * original_index).round() as usize;
+  move |t| {
+    let multiplier = frequency / sample_frequency;
+    let original_index = sample_rate as f64 * t;
+    let adjusted_index = (multiplier * original_index).round() as usize;
 
-        // We have no intention of copying sample, and we don't want to use &'static Vec<f64> for wasm interop
-        let raw_samples = unsafe { &*samples };
-        if adjusted_index >= sample_length {
-            0.0
-        } else {
-            raw_samples[adjusted_index]
-        }
+    // We have no intention of copying sample, and we don't want to use &'static Vec<f64> for wasm interop
+    let raw_samples = unsafe { &*samples };
+    if adjusted_index >= sample_length {
+      0.0
+    } else {
+      raw_samples[adjusted_index]
     }
+  }
 }
 
 /// Wraps a generator function, delaying its output by `delay_length_samples` number of samples.
@@ -222,27 +223,27 @@ pub fn sampler(
 /// let delayed_sine = wave::delay_line_generator(generator, 1.0, 44_100);
 /// ```
 pub fn delay_line_generator<F: Fn(f64) -> f64>(
-    generator: F,
-    delay_length: f64,
-    sample_rate: usize,
+  generator: F,
+  delay_length: f64,
+  sample_rate: usize,
 ) -> impl Fn(f64) -> f64 {
-    let delay_length_samples = (delay_length * sample_rate as f64).floor() as usize;
-    let buf: VecDeque<f64> = VecDeque::with_capacity(delay_length_samples + 1);
-    let cell = std::cell::RefCell::new(buf);
+  let delay_length_samples = (delay_length * sample_rate as f64).floor() as usize;
+  let buf: VecDeque<f64> = VecDeque::with_capacity(delay_length_samples + 1);
+  let cell = std::cell::RefCell::new(buf);
 
-    move |t| {
-        let mut buf = cell.borrow_mut();
-        let current_sample = generator(t);
+  move |t| {
+    let mut buf = cell.borrow_mut();
+    let current_sample = generator(t);
 
-        let output = if buf.len() < delay_length_samples {
-            0.0f64
-        } else {
-            buf.pop_front().unwrap_or(0.0f64)
-        };
+    let output = if buf.len() < delay_length_samples {
+      0.0f64
+    } else {
+      buf.pop_front().unwrap_or(0.0f64)
+    };
 
-        buf.push_back(current_sample);
-        output
-    }
+    buf.push_back(current_sample);
+    output
+  }
 }
 
 /// `rising_linear` is a stateful generator function.
@@ -252,65 +253,65 @@ pub fn delay_line_generator<F: Fn(f64) -> f64>(
 /// This is mainly an example on how to do stateful generator functions.
 /// This is achieved using interior mutability. See the source for details on how this is achieved.
 pub fn rising_linear(
-    start_frequency: f64,
-    end_frequency: f64,
-    increment_per_sample: f64,
+  start_frequency: f64,
+  end_frequency: f64,
+  increment_per_sample: f64,
 ) -> impl Fn(f64) -> f64 {
-    // Our state! You can use a `RefCell` or a `Cell` for a start.
-    // This example uses a `RefCell`, but a `Cell` will be simpler and
-    // suffice for this simple state. An example using `Cell` is provided below.
-    let cell = std::cell::RefCell::new(start_frequency);
+  // Our state! You can use a `RefCell` or a `Cell` for a start.
+  // This example uses a `RefCell`, but a `Cell` will be simpler and
+  // suffice for this simple state. An example using `Cell` is provided below.
+  let cell = std::cell::RefCell::new(start_frequency);
 
-    move |t| {
-        let mut current_frequency = cell.borrow_mut();
+  move |t| {
+    let mut current_frequency = cell.borrow_mut();
 
-        *current_frequency += increment_per_sample;
+    *current_frequency += increment_per_sample;
 
-        if *current_frequency > end_frequency {
-            *current_frequency = start_frequency;
-        }
-
-        sine_wave(*current_frequency)(t)
+    if *current_frequency > end_frequency {
+      *current_frequency = start_frequency;
     }
 
-    // The below is an example using `Cell` instead of `RefCell`.
-    //
-    // ```
-    // let mut cell = std::cell::Cell::new(start_frequency);
-    //
-    // move |t| {
-    //     let current_frequency = cell.get();
-    //
-    //     let new_frequency = if current_frequency > end_frequency {
-    //         start_frequency
-    //     } else {
-    //         current_frequency + increment_per_sample
-    //     };
-    //
-    //     cell.set(new_frequency);
-    //
-    //     sine_wave(new_frequency)(t)
-    // }
-    // ```
+    sine_wave(*current_frequency)(t)
+  }
+
+  // The below is an example using `Cell` instead of `RefCell`.
+  //
+  // ```
+  // let mut cell = std::cell::Cell::new(start_frequency);
+  //
+  // move |t| {
+  //     let current_frequency = cell.get();
+  //
+  //     let new_frequency = if current_frequency > end_frequency {
+  //         start_frequency
+  //     } else {
+  //         current_frequency + increment_per_sample
+  //     };
+  //
+  //     cell.set(new_frequency);
+  //
+  //     sine_wave(new_frequency)(t)
+  // }
+  // ```
 }
 
 mod tests {
-    #[allow(unused_imports)]
-    use super::*;
+  #[allow(unused_imports)]
+  use super::*;
 
-    #[test]
-    #[allow(clippy::float_cmp)]
-    fn test_delay_line() {
-        let identity = |t| t;
-        let delayed = delay_line_generator(identity, 3.0, 1);
+  #[test]
+  #[allow(clippy::float_cmp)]
+  fn test_delay_line() {
+    let identity = |t| t;
+    let delayed = delay_line_generator(identity, 3.0, 1);
 
-        assert_eq!(delayed(1.0), 0.0);
-        assert_eq!(delayed(3.0), 0.0);
-        assert_eq!(delayed(5.0), 0.0);
-        assert_eq!(delayed(7.0), 1.0);
-        assert_eq!(delayed(11.0), 3.0);
-        assert_eq!(delayed(13.0), 5.0);
-        assert_eq!(delayed(17.0), 7.0);
-        assert_eq!(delayed(19.0), 11.0);
-    }
+    assert_eq!(delayed(1.0), 0.0);
+    assert_eq!(delayed(3.0), 0.0);
+    assert_eq!(delayed(5.0), 0.0);
+    assert_eq!(delayed(7.0), 1.0);
+    assert_eq!(delayed(11.0), 3.0);
+    assert_eq!(delayed(13.0), 5.0);
+    assert_eq!(delayed(17.0), 7.0);
+    assert_eq!(delayed(19.0), 11.0);
+  }
 }
