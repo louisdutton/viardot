@@ -2,7 +2,7 @@
 
  An open-source vocal synthesis library that employs optimised physical-modelling techniques to enable realistic, real-time synthesis.
 
-## Reference
+## References
 ### Projects
 - [Tone.js](https://github.com/Tonejs/Tone.js)
 - [gyng/synthrs](https://github.com/gyng/synthrs/)
