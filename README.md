@@ -1,4 +1,4 @@
-# Viardot &middot; [![npm version](https://img.shields.io/npm/v/react.svg?style=flat)](https://www.npmjs.com/package/belcanto) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# Viardot &middot; [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
  An open-source vocal synthesis library that employs optimised physical-modelling techniques to enable realistic, real-time synthesis.
 
