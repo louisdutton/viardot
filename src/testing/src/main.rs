@@ -15,10 +15,9 @@ impl Iterator for Voice {
     type Item = f32;
 
     fn next(&mut self) -> Option<f32> {
-        let t = (self.i as f64 / self.sample_rate as f64) % 1.0;
+        let t = (self.i as f64 / self.sample_rate as f64 * 110.0) % 1.0;
         self.i += 1;
         return Some(self.glottis.tick(t) as f32);
-        // return Some((2.0 * std::f32::consts::PI * t as f32).sin());
     }
 }
 
@@ -58,9 +57,9 @@ fn main() {
     let voice = Voice::new(44100);
 
     let (_stream, handle) = OutputStream::try_default().unwrap();
-    let _result = handle.play_raw(voice.convert_samples());
+    let _result = handle.play_raw(voice.convert_samples().fade_in(Duration::from_millis(400)));
 
-    sleep(Duration::from_secs(3))
+    sleep(Duration::from_millis(2000))
 }
 
 mod tests {

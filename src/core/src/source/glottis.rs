@@ -50,11 +50,11 @@ impl Glottis {
         // TODO: add noise back in
         // let s1 = simplex1[n] as f64;
         // let s2 = simplex2[n] as f64;
-        let s1 = 0.0;
-        let s2 = 0.0;
+        let s1 = 1.0;
+        let s2 = 1.0;
         // vibrato
         let mut vibrato = (self.vibrato.frequency * PI2 * t).sin() * self.vibrato.amplitude;
-        vibrato += (s1 * self.vibrato.amplitude / 2.0) + (s2 * self.vibrato.amplitude / 3.0);
+        // vibrato += (s1 * self.vibrato.amplitude / 2.0) + (s2 * self.vibrato.amplitude / 3.0);
 
         // excitation
         let f0 = self.frequency + vibrato;
