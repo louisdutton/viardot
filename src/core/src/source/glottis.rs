@@ -29,7 +29,7 @@ impl Glottis {
             frequency: 440.0, // A4
             vibrato,
             intensity: 0.5,
-            tenseness: 0.0,
+            tenseness: 0.5,
             loudness: 0.5,
             wave_function: Box::new(liljencrants_fant(0.0)),
             aspiration_buffer: create_aspiration_buffer(),
@@ -73,11 +73,7 @@ impl Glottis {
 
 /// Returns a hanning-window amplitude modulation value at point t for a given frequency.
 fn hanning_modulation(t: f64, floor: f64, amplitude: f64) -> f64 {
-    floor + amplitude * hanning(t)
-}
-
-fn hanning(t: f64) -> f64 {
-    (1.0 - (PI2 * t).cos()) / 2.0
+    floor + amplitude * ((1.0 - (PI2 * t).cos()) / 2.0)
 }
 
 fn create_aspiration_buffer() -> [f64; 128] {
