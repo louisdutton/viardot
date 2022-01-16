@@ -21,8 +21,8 @@ pub struct Glottis {
 impl Glottis {
     pub fn new() -> Glottis {
         let vibrato: Vibrato = Vibrato {
-            frequency: 6.0,
-            amplitude: 4.0,
+            frequency: 7.0,
+            amplitude: 0.25,
         };
 
         Glottis {
@@ -46,24 +46,24 @@ impl Glottis {
     // pub fn post_block() {}
 
     /// Generates glottal excitation at a given time.
-    pub fn tick(&mut self, t: f64) -> f64 {
+    pub fn tick(&mut self, time: f64) -> f64 {
         // TODO: add noise back in
         // let s1 = simplex1[n] as f64;
         // let s2 = simplex2[n] as f64;
-        let s1 = 1.0;
-        let s2 = 1.0;
+        // let s1 = 1.0;
+        let s2 = 0.0;
         // vibrato
-        let mut vibrato = (self.vibrato.frequency * PI2 * t).sin() * self.vibrato.amplitude;
+        let vibrato = (self.vibrato.frequency * PI2 * time).sin() * self.vibrato.amplitude;
         // vibrato += (s1 * self.vibrato.amplitude / 2.0) + (s2 * self.vibrato.amplitude / 3.0);
 
         // excitation
         let f0 = self.frequency + vibrato;
-        // let t = (n as f64 / self.sample_rate as f64) % 1.0;
+        let t = (time * f0) % 1.0;
         let excitation = (self.wave_function)(t);
 
         // aspiration (gaussian buffer = aspiration)
         let aspiration = self.aspiration_buffer[self.aspiration_index];
-        let modulation = hanning_modulation(t, f0, 0.15, 0.2);
+        let modulation = hanning_modulation(t, 0.15, 0.2);
         let noise_residual = aspiration * (1.0 + s2 * 0.25) * modulation * self.tenseness.sqrt();
         self.aspiration_index = (self.aspiration_index + 1) % 128; // incremement & wrap within 128
 
@@ -72,12 +72,12 @@ impl Glottis {
 }
 
 /// Returns a hanning-window amplitude modulation value at point t for a given frequency.
-fn hanning_modulation(t: f64, frequency: f64, floor: f64, amplitude: f64) -> f64 {
-    floor + amplitude * hanning(t, frequency)
+fn hanning_modulation(t: f64, floor: f64, amplitude: f64) -> f64 {
+    floor + amplitude * hanning(t)
 }
 
-fn hanning(t: f64, frequency: f64) -> f64 {
-    (1.0 - (PI2 * t * frequency).cos()) / 2.0
+fn hanning(t: f64) -> f64 {
+    (1.0 - (PI2 * t).cos()) / 2.0
 }
 
 fn create_aspiration_buffer() -> [f64; 128] {
