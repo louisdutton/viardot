@@ -1,0 +1,10 @@
+[package]
+edition = "2021"
+name = "core"
+version = "0.1.0"
+
+[dependencies]
+rand = "0.8.4"
+
+# [lib]
+# crate-type = ["cdylib"]
