@@ -13,3 +13,4 @@
 - [A unit selection text-to-speech-and-singing synthesis framework from neutral speech: proof of concept
 ](https://asmp-eurasipjournals.springeropen.com/articles/10.1186/s13636-019-0163-y)
 - [SPASM, a Real-Time Vocal Tract Physical Model Controller; and Singer, the Companion Software Synthesis System](https://www.jstor.org/stable/3680568?origin=crossref)
+- [A simpler singing synthesis system](https://www.amazon.science/blog/a-simpler-singing-synthesis-system#:~:text=Singing%20synthesis%20%E2%80%94%20the%20use%20of,been%20studied%20since%20the%201950s.&text=It%20also%20autonomously%20sings%20in,true%20of%20all%20neural%20models.)
