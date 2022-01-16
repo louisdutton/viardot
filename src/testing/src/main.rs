@@ -1,3 +1,4 @@
+use core::filter::stateful::tract::Tract;
 use core::source::Glottis;
 use rodio::{OutputStream, Source};
 use std::thread::sleep;
@@ -9,6 +10,7 @@ struct Voice {
     i: usize,
     sample_rate: usize,
     glottis: Glottis,
+    tract: Tract,
 }
 
 impl Iterator for Voice {
@@ -17,7 +19,7 @@ impl Iterator for Voice {
     fn next(&mut self) -> Option<f32> {
         let t = self.i as f64 / self.sample_rate as f64;
         self.i += 1;
-        return Some(self.glottis.tick(t) as f32);
+        return Some(self.generate(t));
     }
 }
 
@@ -41,11 +43,21 @@ impl Source for Voice {
 
 impl Voice {
     pub fn new(sample_rate: usize) -> Voice {
+        let mut tract = Tract::new();
+        tract.init();
+
         Voice {
             i: 0,
             sample_rate,
             glottis: Glottis::new(),
+            tract,
         }
+    }
+
+    fn generate(&mut self, t: f64) -> f32 {
+        let glottal_output = self.glottis.tick(t);
+        let tract_output = self.tract.process(glottal_output, 0.0);
+        return tract_output as f32;
     }
 
     pub fn set_frequency(&mut self, value: f64) {
