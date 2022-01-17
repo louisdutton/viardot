@@ -58,6 +58,7 @@ impl Voice {
         let glottal_output = self.glottis.tick(t);
         let tract_output = self.tract.process(glottal_output, 0.0);
         return tract_output as f32;
+        // return glottal_output as f32;
     }
 
     pub fn set_frequency(&mut self, value: f64) {
@@ -67,10 +68,10 @@ impl Voice {
 
 fn main() {
     let mut voice = Voice::new(44100);
-    voice.set_frequency(440.0);
+    voice.set_frequency(220.0);
 
     let (_stream, handle) = OutputStream::try_default().unwrap();
-    let _result = handle.play_raw(voice.convert_samples().fade_in(Duration::from_millis(400)));
+    let _result = handle.play_raw(voice.convert_samples().fade_in(Duration::from_millis(100)));
 
     sleep(Duration::from_millis(2000));
 }

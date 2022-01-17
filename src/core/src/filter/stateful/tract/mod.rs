@@ -7,7 +7,7 @@ use utils::{circle_area, ease, kelly_lochbaum, min};
 use velum::Velum;
 
 /// Number of sections in the oral cavity.
-const ORAL_LENGTH: usize = 44;
+const ORAL_LENGTH: usize = 48;
 /// Number of sections in the oral cavity.
 const NASAL_LENGTH: usize = 28;
 /// Coefficient of reflection at the glottis.
@@ -17,7 +17,7 @@ const K_LABIAL: f64 = -0.85;
 /// Coefficient of reflection at the nose.
 const K_NOSE: f64 = -0.9;
 /// Coefficient of reflection pertaining to the soft palate.
-const K_SOFT_PALATE: f64 = 0.8;
+const K_SOFT_PALATE: f64 = 0.6;
 /// Coefficient of reflection pertaining to the hard palate.
 const K_HARD_PALATE: f64 = 0.9;
 /// The index of the buccal segment that connects the pharyngeal and nasal cavities.
@@ -62,7 +62,7 @@ impl Tract {
         let glottal_end = ORAL_LENGTH as f64 / 6.0;
         let glottal_diameter = oral_diameter * RATIO_GLOTTAL_DIAMETER;
         let pharyngeal_end = ORAL_LENGTH as f64 / 3.0;
-        let pharyngeal_diameter = oral_diameter * RATIO_GLOTTAL_DIAMETER;
+        let pharyngeal_diameter = oral_diameter * RATIO_PHARYNGEAL_DIAMETER;
         let glottal_difference = pharyngeal_diameter - glottal_diameter;
         let mut oral_diameter_rest = vec![0.0; ORAL_LENGTH];
         let mut oral_diameter_target = vec![0.0; ORAL_LENGTH];
@@ -209,7 +209,7 @@ impl Tract {
     pub fn process(&mut self, excitation: f64, noise: f64) -> f64 {
         // run step twice per sample
         self.step(excitation, noise);
-        self.step(excitation, noise);
+        // self.step(excitation, noise);
 
         // sample output from the right-end of tract.
         return self.oral.right[ORAL_LENGTH - 1] + self.nasal.right[NASAL_LENGTH - 1];

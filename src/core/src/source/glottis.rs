@@ -21,16 +21,16 @@ pub struct Glottis {
 impl Glottis {
     pub fn new() -> Glottis {
         let vibrato: Vibrato = Vibrato {
-            frequency: 7.0,
-            amplitude: 0.25,
+            frequency: 6.0,
+            amplitude: 0.1,
         };
 
         Glottis {
             frequency: 440.0, // A4
             vibrato,
             intensity: 0.5,
-            tenseness: 0.5,
-            loudness: 0.5,
+            tenseness: 0.0,
+            loudness: 0.1,
             wave_function: Box::new(liljencrants_fant(0.0)),
             aspiration_buffer: create_aspiration_buffer(),
             aspiration_index: 0,
@@ -63,7 +63,7 @@ impl Glottis {
 
         // aspiration (gaussian buffer = aspiration)
         let aspiration = self.aspiration_buffer[self.aspiration_index];
-        let modulation = hanning_modulation(t, 0.15, 0.2);
+        let modulation = hanning_modulation(t, 0.15, 0.4);
         let noise_residual = aspiration * (1.0 + s2 * 0.25) * modulation * self.tenseness.sqrt();
         self.aspiration_index = (self.aspiration_index + 1) % 128; // incremement & wrap within 128
 
