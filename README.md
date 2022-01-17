@@ -4,7 +4,6 @@
 
 ## References
 ### Projects
-- [Tone.js](https://github.com/Tonejs/Tone.js)
 - [gyng/synthrs](https://github.com/gyng/synthrs/)
 - [Pink Trombone](https://dood.al/pinktrombone/)
 
