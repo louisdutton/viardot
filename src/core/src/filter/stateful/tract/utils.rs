@@ -16,3 +16,11 @@ pub fn ease(x: f64) -> f64 {
         return f64::powf(2.0, 10.0 * x - 10.0);
     }
 }
+
+pub fn min(a: f64, b: f64) -> f64 {
+    if a < b {
+        a
+    } else {
+        b
+    }
+}

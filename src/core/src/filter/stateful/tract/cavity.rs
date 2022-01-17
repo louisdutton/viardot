@@ -1,7 +1,7 @@
 /// A line of sections through which sound can propagate.
 #[derive(Clone, Debug)]
 pub struct Cavity {
-    /// Cross-sectional area of each section.
+    /// Diameter of each section.
     pub diameter: Vec<f64>,
     /// Cross-sectional area of each section.
     pub area: Vec<f64>,
