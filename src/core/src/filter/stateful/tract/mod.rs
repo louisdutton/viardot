@@ -41,7 +41,7 @@ impl Tract {
         Tract {
             oral: Cavity::new(ORAL_LENGTH),
             nasal: Cavity::new(NASAL_LENGTH),
-            velum: Velum::new(),
+            velum: Velum::new(0.04, 0.1),
         }
     }
 

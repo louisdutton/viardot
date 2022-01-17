@@ -9,13 +9,13 @@ pub struct Velum {
 }
 
 impl Velum {
-    pub fn new() -> Velum {
+    pub fn new(target_diameter: f64, max_diameter: f64) -> Velum {
         Velum {
             k_right: 0.0,
             k_left: 0.0,
             k_nose: 0.0,
-            target_diameter: 0.04,
-            max_diameter: 0.1,
+            target_diameter,
+            max_diameter,
         }
     }
 }
