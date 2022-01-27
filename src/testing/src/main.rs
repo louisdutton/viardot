@@ -5,7 +5,6 @@ use std::thread::sleep;
 use std::time::Duration;
 
 // mod stream;
-
 struct Voice {
     i: usize,
     sample_rate: usize,
@@ -43,13 +42,19 @@ impl Source for Voice {
 
 impl Voice {
     pub fn new(sample_rate: usize) -> Voice {
-        let mut tract = Tract::new();
+        // init glottis
+        let mut glottis = Glottis::new();
+        glottis.tenseness = 0.5;
+        glottis.pre_block();
+
+        // init tract
+        let mut tract = Tract::new(60, 32);
         tract.init();
 
         Voice {
             i: 0,
             sample_rate,
-            glottis: Glottis::new(),
+            glottis,
             tract,
         }
     }
@@ -68,12 +73,12 @@ impl Voice {
 
 fn main() {
     let mut voice = Voice::new(44100);
-    voice.set_frequency(220.0);
+    voice.set_frequency(110.0);
 
     let (_stream, handle) = OutputStream::try_default().unwrap();
     let _result = handle.play_raw(voice.convert_samples().fade_in(Duration::from_millis(100)));
 
-    sleep(Duration::from_millis(2000));
+    sleep(Duration::from_millis(3000));
 }
 
 mod tests {
