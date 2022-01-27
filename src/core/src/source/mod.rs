@@ -124,7 +124,17 @@ pub fn karplus_strong<F: Fn(f64) -> f64>(
 }
 
 pub fn white_noise() -> impl Fn(f64) -> f64 {
-    |_t| rand::random::<f64>()
+    move |_t| rand::random::<f64>()
+}
+
+pub fn gaussian_noise() -> impl Fn(f64) -> f64 {
+    move |_t| {
+        let mut s = 0.0;
+        for c in 0..16 {
+            s += rand::random::<f64>()
+        }
+        return (s - 8.0) / 4.0;
+    }
 }
 
 /// Liljencrants-Fant glottal waveform model.
