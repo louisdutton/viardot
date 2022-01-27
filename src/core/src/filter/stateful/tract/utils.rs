@@ -17,6 +17,7 @@ pub fn ease(x: f64) -> f64 {
     }
 }
 
+/// Returns the minimum of two values.
 pub fn min(a: f64, b: f64) -> f64 {
     if a < b {
         a
