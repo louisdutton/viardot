@@ -3,4 +3,5 @@
 members = [
   "src/core",
   "src/testing",
+  "src/web",
 ]
