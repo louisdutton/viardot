@@ -22,10 +22,10 @@
 // }
 
 #[no_mangle]
-pub extern "C" fn test() -> f64 {
+pub extern "C" fn test(time: f64) -> f64 {
     // let mut glottis = Glottis::new();
-    // return glottis.tick(time);
-    42.0
+    // return glottis.tick(0.5);
+    time.sin()
 }
 
 // #[no_mangle]

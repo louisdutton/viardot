@@ -10,6 +10,7 @@ class Voice extends AudioWorkletProcessor {
 			console.log(e.data);
 			WebAssembly.instantiate(e.data, importObject).then((source) => {
 				this.wasm = source.instance;
+				this.sin = this.wasm.exports.test;
 				this.port.postMessage(this.wasm.exports.test(0.5));
 				// console.log(source);
 				// console.log(this.wasm.exports.test(0.5));
@@ -23,7 +24,9 @@ class Voice extends AudioWorkletProcessor {
 	}
 
 	process(inputs, outputs, parameters) {
-		// if (!this.wasm) return;
+		if (!this.wasm) return;
+
+		this.sin();
 
 		return true;
 	}

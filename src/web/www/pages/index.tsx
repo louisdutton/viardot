@@ -13,14 +13,15 @@ const Home: NextPage = () => {
 			latencyHint: "interactive",
 		});
 
-		// ctx.audioWorklet.addModule("worklet.js").then(() => {
-		// 	fetch("web.wasm")
-		// 		.then((res) => res.arrayBuffer())
-		// 		.then((buffer) => {
-		// 			const voice = new AudioWorkletNode(ctx, "voice");
-		// 			voice.port.postMessage(buffer);
-		// 		});
-		// });
+		ctx.audioWorklet.addModule("worklet.js").then(() => {
+			fetch("web.wasm")
+				.then((res) => res.arrayBuffer())
+				.then((buffer) => {
+					const voice = new AudioWorkletNode(ctx, "voice");
+					voice.port.onmessage = (e) => console.log(e.data);
+					voice.port.postMessage(buffer);
+				});
+		});
 	}, []);
 
 	return (
