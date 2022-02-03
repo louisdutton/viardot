@@ -2,13 +2,27 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
-import init, { test } from "../../pkg";
-
-init().then(() => console.log(test(0.5)));
+// import init, { test } from "../../pkg";
+import { useEffect } from "react";
 
 // import("../../pkg").then((wasm) => console.log(wasm.test(0.5)));
 
 const Home: NextPage = () => {
+	useEffect(() => {
+		const ctx = new window.AudioContext({
+			latencyHint: "interactive",
+		});
+
+		// ctx.audioWorklet.addModule("worklet.js").then(() => {
+		// 	fetch("web.wasm")
+		// 		.then((res) => res.arrayBuffer())
+		// 		.then((buffer) => {
+		// 			const voice = new AudioWorkletNode(ctx, "voice");
+		// 			voice.port.postMessage(buffer);
+		// 		});
+		// });
+	}, []);
+
 	return (
 		<div className={styles.container}>
 			<Head>
