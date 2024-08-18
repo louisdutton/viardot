@@ -1,0 +1,8 @@
+[package]
+edition = "2021"
+name = "testing"
+version = "0.1.0"
+
+[dependencies]
+core = { path = "../core" }
+rodio = "0.14.0"
