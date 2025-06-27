@@ -1,8 +1,8 @@
-use core::filter::stateful::tract::Tract;
-use core::source::Glottis;
 use rodio::{OutputStream, Source};
 use std::thread::sleep;
 use std::time::Duration;
+use viardot::filter::stateful::tract::Tract;
+use viardot::source::Glottis;
 
 // mod stream;
 struct Voice {
