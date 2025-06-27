@@ -44,7 +44,6 @@ impl Voice {
     pub fn new(sample_rate: usize) -> Voice {
         // init glottis
         let mut glottis = Glottis::new();
-        glottis.tenseness = 0.5;
         glottis.pre_block();
 
         // init tract
