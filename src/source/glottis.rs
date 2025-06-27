@@ -1,4 +1,5 @@
-use super::{gaussian_noise, liljencrants_fant};
+use super::liljencrants_fant;
+use crate::noise::gaussian;
 use std::f64::consts::PI;
 const PI2: f64 = PI * 2.0;
 
@@ -20,7 +21,7 @@ pub struct Glottis {
 
 impl Glottis {
     pub fn new() -> Glottis {
-        let vibrato: Vibrato = Vibrato {
+        let vibrato = Vibrato {
             frequency: 6.0,
             amplitude: 0.1,
         };
@@ -79,6 +80,6 @@ fn hanning_modulation(t: f64, floor: f64, amplitude: f64) -> f64 {
 
 /// Returns an array of 128 white noise samples.
 fn create_aspiration_buffer() -> [f64; 128] {
-    let noise = gaussian_noise();
+    let noise = gaussian();
     return [noise(0.0); 128];
 }
