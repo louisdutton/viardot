@@ -48,7 +48,7 @@ impl Glottis {
     }
 
     /// Generates glottal excitation at a given time.
-    pub fn tick(&mut self, time: f64) -> f64 {
+    pub fn process(&mut self, time: f64) -> f64 {
         let s1 = simplex(self.aspiration_index as f64);
 
         // vibrato

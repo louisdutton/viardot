@@ -5,7 +5,9 @@ use crossterm::{
 use rodio::{OutputStream, Source};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use viardot::filter::reverb::Reverb;
 use viardot::filter::stateful::tract::Tract;
+use viardot::note::*;
 use viardot::source::Glottis;
 
 // mod stream;
@@ -14,6 +16,7 @@ struct Voice {
     sample_rate: usize,
     glottis: Glottis,
     tract: Tract,
+    reverb: Reverb,
     frequency: Arc<Mutex<f64>>,
 }
 
@@ -47,11 +50,15 @@ impl Source for Voice {
 
 impl Voice {
     pub fn new(sample_rate: usize, frequency: Arc<Mutex<f64>>) -> Voice {
+        let mut reverb = Reverb::new(sample_rate);
+        reverb.set_wet_level(0.9);
+
         Voice {
             i: 0,
             sample_rate,
             glottis: Glottis::new(),
             tract: Tract::new(46, 32),
+            reverb,
             frequency,
         }
     }
@@ -60,9 +67,10 @@ impl Voice {
         if let Ok(freq) = self.frequency.lock() {
             self.glottis.frequency = *freq;
         }
-        let glottal_output = self.glottis.tick(t);
+        let glottal_output = self.glottis.process(t);
         let tract_output = self.tract.process(glottal_output, 0.0);
-        return tract_output as f32;
+        let reverb_output = self.reverb.process(tract_output);
+        return reverb_output as f32;
     }
 }
 
@@ -78,48 +86,37 @@ fn main() {
     // Enable raw mode for immediate key capture
     enable_raw_mode().unwrap();
 
-    println!("Keyboard Controls:");
-    println!("Q/W/E/R/T/Y/U - Play notes (C/D/E/F/G/A/B)");
-    println!("A/S/D/F/G/H/J - Play notes one octave higher");
-    println!("Z/X - Lower/raise octave");
-    println!("ESC or Ctrl+C - Exit");
-
-    let mut current_octave = 3;
-
     loop {
         if poll(Duration::from_millis(50)).unwrap() {
             match read().unwrap() {
                 Event::Key(key_event) => {
-                    let base_freq = match key_event.code {
-                        // Lower row - base octave
-                        KeyCode::Char('q') => Some(261.63), // C
-                        KeyCode::Char('w') => Some(293.66), // D
-                        KeyCode::Char('e') => Some(329.63), // E
-                        KeyCode::Char('r') => Some(349.23), // F
-                        KeyCode::Char('t') => Some(392.00), // G
-                        KeyCode::Char('y') => Some(440.00), // A
-                        KeyCode::Char('u') => Some(493.88), // B
+                    let note = match key_event.code {
+                        // Lower row - base octave (C3, D3, etc.)
+                        KeyCode::Char('a') => Some(C3),
+                        KeyCode::Char('s') => Some(D3),
+                        KeyCode::Char('d') => Some(E3),
+                        KeyCode::Char('f') => Some(F3),
+                        KeyCode::Char('g') => Some(G3),
+                        KeyCode::Char('h') => Some(A3),
+                        KeyCode::Char('j') => Some(B3),
 
-                        // Upper row - one octave higher
-                        KeyCode::Char('a') => Some(261.63 * 2.0), // C
-                        KeyCode::Char('s') => Some(293.66 * 2.0), // D
-                        KeyCode::Char('d') => Some(329.63 * 2.0), // E
-                        KeyCode::Char('f') => Some(349.23 * 2.0), // F
-                        KeyCode::Char('g') => Some(392.00 * 2.0), // G
-                        KeyCode::Char('h') => Some(440.00 * 2.0), // A
-                        KeyCode::Char('j') => Some(493.88 * 2.0), // B
+                        // Upper row - one octave higher (C4, D4, etc.)
+                        KeyCode::Char('q') => Some(C4),
+                        KeyCode::Char('w') => Some(D4),
+                        KeyCode::Char('e') => Some(E4),
+                        KeyCode::Char('r') => Some(F4),
+                        KeyCode::Char('t') => Some(G4),
+                        KeyCode::Char('y') => Some(A4),
+                        KeyCode::Char('u') => Some(B4),
 
-                        // Octave controls
-                        KeyCode::Char('z') => {
-                            current_octave = (current_octave - 1).max(1);
-                            println!("Octave: {}", current_octave);
-                            None
-                        }
-                        KeyCode::Char('x') => {
-                            current_octave = (current_octave + 1).min(7);
-                            println!("Octave: {}", current_octave);
-                            None
-                        }
+                        // Number row - two octaves higher (C5, D5, etc.)
+                        KeyCode::Char('1') => Some(C5),
+                        KeyCode::Char('2') => Some(D5),
+                        KeyCode::Char('3') => Some(E5),
+                        KeyCode::Char('4') => Some(F5),
+                        KeyCode::Char('5') => Some(G5),
+                        KeyCode::Char('6') => Some(A5),
+                        KeyCode::Char('7') => Some(B5),
 
                         KeyCode::Esc => break,
                         KeyCode::Char('c')
@@ -130,13 +127,10 @@ fn main() {
                         _ => None,
                     };
 
-                    if let Some(freq) = base_freq {
-                        let octave_multiplier = 2.0_f64.powi(current_octave - 4);
-                        let final_freq = freq * octave_multiplier;
-
+                    if let Some(note_freq) = note {
                         if let Ok(mut frequency_guard) = frequency.lock() {
-                            *frequency_guard = final_freq;
-                            println!("Playing: {:.2} Hz", final_freq);
+                            *frequency_guard = note_freq;
+                            println!("Playing: {:.2} Hz", note_freq);
                         }
                     }
                 }
