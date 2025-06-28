@@ -10,11 +10,10 @@ pub fn kelly_lochbaum(a1: f64, a2: f64) -> f64 {
     return (a1 - a2) / (a1 + a2);
 }
 
-/// Returns an eased value in range [0-1].
-pub fn ease(x: f64) -> f64 {
-    if x == 0.0 {
-        return 0.0;
-    } else {
-        return f64::powf(2.0, 10.0 * x - 10.0);
+/// Returns an exponential ease-in interpolated value in range [0-1].
+pub fn exponential_ease_in(x: f64) -> f64 {
+    match x {
+        0.0 => 0.0,
+        _ => f64::powf(2.0, 10.0 * x - 10.0),
     }
 }

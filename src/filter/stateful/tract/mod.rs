@@ -3,7 +3,7 @@ mod utils;
 mod velum;
 
 use cavity::Cavity;
-use utils::{circle_area, ease, kelly_lochbaum};
+use utils::{circle_area, exponential_ease_in, kelly_lochbaum};
 use velum::Velum;
 
 /// Number of sections in the oral cavity.
@@ -89,7 +89,8 @@ impl Tract {
         // Generate oral cavity shape / diameter
         for m in 0..oral_length {
             let diameter = if (m) < glottal_end {
-                glottal_diameter + ease(m as f64 / glottal_end as f64) * glottal_difference
+                glottal_diameter
+                    + exponential_ease_in(m as f64 / glottal_end as f64) * glottal_difference
             } else if m < pharyngeal_end {
                 pharyngeal_diameter
             } else {
@@ -128,7 +129,6 @@ impl Tract {
 
         tract.calculate_oral_reflections();
         tract.calculate_nasal_reflections();
-
         tract
     }
 

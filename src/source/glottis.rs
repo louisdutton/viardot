@@ -49,12 +49,11 @@ impl Glottis {
 
     /// Generates glottal excitation at a given time.
     pub fn tick(&mut self, time: f64) -> f64 {
-        let s1 = simplex(self.aspiration_index as f64 * 2.0);
-        let s2 = simplex(self.aspiration_index as f64);
+        let s1 = simplex(self.aspiration_index as f64);
 
         // vibrato
-        let mut vibrato = (self.vibrato.frequency * PI2 * time).sin() * self.vibrato.amplitude;
-        vibrato += (s1 * self.vibrato.amplitude / 2.0) + (s2 * self.vibrato.amplitude / 3.0);
+        let vibrato = (self.vibrato.frequency * PI2 * time).sin() * self.vibrato.amplitude
+            + (s1 * self.vibrato.amplitude * 0.5);
 
         // excitation
         let f0 = self.frequency + vibrato;
@@ -65,7 +64,7 @@ impl Glottis {
         let aspiration = self.aspiration_buffer[self.aspiration_index];
         let modulation = hanning_modulation(t, NOISE_HANNING_FLOOR, NOISE_HANNING_AMPLITUDE);
         let noise_residual =
-            aspiration * (1.0 + s2 * NOISE_SIMPLEX_AMPLITUDE) * modulation * self.tenseness.sqrt();
+            aspiration * (1.0 + s1 * NOISE_SIMPLEX_AMPLITUDE) * modulation * self.tenseness.sqrt();
         self.aspiration_index = (self.aspiration_index + 1) % ASPIRATION_BUFFER_SIZE; // saturated incremement
 
         return (excitation) * self.intensity * self.loudness + noise_residual;

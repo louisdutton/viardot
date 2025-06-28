@@ -10,3 +10,4 @@ path = "src/bin/main.rs"
 [dependencies]
 rand = "0.9"
 rodio = "0.17"
+crossterm = "0.27"
