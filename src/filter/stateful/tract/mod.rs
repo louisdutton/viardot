@@ -3,7 +3,7 @@ mod utils;
 mod velum;
 
 use cavity::Cavity;
-use utils::{circle_area, ease, kelly_lochbaum, min};
+use utils::{circle_area, ease, kelly_lochbaum};
 use velum::Velum;
 
 /// Number of sections in the oral cavity.
@@ -19,13 +19,13 @@ const K_GLOTTAL: f64 = 0.7;
 const K_LABIAL: f64 = -0.85;
 
 /// Coefficient of reflection at the nose.
-const K_NOSE: f64 = -0.9;
+const K_NOSE: f64 = -0.8;
 
 /// Coefficient of reflection pertaining to the soft palate.
-const K_SOFT_PALATE: f64 = 1.0;
+const K_SOFT_PALATE: f64 = 0.8;
 
 /// Coefficient of reflection pertaining to the hard palate.
-const K_HARD_PALATE: f64 = 0.9;
+const K_HARD_PALATE: f64 = 0.95;
 
 /// The index of the buccal segment that connects the pharyngeal and nasal cavities.
 const VELUM_INDEX: usize = 17;
@@ -33,11 +33,17 @@ const VELUM_INDEX: usize = 17;
 /// The coefficient of sonic attenutation.
 const ATTENUATION: f64 = 0.9999;
 
+/// The maximum diamter of the oral cavity.
+/// This is essentially an arbitrary scale factor
+const ORAL_MAX_DIAMETER: f64 = 3.0;
+
 /// The glottal diameter relative to the maximum oral diameter.
-const RATIO_GLOTTAL_DIAMETER: f64 = 0.16667; // (1/6)^2
+const GLOTTAL_DIAMETER_RATIO: f64 = (1. / 6.) * (1. / 6.);
+const GLOTTAL_LENGTH_RATIO: f64 = (1. / 6.) * (1. / 6.);
 
 /// The pharyngeal diameter relative to the maximum oral diameter.
-const RATIO_PHARYNGEAL_DIAMETER: f64 = 2.0 / 3.0;
+const PHARYNGEAL_DIAMETER_RATIO: f64 = 2. / 3.;
+const PHARYNGEAL_LENGTH_RATIO: f64 = 1. / 3.;
 
 /// A stateful vocal tract filter.
 ///
@@ -69,26 +75,25 @@ impl Tract {
     pub fn new(oral_length: usize, nasal_length: usize) -> Tract {
         let mut oral = Cavity::new(oral_length);
         let mut nasal = Cavity::new(nasal_length);
-        let velum = Velum::new(0.04, 0.1);
+        let velum = Velum::new(0.03, 0.1);
 
         // Initalialise oral cavity
-        let oral_diameter = 3.0;
-        let glottal_end = oral_length as f64 / 6.0;
-        let glottal_diameter = oral_diameter * RATIO_GLOTTAL_DIAMETER;
-        let pharyngeal_end = oral_length as f64 / 3.0;
-        let pharyngeal_diameter = oral_diameter * RATIO_PHARYNGEAL_DIAMETER;
+        let glottal_end = (oral_length as f64 * GLOTTAL_LENGTH_RATIO) as usize;
+        let glottal_diameter = ORAL_MAX_DIAMETER * GLOTTAL_DIAMETER_RATIO;
+        let pharyngeal_end = (oral_length as f64 * PHARYNGEAL_LENGTH_RATIO) as usize;
+        let pharyngeal_diameter = ORAL_MAX_DIAMETER * PHARYNGEAL_DIAMETER_RATIO;
         let glottal_difference = pharyngeal_diameter - glottal_diameter;
         let mut oral_diameter_rest = vec![0.0; oral_length];
         let mut oral_diameter_target = vec![0.0; oral_length];
 
         // Generate oral cavity shape / diameter
         for m in 0..oral_length {
-            let diameter = if (m as f64) < glottal_end {
-                glottal_diameter + ease((m as f64) / glottal_end) * glottal_difference
-            } else if (m as f64) < pharyngeal_end {
+            let diameter = if (m) < glottal_end {
+                glottal_diameter + ease(m as f64 / glottal_end as f64) * glottal_difference
+            } else if m < pharyngeal_end {
                 pharyngeal_diameter
             } else {
-                oral_diameter
+                ORAL_MAX_DIAMETER
             };
 
             oral.diameter[m] = diameter;
@@ -105,11 +110,11 @@ impl Tract {
             } else {
                 0.2 + 1.2 * (2.0 - d)
             };
-            nasal.diameter[i] = min(diameter, 1.2) * nasal_length as f64 / 28.0
+            nasal.diameter[i] = diameter.min(1.2) * nasal_length as f64 / 28.0
         }
+        nasal.diameter[0] = velum.target_diameter; // ??
 
-        // Construct
-        Tract {
+        let mut tract = Tract {
             oral_length,
             nasal_length,
             oral,
@@ -119,14 +124,22 @@ impl Tract {
             oral_diameter_target,
             transients: vec![0.0; oral_length],
             last_obstruction: -1,
-        }
+        };
+
+        tract.calculate_oral_reflections();
+        tract.calculate_nasal_reflections();
+
+        tract
     }
 
-    /// Initialises the vocal tract.
-    pub fn init(&mut self) {
-        self.calculate_oral_reflections();
-        self.calculate_nasal_reflections();
-        self.nasal.diameter[0] = self.velum.target_diameter;
+    pub fn process(&mut self, excitation: f64, noise: f64) -> f64 {
+        // run step twice per sample
+        // TODO: document why
+        self.step(excitation, noise);
+        self.step(excitation, noise);
+
+        // sample output from both orifices right-end of tract.
+        return self.oral.right[self.nasal_length - 1] + self.nasal.right[self.nasal_length - 1];
     }
 
     /// Calculates the coefficients of reflection for each junction in the oral cavity.
@@ -137,14 +150,18 @@ impl Tract {
         for m in 0..self.oral_length {
             oral.area[m] = circle_area(oral.diameter[m])
         }
+
+        let pharyngeal_end = (self.oral_length as f64 * PHARYNGEAL_LENGTH_RATIO) as usize;
         for m in 1..self.oral_length {
-            // let coefficient = if m > this.pharynxEnd {K_HARD_PALATE} else {K_SOFT_PALATE}
-            let coefficient = K_SOFT_PALATE;
-            // prevent error if 0
-            oral.k[m] = if oral.area[m] == 0.0 {
-                ATTENUATION
+            let coefficient = if m > pharyngeal_end {
+                K_HARD_PALATE
             } else {
-                kelly_lochbaum(oral.area[m - 1], oral.area[m]) * coefficient
+                K_SOFT_PALATE
+            };
+
+            oral.k[m] = match oral.area[m] {
+                0. => ATTENUATION, // prevent zero division
+                _ => kelly_lochbaum(oral.area[m - 1], oral.area[m]) * coefficient,
             }
         }
 
@@ -167,7 +184,7 @@ impl Tract {
 
     /// Simulates the propogation of sound within the vocal tract (must run at twice the sample rate).
     fn step(&mut self, excitation: f64, _noise: f64) {
-        // TODO process turnbulance noise
+        // TODO process turbulance noise
         // let noise_output = noise
 
         let oral = &mut self.oral;
@@ -215,19 +232,5 @@ impl Tract {
             nasal.right[m] = nasal.j_right[m] * ATTENUATION;
             nasal.left[m] = nasal.j_left[m + 1] * ATTENUATION;
         }
-    }
-
-    pub fn pre_block(&mut self) {}
-    pub fn post_block(&mut self) {
-        self.calculate_oral_reflections();
-    }
-
-    pub fn process(&mut self, excitation: f64, noise: f64) -> f64 {
-        // run step twice per sample
-        self.step(excitation, noise);
-        self.step(excitation, noise);
-
-        // sample output from the right-end of tract.
-        return self.oral.right[self.nasal_length - 1] + self.nasal.right[self.nasal_length - 1];
     }
 }

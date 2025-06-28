@@ -47,19 +47,8 @@ impl Glottis {
         }
     }
 
-    pub fn pre_block(&mut self) {
-        self.wave_function = Box::new(liljencrants_fant(self.tenseness));
-        // let simplex1 = simplex(1.4);
-        // let simplex2 = simplex(4.2);
-    }
-
-    // pub fn post_block() {}
-
     /// Generates glottal excitation at a given time.
     pub fn tick(&mut self, time: f64) -> f64 {
-        // TODO: add noise back in
-        // let s1 = simplex1[n] as f64;
-        // let s2 = simplex2[n] as f64;
         let s1 = simplex(self.aspiration_index as f64 * 2.0);
         let s2 = simplex(self.aspiration_index as f64);
 
