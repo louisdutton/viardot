@@ -1,45 +1,54 @@
 {
-  description = "A physically-modelled vocal synthesis framework";
+  description = "A Nix-flake-based Odin development environment";
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-  };
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
   outputs = {
+    self,
     nixpkgs,
-    flake-utils,
-    rust-overlay,
-    ...
-  }:
-    flake-utils.lib.eachDefaultSystem (
-      system: let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [rust-overlay.overlays.default];
-        };
+  }: let
+    supportedSystems = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "aarch64-darwin"
+    ];
 
-        rust = pkgs.rust-bin.stable.latest.default.override {
-          extensions = ["rust-src"];
-        };
-      in
-        with pkgs; { 
-          devShells.default = mkShell {
-            buildInputs = [
-              rust
-              cargo
-              rust-analyzer
+    forEachSupportedSystem = f:
+      nixpkgs.lib.genAttrs supportedSystems (
+        system:
+          f {
+            pkgs = import nixpkgs {
+              inherit system;
+              config.allowUnfree = true;
+            };
+          }
+      );
+  in {
+    devShells = forEachSupportedSystem (
+      {pkgs}:
+        with pkgs; {
+          default = mkShell {
+            nativeBuildInputs = [
+              odin
+              raylib
             ];
 
-            env = {
-              RUST_SRC_PATH = "${rust}/lib/rustlib/src/rust/library";
-              RUST_BACKTRACE = "1";
-            };
+            packages = [
+              # debugging
+              gdb
+
+              # language support
+              ols
+              nixd
+              alejandra
+              vscode-json-languageserver
+            ];
+
+            # GALLIUM_HUD = "fps,cpu";
+            XDG_SESSION_TYPE = "x11"; # wayland can't handle fullscreen
+            RES_ROOT = "./res";
           };
         }
     );
+  };
 }
