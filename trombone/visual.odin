@@ -25,19 +25,19 @@ KEYBOARD_HEIGHT :: 120
 // index: 0 = glottis/throat, LIP_START-1 = lips
 // diameter: positive = outer (palate/top side), negative = inner (tongue/bottom side)
 // The tract curves from bottom-left (throat) counterclockwise to right-bottom (lips)
-get_tract_polar :: proc(index: f64, diameter: f64, scale: f64 = 25.0) -> (x: f64, y: f64) {
+get_tract_polar :: proc(index: f32, diameter: f32, scale: f32 = 25.0) -> (x: f32, y: f32) {
 	// Angle in standard math coords (0 = right, PI/2 = up, PI = left, 3PI/2 = down)
 	// Throat at bottom-left (~225 deg = 1.25*PI), lips at right-down (~-20 deg = -0.11*PI)
-	angle_start := math.PI * 1.1 // ~200 degrees - lower left
-	angle_end := math.PI * -0.15 // ~-27 degrees - right, slightly below horizontal
-	angle_range := angle_start - angle_end
+	ANGLE_START :: math.PI * 1.1 // ~200 degrees - lower left
+	ANGLE_END :: math.PI * -0.15 // ~-27 degrees - right, slightly below horizontal
+	ANGLE_RANGE :: ANGLE_START - ANGLE_END
 
-	t := index / f64(LIP_START - 1) // 0 to 1 along tract
-	angle := angle_start - t * angle_range
+	t := index / f32(LIP_START - 1) // 0 to 1 along tract
+	angle := ANGLE_START - t * ANGLE_RANGE
 
-	r := f64(TRACT_RADIUS) + diameter * scale
-	x = f64(TRACT_ORIGIN_X) + math.cos(angle) * r
-	y = f64(TRACT_ORIGIN_Y) - math.sin(angle) * r
+	r := f32(TRACT_RADIUS) + diameter * scale
+	x = f32(TRACT_ORIGIN_X) + math.cos(angle) * r
+	y = f32(TRACT_ORIGIN_Y) - math.sin(angle) * r
 	return
 }
 
@@ -54,11 +54,11 @@ draw_oral_cavity_fill :: proc(tract: ^Tract) {
 	// Fill the oral cavity with pink color using triangles
 	for i in 0 ..< TRACT_N - 1 {
 		// Inner wall points (tongue side - negative diameter = closer to center)
-		ix1, iy1 := get_tract_polar(f64(i), -tract.diameter[i])
-		ix2, iy2 := get_tract_polar(f64(i + 1), -tract.diameter[i + 1])
+		ix1, iy1 := get_tract_polar(f32(i), -tract.diameter[i])
+		ix2, iy2 := get_tract_polar(f32(i + 1), -tract.diameter[i + 1])
 		// Outer wall points (palate side - positive diameter = further from center)
-		ox1, oy1 := get_tract_polar(f64(i), tract.diameter[i])
-		ox2, oy2 := get_tract_polar(f64(i + 1), tract.diameter[i + 1])
+		ox1, oy1 := get_tract_polar(f32(i), tract.diameter[i])
+		ox2, oy2 := get_tract_polar(f32(i + 1), tract.diameter[i + 1])
 
 		// Draw two triangles to fill the quad (counter-clockwise winding for raylib)
 		rl.DrawTriangle(
@@ -80,9 +80,9 @@ draw_tract_segments :: proc(tract: ^Tract) {
 	// Draw radial lines for each segment (like in Pink Trombone)
 	for i in 0 ..< TRACT_N {
 		// Inner point
-		ix, iy := get_tract_polar(f64(i), -tract.diameter[i])
+		ix, iy := get_tract_polar(f32(i), -tract.diameter[i])
 		// Outer point
-		ox, oy := get_tract_polar(f64(i), tract.diameter[i])
+		ox, oy := get_tract_polar(f32(i), tract.diameter[i])
 
 		// Color varies by region
 		color: rl.Color
@@ -104,21 +104,21 @@ draw_tract_segments :: proc(tract: ^Tract) {
 draw_tract_walls :: proc(tract: ^Tract) {
 	// Draw outer wall (hard/soft palate side)
 	for i in 0 ..< TRACT_N - 1 {
-		x1, y1 := get_tract_polar(f64(i), tract.diameter[i])
-		x2, y2 := get_tract_polar(f64(i + 1), tract.diameter[i + 1])
+		x1, y1 := get_tract_polar(f32(i), tract.diameter[i])
+		x2, y2 := get_tract_polar(f32(i + 1), tract.diameter[i + 1])
 		rl.DrawLineEx({f32(x1), f32(y1)}, {f32(x2), f32(y2)}, 5, COLOR_ORCHID)
 	}
 
 	// Draw inner wall (tongue side)
 	for i in 0 ..< TRACT_N - 1 {
-		x1, y1 := get_tract_polar(f64(i), -tract.diameter[i])
-		x2, y2 := get_tract_polar(f64(i + 1), -tract.diameter[i + 1])
+		x1, y1 := get_tract_polar(f32(i), -tract.diameter[i])
+		x2, y2 := get_tract_polar(f32(i + 1), -tract.diameter[i + 1])
 		rl.DrawLineEx({f32(x1), f32(y1)}, {f32(x2), f32(y2)}, 5, COLOR_ORCHID)
 	}
 
 	// Draw lip end cap
-	lip_inner_x, lip_inner_y := get_tract_polar(f64(TRACT_N - 1), -tract.diameter[TRACT_N - 1])
-	lip_outer_x, lip_outer_y := get_tract_polar(f64(TRACT_N - 1), tract.diameter[TRACT_N - 1])
+	lip_inner_x, lip_inner_y := get_tract_polar(f32(TRACT_N - 1), -tract.diameter[TRACT_N - 1])
+	lip_outer_x, lip_outer_y := get_tract_polar(f32(TRACT_N - 1), tract.diameter[TRACT_N - 1])
 	rl.DrawLineEx(
 		{f32(lip_inner_x), f32(lip_inner_y)},
 		{f32(lip_outer_x), f32(lip_outer_y)},
@@ -139,50 +139,40 @@ draw_tract_walls :: proc(tract: ^Tract) {
 
 draw_nasal_cavity :: proc(tract: ^Tract) {
 	// Nasal cavity sits above (outside) the oral cavity, starting at NOSE_START
-	nose_base := 2.0 // Base offset from tract center (outside the oral cavity)
+	NOSE_BASE :: 2.0 // Base offset from tract center (outside the oral cavity)
 
 	// Fill nasal cavity
 	for i in 0 ..< NASAL_N - 1 {
 		// Map nasal index to tract position (nasal runs from NOSE_START toward lips)
-		tract_idx := f64(NOSE_START) + f64(i) * f64(TRACT_N - NOSE_START - 5) / f64(NASAL_N)
+		tract_idx := f32(NOSE_START) + f32(i) * f32(TRACT_N - NOSE_START - 5) / f32(NASAL_N)
 		tract_idx_next :=
-			f64(NOSE_START) + f64(i + 1) * f64(TRACT_N - NOSE_START - 5) / f64(NASAL_N)
+			f32(NOSE_START) + f32(i + 1) * f32(TRACT_N - NOSE_START - 5) / f32(NASAL_N)
 
 		// Inner edge (closer to oral cavity - at the palate)
-		inner_d := nose_base + 0.5
-		ix1, iy1 := get_tract_polar(tract_idx, inner_d)
-		ix2, iy2 := get_tract_polar(tract_idx_next, inner_d)
+		INNER_D :: NOSE_BASE + 0.5
+		ix1, iy1 := get_tract_polar(tract_idx, INNER_D)
+		ix2, iy2 := get_tract_polar(tract_idx_next, INNER_D)
 
 		// Outer edge (further from center)
-		outer_d := inner_d + tract.nose_diameter[i] * 0.6
-		outer_d_next := inner_d + tract.nose_diameter[i + 1] * 0.6
+		outer_d := INNER_D + tract.nose_diameter[i] * 0.6
+		outer_d_next := INNER_D + tract.nose_diameter[i + 1] * 0.6
 		ox1, oy1 := get_tract_polar(tract_idx, outer_d)
 		ox2, oy2 := get_tract_polar(tract_idx_next, outer_d_next)
 
 		// Fill with pink (counter-clockwise winding)
-		rl.DrawTriangle(
-			{f32(ox1), f32(oy1)},
-			{f32(ix1), f32(iy1)},
-			{f32(ix2), f32(iy2)},
-			COLOR_PINK,
-		)
-		rl.DrawTriangle(
-			{f32(ox1), f32(oy1)},
-			{f32(ix2), f32(iy2)},
-			{f32(ox2), f32(oy2)},
-			COLOR_PINK,
-		)
+		rl.DrawTriangle({ox1, oy1}, {ix1, iy1}, {ix2, iy2}, COLOR_PINK)
+		rl.DrawTriangle({ox1, oy1}, {ix2, iy2}, {ox2, oy2}, COLOR_PINK)
 	}
 
 	// Draw nasal cavity walls
 	for i in 0 ..< NASAL_N - 1 {
-		tract_idx := f64(NOSE_START) + f64(i) * f64(TRACT_N - NOSE_START - 5) / f64(NASAL_N)
+		tract_idx := f32(NOSE_START) + f32(i) * f32(TRACT_N - NOSE_START - 5) / f32(NASAL_N)
 		tract_idx_next :=
-			f64(NOSE_START) + f64(i + 1) * f64(TRACT_N - NOSE_START - 5) / f64(NASAL_N)
+			f32(NOSE_START) + f32(i + 1) * f32(TRACT_N - NOSE_START - 5) / f32(NASAL_N)
 
-		inner_d := nose_base + 0.5
-		outer_d := inner_d + tract.nose_diameter[i] * 0.6
-		outer_d_next := inner_d + tract.nose_diameter[i + 1] * 0.6
+		INNER_D :: NOSE_BASE + 0.5
+		outer_d := INNER_D + tract.nose_diameter[i] * 0.6
+		outer_d_next := INNER_D + tract.nose_diameter[i + 1] * 0.6
 
 		// Outer wall
 		ox1, oy1 := get_tract_polar(tract_idx, outer_d)
@@ -190,8 +180,8 @@ draw_nasal_cavity :: proc(tract: ^Tract) {
 		rl.DrawLineEx({f32(ox1), f32(oy1)}, {f32(ox2), f32(oy2)}, 3, rl.Color{192, 100, 192, 200})
 
 		// Inner wall
-		ix1, iy1 := get_tract_polar(tract_idx, inner_d)
-		ix2, iy2 := get_tract_polar(tract_idx_next, inner_d)
+		ix1, iy1 := get_tract_polar(tract_idx, INNER_D)
+		ix2, iy2 := get_tract_polar(tract_idx_next, INNER_D)
 		rl.DrawLineEx({f32(ix1), f32(iy1)}, {f32(ix2), f32(iy2)}, 3, rl.Color{192, 100, 192, 200})
 	}
 }
@@ -202,8 +192,8 @@ draw_tract_labels :: proc(tract: ^Tract) {
 	soft_palate_x, soft_palate_y := get_tract_polar(10, 2.5)
 	hard_palate_x, hard_palate_y := get_tract_polar(25, 2.5)
 	oral_x, oral_y := get_tract_polar(22, 0)
-	lip_outer_x, lip_outer_y := get_tract_polar(f64(LIP_START) + 2, 1.0)
-	lip_inner_x, lip_inner_y := get_tract_polar(f64(LIP_START) + 2, -1.0)
+	lip_outer_x, lip_outer_y := get_tract_polar(f32(LIP_START) + 2, 1.0)
+	lip_inner_x, lip_inner_y := get_tract_polar(f32(LIP_START) + 2, -1.0)
 
 	// Throat label
 	rl.DrawText("throat", i32(throat_x) - 30, i32(throat_y) + 10, 14, rl.Color{200, 150, 200, 200})
@@ -259,15 +249,15 @@ draw_tract_labels :: proc(tract: ^Tract) {
 draw_tongue_control :: proc(tract: ^Tract) {
 	// Tongue control is on the inner (tongue) side of the tract
 	// In the original, it's a region where you can drag to shape vowels
-	inner_diam := -2.05 // Closer to center (inside the tract)
-	outer_diam := -3.5 // Further inside
+	INNER_DIAM :: -2.05 // Closer to center (inside the tract)
+	OUTER_DIAM :: -3.5 // Further inside
 
 	// Draw the tongue control region background
 	for i in BLADE_START + 2 ..< TIP_START - 3 {
-		ix1, iy1 := get_tract_polar(f64(i), inner_diam)
-		ix2, iy2 := get_tract_polar(f64(i + 1), inner_diam)
-		ox1, oy1 := get_tract_polar(f64(i), outer_diam)
-		ox2, oy2 := get_tract_polar(f64(i + 1), outer_diam)
+		ix1, iy1 := get_tract_polar(f32(i), INNER_DIAM)
+		ix2, iy2 := get_tract_polar(f32(i + 1), INNER_DIAM)
+		ox1, oy1 := get_tract_polar(f32(i), OUTER_DIAM)
+		ox2, oy2 := get_tract_polar(f32(i + 1), OUTER_DIAM)
 
 		rl.DrawTriangle(
 			{f32(ix1), f32(iy1)},
@@ -285,9 +275,9 @@ draw_tongue_control :: proc(tract: ^Tract) {
 
 	// Draw control guide dots
 	for j in 0 ..< 6 {
-		idx := f64(BLADE_START + 2) + f64(j) * f64(TIP_START - BLADE_START - 5) / 5.0
-		mid_diam := (inner_diam + outer_diam) / 2.0
-		x, y := get_tract_polar(idx, mid_diam)
+		idx := f32(BLADE_START + 2) + f32(j) * f32(TIP_START - BLADE_START - 5) / 5.0
+		MID_DIAM :: (INNER_DIAM + OUTER_DIAM) / 2.0
+		x, y := get_tract_polar(idx, MID_DIAM)
 		rl.DrawCircle(i32(x), i32(y), 4, rl.Color{218, 112, 214, 100})
 	}
 
@@ -297,7 +287,7 @@ draw_tongue_control :: proc(tract: ^Tract) {
 	rl.DrawCircleLines(i32(tongue_x), i32(tongue_y), 18, COLOR_ORCHID)
 
 	// Label below the control area
-	label_x, label_y := get_tract_polar(f64(BLADE_START + 12), -1.0)
+	label_x, label_y := get_tract_polar(f32(BLADE_START + 12), -1.0)
 	rl.DrawText(
 		"tongue control",
 		i32(label_x) - 50,
@@ -340,8 +330,8 @@ draw_glottis_ui :: proc(glottis: ^Glottis) {
 
 	// Draw pitch indicator
 	semitone := 12.0 * math.log2(glottis.frequency / BASE_FREQUENCY)
-	pitch_x := keyboard_x + i32((semitone / 20.0) * f64(keyboard_width))
-	pitch_y := i32(f64(KEYBOARD_Y) + f64(keyboard_height) * (1.0 - glottis.tenseness))
+	pitch_x := keyboard_x + i32((semitone / 20.0) * f32(keyboard_width))
+	pitch_y := i32(f32(KEYBOARD_Y) + f32(keyboard_height) * (1.0 - glottis.tenseness))
 
 	// Pitch indicator rectangle
 	rl.DrawRectangle(pitch_x - 9, pitch_y - 12, 18, 24, rl.Color{218, 112, 214, 100})

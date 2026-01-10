@@ -2,18 +2,18 @@ package trombone
 
 import "core:math"
 
-move_towards :: proc(current, target, amount: f64) -> f64 {
+move_towards :: proc(current, target, amount: f32) -> f32 {
 	if current < target {
 		return min(current + amount, target)
 	}
 	return max(current - amount, target)
 }
 
-simplex_noise :: proc(x: f64) -> f64 {
+simplex_noise :: proc(x: f32) -> f32 {
 	// Simple 1D simplex noise
 	i0 := int(math.floor(x))
 	i1 := i0 + 1
-	x0 := x - f64(i0)
+	x0 := x - f32(i0)
 	x1 := x0 - 1.0
 
 	t0 := 1.0 - x0 * x0
@@ -37,8 +37,8 @@ simplex_hash :: proc(i: int) -> int {
 	return int(h)
 }
 
-simplex_grad :: proc(hash: int, x: f64) -> f64 {
+simplex_grad :: proc(hash: int, x: f32) -> f32 {
 	h := hash & 3
-	grad: f64 = 1.0 if (h & 1) == 0 else -1.0
+	grad: f32 = 1.0 if (h & 1) == 0 else -1.0
 	return grad * x
 }

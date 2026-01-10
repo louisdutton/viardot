@@ -15,7 +15,7 @@ SAMPLE_RATE :: 44100
 Audio_Context :: struct {
 	glottis:      ^Glottis,
 	tract:        ^Tract,
-	time:         f64,
+	time:         f32,
 	sample_count: int,
 }
 
@@ -32,11 +32,11 @@ audio_callback :: proc "c" (buffer_data: rawptr, frames: u32) {
 	block_size := 512
 
 	for i in 0 ..< int(frames) {
-		lambda := f64(ctx.sample_count % block_size) / f64(block_size)
+		lambda := f32(ctx.sample_count % block_size) / f32(block_size)
 
 		// Generate audio
 		glottal := glottis_step(ctx.glottis, ctx.time, lambda)
-		turbulence := (rand.float64() * 2.0 - 1.0) * 0.1
+		turbulence := (rand.float32() * 2.0 - 1.0) * 0.1
 		vocal := tract_process(ctx.tract, glottal, turbulence, lambda)
 
 		// Output: mix tract output with direct glottal

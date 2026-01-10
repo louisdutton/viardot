@@ -8,26 +8,26 @@ BASE_FREQUENCY :: F2
 
 // The opening between the vocal folds
 Glottis :: struct {
-	frequency:        f64,
-	target_frequency: f64,
-	tenseness:        f64,
-	target_tenseness: f64,
-	intensity:        f64,
-	loudness:         f64,
-	vibrato_amount:   f64,
-	vibrato_freq:     f64,
-	time_in_waveform: f64,
-	waveform_length:  f64,
+	frequency:        f32,
+	target_frequency: f32,
+	tenseness:        f32,
+	target_tenseness: f32,
+	intensity:        f32,
+	loudness:         f32,
+	vibrato_amount:   f32,
+	vibrato_freq:     f32,
+	time_in_waveform: f32,
+	waveform_length:  f32,
 	// LF waveform parameters
-	alpha:            f64,
-	e0:               f64,
-	epsilon:          f64,
-	shift:            f64,
-	delta:            f64,
-	te:               f64,
-	omega:            f64,
+	alpha:            f32,
+	e0:               f32,
+	epsilon:          f32,
+	shift:            f32,
+	delta:            f32,
+	te:               f32,
+	omega:            f32,
 	// Noise
-	noise_time:       f64,
+	noise_time:       f32,
 	is_touched:       bool,
 }
 
@@ -49,7 +49,7 @@ glottis_new :: proc() -> (g: Glottis) {
 	return g
 }
 
-glottis_setup_waveform :: proc(g: ^Glottis, lambda: f64) {
+glottis_setup_waveform :: proc(g: ^Glottis, lambda: f32) {
 	// Interpolate frequency and tenseness
 	g.frequency = g.frequency * (1.0 - lambda) + g.target_frequency * lambda
 	g.tenseness = g.tenseness * (1.0 - lambda) + g.target_tenseness * lambda
@@ -86,14 +86,14 @@ glottis_setup_waveform :: proc(g: ^Glottis, lambda: f64) {
 	g.te = te
 }
 
-glottis_noise_modulator :: proc(g: ^Glottis) -> f64 {
+glottis_noise_modulator :: proc(g: ^Glottis) -> f32 {
 	voiced := 0.1 + 0.2 * max(0.0, math.sin(math.TAU * g.time_in_waveform / g.waveform_length))
 	return g.tenseness * g.intensity * voiced + (1 - g.tenseness * g.intensity) * 0.3
 }
 
-glottis_step :: proc(g: ^Glottis, time: f64, lambda: f64) -> f64 {
-	time_step := 1.0 / f64(SAMPLE_RATE)
-	g.time_in_waveform += time_step
+glottis_step :: proc(g: ^Glottis, time: f32, lambda: f32) -> f32 {
+	TIME_STEP :: 1 / f32(SAMPLE_RATE)
+	g.time_in_waveform += TIME_STEP
 
 	if g.time_in_waveform > g.waveform_length {
 		g.time_in_waveform -= g.waveform_length
@@ -116,7 +116,7 @@ glottis_step :: proc(g: ^Glottis, time: f64, lambda: f64) -> f64 {
 	t := (g.time_in_waveform / g.waveform_length) * (1 + vibrato)
 	t = clamp(t, 0, 1)
 
-	out: f64
+	out: f32
 	if t > g.te {
 		out = (-math.exp(-g.epsilon * (t - g.te)) + g.shift) / g.delta
 	} else {
@@ -124,9 +124,9 @@ glottis_step :: proc(g: ^Glottis, time: f64, lambda: f64) -> f64 {
 	}
 
 	// Add aspiration noise
-	aspiration := g.intensity * (1.0 - math.sqrt(g.tenseness)) * glottis_noise_modulator(g)
+	aspiration := g.intensity * (1 - math.sqrt(g.tenseness)) * glottis_noise_modulator(g)
 	aspiration *= 0.2 + 0.02 * simplex_noise(time * 1.99)
-	noise := (rand.float64() * 2.0 - 1.0) * aspiration
+	noise := (rand.float32() * 2 - 1) * aspiration
 
 	return out * g.intensity * g.loudness + noise
 }

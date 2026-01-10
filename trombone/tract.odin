@@ -16,45 +16,45 @@ ATTENUATION :: 0.9999 // the efficiency of the energy transfer through junctions
 // Vocal tract filter
 Tract :: struct {
 	// Dimensions
-	diameter:            [TRACT_N]f64,
-	rest_diameter:       [TRACT_N]f64,
-	target_diameter:     [TRACT_N]f64,
+	diameter:            [TRACT_N]f32,
+	rest_diameter:       [TRACT_N]f32,
+	target_diameter:     [TRACT_N]f32,
 	// Wave propagation
-	left:                [TRACT_N]f64,
-	right:               [TRACT_N]f64,
-	reflection:          [TRACT_N + 1]f64,
-	new_reflection:      [TRACT_N + 1]f64,
-	junction_out_l:      [TRACT_N + 1]f64,
-	junction_out_r:      [TRACT_N + 1]f64,
-	area:                [TRACT_N]f64,
+	left:                [TRACT_N]f32,
+	right:               [TRACT_N]f32,
+	reflection:          [TRACT_N + 1]f32,
+	new_reflection:      [TRACT_N + 1]f32,
+	junction_out_l:      [TRACT_N + 1]f32,
+	junction_out_r:      [TRACT_N + 1]f32,
+	area:                [TRACT_N]f32,
 	// Nasal cavity
-	nose_diameter:       [NASAL_N]f64,
-	nose_left:           [NASAL_N]f64,
-	nose_right:          [NASAL_N]f64,
-	nose_reflection:     [NASAL_N + 1]f64,
-	nose_junction_out_l: [NASAL_N + 1]f64,
-	nose_junction_out_r: [NASAL_N + 1]f64,
-	nose_area:           [NASAL_N]f64,
+	nose_diameter:       [NASAL_N]f32,
+	nose_left:           [NASAL_N]f32,
+	nose_right:          [NASAL_N]f32,
+	nose_reflection:     [NASAL_N + 1]f32,
+	nose_junction_out_l: [NASAL_N + 1]f32,
+	nose_junction_out_r: [NASAL_N + 1]f32,
+	nose_area:           [NASAL_N]f32,
 	// Velum (nose junction)
-	velum_target:        f64,
+	velum_target:        f32,
 	// Tongue control
-	tongue_index:        f64,
-	tongue_diameter:     f64,
+	tongue_index:        f32,
+	tongue_diameter:     f32,
 	// Transients
 	transients:          [dynamic]Transient,
 	// Turbulence
-	fricative_intensity: f64,
+	fricative_intensity: f32,
 	// Lip output
-	lip_output:          f64,
-	nose_output:         f64,
+	lip_output:          f32,
+	nose_output:         f32,
 }
 
 Transient :: struct {
 	position:   int,
-	time_alive: f64,
-	lifetime:   f64,
-	strength:   f64,
-	exponent:   f64,
+	time_alive: f32,
+	lifetime:   f32,
+	strength:   f32,
+	exponent:   f32,
 }
 
 tract_new :: proc() -> (t: Tract) {
@@ -65,7 +65,7 @@ tract_new :: proc() -> (t: Tract) {
 
 	// Set up rest diameters (anatomical shape)
 	for i in 0 ..< TRACT_N {
-		diameter: f64 = 0
+		diameter: f32 = 0
 		if i < 7 {
 			diameter = 0.6
 		} else if i < BLADE_START {
@@ -82,8 +82,8 @@ tract_new :: proc() -> (t: Tract) {
 
 	// Set up nasal cavity
 	for i in 0 ..< NASAL_N {
-		d := 2.0 * f64(i) / f64(NASAL_N)
-		diameter: f64
+		d := 2.0 * f32(i) / f32(NASAL_N)
+		diameter: f32
 		if d < 1.0 {
 			diameter = 0.4 + 1.6 * d
 		} else {
@@ -108,7 +108,7 @@ tract_destroy :: proc(t: ^Tract) {
 tract_set_rest_diameter :: proc(t: ^Tract) {
 	// Apply tongue shape to tract
 	for i in BLADE_START ..< LIP_START {
-		fi := f64(i)
+		fi := f32(i)
 		tongue_idx := t.tongue_index
 		tongue_diam := t.tongue_diameter
 
@@ -161,7 +161,7 @@ tract_calculate_nose_reflections :: proc(t: ^Tract) {
 	}
 }
 
-tract_step :: proc(t: ^Tract, glottal_output: f64, turbulence_noise: f64, lambda: f64) {
+tract_step :: proc(t: ^Tract, glottal_output: f32, turbulence_noise: f32, lambda: f32) {
 	// Process transients
 	for i := len(t.transients) - 1; i >= 0; i -= 1 {
 		trans := &t.transients[i]
@@ -233,7 +233,7 @@ tract_step :: proc(t: ^Tract, glottal_output: f64, turbulence_noise: f64, lambda
 }
 
 // Runs at 2x sample rate
-tract_process :: proc(t: ^Tract, glottal_output: f64, turbulence_noise: f64, lambda: f64) -> f64 {
+tract_process :: proc(t: ^Tract, glottal_output: f32, turbulence_noise: f32, lambda: f32) -> f32 {
 	tract_step(t, glottal_output, turbulence_noise, lambda)
 	tract_step(t, glottal_output, turbulence_noise, lambda)
 	return t.lip_output + t.nose_output
@@ -242,13 +242,13 @@ tract_process :: proc(t: ^Tract, glottal_output: f64, turbulence_noise: f64, lam
 tract_finish_block :: proc(t: ^Tract) {
 	// Move diameters towards targets
 	for i in 0 ..< TRACT_N {
-		slow_return := 0.6 + 0.4 * f64(NOSE_START - i) / NOSE_START if i < NOSE_START else 1
+		slow_return := 0.6 + 0.4 * f32(NOSE_START - i) / NOSE_START if i < NOSE_START else 1
 		t.diameter[i] = move_towards(t.diameter[i], t.target_diameter[i], slow_return * 0.25)
 	}
 
 	// Update velum
-	amount := 0.25
-	t.nose_diameter[0] = move_towards(t.nose_diameter[0], t.velum_target, amount)
+	AMOUNT :: 0.25
+	t.nose_diameter[0] = move_towards(t.nose_diameter[0], t.velum_target, AMOUNT)
 
 	tract_calculate_reflections(t)
 	tract_calculate_nose_reflections(t)
